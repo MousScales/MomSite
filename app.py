@@ -5,6 +5,7 @@ from googleapiclient.discovery import build
 import datetime
 import stripe
 import os
+import json
 from urllib.parse import quote
 from werkzeug.utils import secure_filename
 import uuid
@@ -17,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure upload settings
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = '/tmp/uploads'  # Use /tmp for Vercel
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
@@ -33,8 +34,21 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-SERVICE_ACCOUNT_FILE = 'service_account.json'  # Place your file in the project root
-CALENDAR_ID = 'bizmoustaphagueye@gmail.com'  # Your Google Calendar ID
+CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID', 'bizmoustaphagueye@gmail.com')
+
+# Get service account info from environment variable
+service_account_info = os.getenv('GOOGLE_SERVICE_ACCOUNT_INFO')
+if service_account_info:
+    service_account_info = json.loads(service_account_info)
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info, scopes=SCOPES)
+else:
+    # Fallback to file if environment variable is not set
+    SERVICE_ACCOUNT_FILE = 'service_account.json'
+    credentials = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
+service = build('calendar', 'v3', credentials=credentials)
 
 # --- Stripe Configuration ---
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
@@ -91,11 +105,6 @@ HAIR_LENGTH_DATA = {
         'knotlessAddedHairDeposit': 128
     }
 }
-
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
-service = build('calendar', 'v3', credentials=credentials)
 
 def create_calendar_event(name, phone, style, hair_length, date_str, time_str, notes='', box_braids_variation='', hair_option='', cornrows_variation='', two_strand_twists_variation='', current_hair_image='', reference_image='', promo_code='', discount_amount=0, final_price=0):
     """Helper function to create a Google Calendar event"""

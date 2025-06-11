@@ -134,10 +134,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         customCalendar.innerHTML = '<div class="loading-indicator">Loading availability...</div>';
 
-        const availabilityUrl = `http://127.0.0.1:5000/api/availability?month=${year}-${(month + 1).toString().padStart(2, '0')}`;
+        const availabilityUrl = `/api/availability?month=${year}-${(month + 1).toString().padStart(2, '0')}`;
         console.log('Fetching availability from:', availabilityUrl);
 
-        fetch(availabilityUrl)
+        fetch(availabilityUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
             .then(res => {
                 console.log('Availability fetch response status:', res.status);
                 if (!res.ok) {
@@ -147,101 +153,93 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 console.log('Availability data received:', data);
-                if (data.bookings) {
-                    monthlyBookings = data.bookings;
-                    // Now render the calendar with fetched data
-                    const today = new Date();
-                    const firstDay = new Date(year, month, 1);
-                    const lastDay = new Date(year, month + 1, 0);
-                    let html = '';
-                    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-                    html += `<div class="calendar-nav">
-                        <button type="button" id="prev-month">&#8592;</button>
-                        <span class="calendar-month-label">${monthNames[month]} ${year}</span>
-                        <button type="button" id="next-month">&#8594;</button>
-                    </div>`;
-                    html += '<table class="simple-calendar"><thead><tr>';
-                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                    days.forEach(d => html += `<th>${d}</th>`);
-                    html += '</tr></thead><tbody>';
-                    let date = 1;
-                    for (let i = 0; i < 6; i++) {
-                        html += '<tr>';
-                        for (let j = 0; j < 7; j++) {
-                            if (i === 0 && j < firstDay.getDay()) {
-                                html += '<td></td>';
-                            } else if (date > lastDay.getDate()) {
-                                html += '<td></td>';
-                            } else {
-                                const cellDate = new Date(year, month, date);
-                                const isPast = cellDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                                const isSelected = selectedDate && formatDate(cellDate) === formatDate(selectedDate);
+                monthlyBookings = Array.isArray(data) ? data : [];
+                // Now render the calendar with fetched data
+                const today = new Date();
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                let html = '';
+                const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                html += `<div class="calendar-nav">
+                    <button type="button" id="prev-month">&#8592;</button>
+                    <span class="calendar-month-label">${monthNames[month]} ${year}</span>
+                    <button type="button" id="next-month">&#8594;</button>
+                </div>`;
+                html += '<table class="simple-calendar"><thead><tr>';
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                days.forEach(d => html += `<th>${d}</th>`);
+                html += '</tr></thead><tbody>';
+                let date = 1;
+                for (let i = 0; i < 6; i++) {
+                    html += '<tr>';
+                    for (let j = 0; j < 7; j++) {
+                        if (i === 0 && j < firstDay.getDay()) {
+                            html += '<td></td>';
+                        } else if (date > lastDay.getDate()) {
+                            html += '<td></td>';
+                        } else {
+                            const cellDate = new Date(year, month, date);
+                            const isPast = cellDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                            const isSelected = selectedDate && formatDate(cellDate) === formatDate(selectedDate);
 
-                                // Check if the day has any bookings
-                                const hasBooking = monthlyBookings.some(booking => {
-                                    // Ensure booking.start is a valid date string before creating a Date object
-                                    try {
-                                        const bookingStartDay = booking.start ? new Date(booking.start).toDateString() : null;
-                                        return bookingStartDay && cellDate.toDateString() === bookingStartDay;
-                                    } catch (e) {
-                                        console.error('Error parsing booking date:', booking.start, e);
-                                        return false;
-                                    }
-                                });
-
-                                let classes = ['calendar-cell'];
-                                if (isPast) classes.push('disabled');
-                                if (isSelected) classes.push('selected');
-                                if (hasBooking && !isPast) classes.push('has-booking');
-
-                                html += `<td class="${classes.join(' ')}" data-date="${formatDate(cellDate)}">${date}</td>`;
-                                date++;
-                            }
-                        }
-                        html += '</tr>';
-                        if (date > lastDay.getDate()) break;
-                    }
-                    html += '</tbody></table>';
-                    customCalendar.innerHTML = html; // Render the actual calendar
-
-                    // Add event listeners AFTER rendering
-                    const prevMonthButton = document.getElementById('prev-month');
-                    const nextMonthButton = document.getElementById('next-month');
-
-                    if(prevMonthButton) prevMonthButton.onclick = function() {
-                        let newMonth = calendarMonth - 1;
-                        let newYear = calendarYear;
-                        if (newMonth < 0) { newMonth = 11; newYear--; }
-                        renderCalendar(newYear, newMonth);
-                    };
-
-                    if(nextMonthButton) nextMonthButton.onclick = function() {
-                        let newMonth = calendarMonth + 1;
-                        let newYear = calendarYear;
-                        if (newMonth > 11) { newMonth = 0; newYear++; }
-                        renderCalendar(newYear, newMonth);
-                    };
-
-                    customCalendar.querySelectorAll('.calendar-cell').forEach(cell => {
-                        if (!cell.classList.contains('disabled')) {
-                            cell.addEventListener('click', function() {
-                                const selected = customCalendar.querySelector('.selected');
-                                if (selected) selected.classList.remove('selected');
-                                cell.classList.add('selected');
-                                dateInput.value = cell.dataset.date;
-                                selectedDate = new Date(cell.dataset.date);
-                                showTimeSlots(cell.dataset.date);
+                            // Check if the day has any bookings
+                            const hasBooking = monthlyBookings.some(booking => {
+                                // Ensure booking.start is a valid date string before creating a Date object
+                                try {
+                                    const bookingStartDay = booking.start ? new Date(booking.start).toDateString() : null;
+                                    return bookingStartDay && cellDate.toDateString() === bookingStartDay;
+                                } catch (e) {
+                                    console.error('Error parsing booking date:', booking.start, e);
+                                    return false;
+                                }
                             });
-                        }
-                    });
 
-                } else if (data.error) {
-                    console.error('Error fetching availability:', data.error);
-                     customCalendar.innerHTML = '<div class="error-message">Could not load availability: ' + data.error + '</div>';
-                } else {
-                     console.error('Availability fetch returned unexpected data:', data);
-                     customCalendar.innerHTML = '<div class="error-message">Could not load availability due to unexpected data.</div>';
+                            let classes = ['calendar-cell'];
+                            if (isPast) classes.push('disabled');
+                            if (isSelected) classes.push('selected');
+                            if (hasBooking && !isPast) classes.push('has-booking');
+
+                            html += `<td class="${classes.join(' ')}" data-date="${formatDate(cellDate)}">${date}</td>`;
+                            date++;
+                        }
+                    }
+                    html += '</tr>';
+                    if (date > lastDay.getDate()) break;
                 }
+                html += '</tbody></table>';
+                customCalendar.innerHTML = html; // Render the actual calendar
+
+                // Add event listeners AFTER rendering
+                const prevMonthButton = document.getElementById('prev-month');
+                const nextMonthButton = document.getElementById('next-month');
+
+                if(prevMonthButton) prevMonthButton.onclick = function() {
+                    let newMonth = calendarMonth - 1;
+                    let newYear = calendarYear;
+                    if (newMonth < 0) { newMonth = 11; newYear--; }
+                    renderCalendar(newYear, newMonth);
+                };
+
+                if(nextMonthButton) nextMonthButton.onclick = function() {
+                    let newMonth = calendarMonth + 1;
+                    let newYear = calendarYear;
+                    if (newMonth > 11) { newMonth = 0; newYear++; }
+                    renderCalendar(newYear, newMonth);
+                };
+
+                customCalendar.querySelectorAll('.calendar-cell').forEach(cell => {
+                    if (!cell.classList.contains('disabled')) {
+                        cell.addEventListener('click', function() {
+                            const selected = customCalendar.querySelector('.selected');
+                            if (selected) selected.classList.remove('selected');
+                            cell.classList.add('selected');
+                            dateInput.value = cell.dataset.date;
+                            selectedDate = new Date(cell.dataset.date);
+                            showTimeSlots(cell.dataset.date);
+                        });
+                    }
+                });
+
             })
             .catch(error => {
                 console.error('Network or HTTP error fetching availability:', error);
