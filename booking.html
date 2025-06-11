@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1020625513516289');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1020625513516289&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+    </nav>
+    <main class="booking-main">
+        <div class="booking-container">
+            <h1 class="page-title">Book Your Appointment</h1>
+            <div class="booking-grid">
+                <section class="calendar-section">
+                    <h2 class="section-title">Select Date & Time</h2>
+                    <div id="custom-calendar"></div>
+                    <div id="time-slots-section" style="display:none;">
+                        <div id="time-slots-grid"></div>
+                        <p class="disclaimer-note" style="font-size: 0.9rem; color: #dc3545; margin-top: 1rem; font-weight: bold;">* Please arrive on time. If you are more than 15 minutes late, your appointment may be cancelled.</p>
+                    </div>
+                </section>
+                <section class="form-section">
+                    <h2 class="section-title">Appointment Details</h2>
+                    <form id="booking-form">
+                        <div class="form-group">
+                            <label class="form-label">Full Name <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="full-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number <span class="required">*</span></label>
+                            <input type="tel" class="form-control" id="phone-number" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Selected Style <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="selected-style" value="Box Braids" readonly>
+                        </div>
+                        <div class="form-group" id="box-braids-variation-group" style="display: none;">
+                            <label class="form-label">Box Braids Type <span class="required">*</span></label>
+                            <select class="form-control" id="box-braids-variation" required>
+                                <option value="">Select box braids type</option>
+                                <option value="normal">Normal Box Braids</option>
+                                <option value="knotless">Knotless Box Braids (+$25)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="cornrows-variation-group" style="display: none;">
+                            <label class="form-label">Cornrows Style <span class="required">*</span></label>
+                            <select class="form-control" id="cornrows-variation" required>
+                                <option value="">Select cornrows style</option>
+                                <option value="straight-back">Straight Back Cornrows</option>
+                                <option value="designed">Designed Cornrows (+$25)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="two-strand-twists-variation-group" style="display: none;">
+                            <label class="form-label">Two Strand Twists Style <span class="required">*</span></label>
+                            <select class="form-control" id="two-strand-twists-variation" required>
+                                <option value="">Select twist style</option>
+                                <option value="regular">Regular Two Strand Twists</option>
+                                <option value="braided-roots">Two Strand Twists with Braided Roots (+$30)</option>
+                            </select>
+                            <small class="form-text">Braided roots help the style stay in longer and look cleaner</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hair Option <span class="required">*</span></label>
+                            <select class="form-control" id="hair-option" required>
+                                <option value="">Select hair option</option>
+                                <option value="natural">Natural Hair Only</option>
+                                <option value="added">Add Hair Extensions (+$50)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="pre-wash-group">
+                            <label class="form-label">Pre-Wash Service</label>
+                            <select class="form-control" id="pre-wash-option">
+                                <option value="no">No Pre-Wash</option>
+                                <option value="yes">Add Pre-Wash Service (+$30)</option>
+                            </select>
+                            <small class="form-text">Professional wash and condition before styling (recommended for clean, healthy results)</small>
+                        </div>
+                        <div class="form-group" id="detangling-group">
+                            <label class="form-label">Detangling Service</label>
+                            <select class="form-control" id="detangling-option">
+                                <option value="no">No Detangling</option>
+                                <option value="yes">Add Professional Detangling (+$25)</option>
+                            </select>
+                            <small class="form-text">Professional detangling service to prepare your hair (recommended for matted or very tangled hair)</small>
+                        </div>
+                        <div class="form-group" id="blowdry-group">
+                            <label class="form-label">Blow Dry Service</label>
+                            <select class="form-control" id="blowdry-option">
+                                <option value="no">No Blow Dry</option>
+                                <option value="yes">Add Blow Dry Service (+$35)</option>
+                            </select>
+                            <small class="form-text">Professional blow dry service to stretch and prepare your hair (recommended for a smoother, longer-lasting style)</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hair Length <span class="required">*</span></label>
+                            <select class="form-control" id="hair-length" required>
+                                <option value="">Select hair length</option>
+                                <option value="short">Short (Above Shoulders)</option>
+                                <option value="medium">Medium (Shoulder Length)</option>
+                                <option value="long">Long (Below Shoulders)</option>
+                                <option value="extra-long">Extra Long (Mid-Back or Longer)</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="date-input" name="date" required>
+                        <input type="hidden" id="time-input" name="time" required>
+                        <div class="form-group">
+                            <label class="form-label">Notes (optional)</label>
+                            <textarea class="form-control" id="notes" rows="2" maxlength="250" placeholder="Add any special requests or info..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Hair Photo <span class="required">*</span></label>
+                            <input type="file" class="form-control" id="current-hair-image" accept="image/*" required>
+                            <small class="form-text">Please upload a clear photo of your current hair condition and length</small>
+                            <div id="current-hair-preview" style="display: none; margin-top: 10px;">
+                                <img id="current-hair-preview-img" src="" alt="Current Hair Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                                <button type="button" id="remove-current-hair-image" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Remove</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reference Image (optional)</label>
+                            <input type="file" class="form-control" id="reference-image" accept="image/*">
+                            <small class="form-text">Upload a photo of the exact style you want if it's different from our gallery images</small>
+                            <div id="image-preview" style="display: none; margin-top: 10px;">
+                                <img id="preview-img" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                                <button type="button" id="remove-image" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Remove</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Promo Code</label>
+                            <input type="text" class="form-control" id="promo-code" placeholder="Enter promo code" style="text-transform: uppercase;">
+                            <small class="form-text">Have a promo code? Enter it here to get a discount!</small>
+                            <div id="promo-feedback" style="margin-top: 0.5rem; font-size: 0.875rem; display: none;">
+                                <span id="promo-message"></span>
+                            </div>
+                        </div>
+                        <div class="price-info">
+                            <h2>Total Price:</h2>
+                            <div class="price-range">$175 - $425</div>
+                            <div id="discount-info" style="display: none; margin: 1rem 0; padding: 0.75rem; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Promo Code Applied:</span>
+                                    <span id="promo-code-display" style="font-weight: bold;"></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                                    <span>Discount (5%):</span>
+                                    <span id="discount-amount" style="font-weight: bold; color: #28a745;">-$0</span>
+                                </div>
+                            </div>
+                            <div class="deposit-info">
+                                <h3>Required Deposit (30%):</h3>
+                                <div class="deposit-range">$53 - $128</div>
+                                <p class="deposit-note">* Select your hair length above to see exact pricing</p>
+                                <p class="deposit-note">* 30% deposit is required to secure your appointment</p>
+                                <p class="deposit-warning">* All deposits are non-refundable</p>
+                            </div>
+                            <div class="time-estimate-info">
+                                <h3>Estimated Time:</h3>
+                                <div class="time-estimate-range">3 - 6 hours</div>
+                                <p class="time-estimate-note">* Select your hair length above to see exact time</p>
+                            </div>
+                        </div>
+                        <button type="button" class="submit-button" id="proceed-to-pay-button">
+                            <i class="fas fa-calendar-check"></i>
+                            Proceed to Pay Deposit
+                        </button>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services with years of experience</p>
+            </div>
+            <div class="footer-section">
+                <h3>Hours</h3>
+                <p>Monday - Saturday: 9am - 7pm</p>
+                <p>Sunday: Closed</p>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <div class="social-links">
+                    <a href="https://instagram.com/mayadoeshairrr" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tiktok.com/@mayadoeshairr" target="_blank"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Maya African Hair Braiding. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="booking.js"></script>
+    <script src="pixel-tracking.js"></script>
+</body>
+</html>

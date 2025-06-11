@@ -1,0 +1,924 @@
+/* Variables */
+:root {
+    --primary-color: #2c2c2c;
+    --secondary-color: #f5f5f5;
+    --accent-color: #666666;
+    --text-color: #2c2c2c;
+    --light-bg: #f8f8f8;
+    --white: #ffffff;
+    --light-gray: #e8e8e8;
+    --soft-grey: #888888;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-600: #6c757d;
+    --error-color: #dc3545;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 25px rgba(0,0,0,0.15);
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+}
+
+/* Main Container */
+.booking-main {
+    padding: 7rem 5% 5rem;
+    min-height: calc(100vh - 200px);
+}
+
+.booking-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--white);
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: fadeInUp 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Page Title */
+.page-title {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.page-title::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--accent-color);
+    margin: 1rem auto 0;
+    border-radius: 2px;
+}
+
+/* Booking Grid */
+.booking-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4rem;
+    margin-top: 2rem;
+}
+
+/* Calendar Section */
+.calendar-section {
+    background: var(--gray-100);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    animation: fadeIn 1s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+/* Enhanced Custom Calendar Styles */
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+.calendar-nav button {
+    background: #fff;
+    border: 1.5px solid var(--accent-color);
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    border-radius: 50%;
+    width: 2.2rem;
+    height: 2.2rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.calendar-nav button:hover {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+}
+.calendar-month-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    letter-spacing: 1px;
+}
+.simple-calendar {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0.5rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+.simple-calendar th {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+}
+.simple-calendar td {
+    text-align: center;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: #f8f9fa;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.18s;
+    box-shadow: none;
+}
+.simple-calendar td.selected {
+    background: var(--accent-color);
+    color: #fff;
+    font-weight: bold;
+    box-shadow: var(--shadow-md);
+    animation: popSelected 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.simple-calendar td:hover:not(.disabled):not(.selected) {
+    background: #ffe4c4;
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+    transform: scale(1.08);
+    z-index: 2;
+}
+.simple-calendar td.disabled {
+    color: #ccc;
+    background: #f3f3f3;
+    cursor: not-allowed;
+}
+.simple-calendar td.empty {
+    background: transparent;
+    cursor: default;
+}
+.simple-calendar td.has-booking {
+    position: relative;
+}
+.simple-calendar td.has-booking::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent-color); /* Or another color for availability */
+    border-radius: 50%;
+}
+
+/* Form Section */
+.form-section {
+    padding: 2rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    animation: fadeIn 1s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.form-label .required {
+    color: var(--error-color);
+    margin-left: 0.25rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.1);
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-top: 0.5rem;
+}
+
+/* Submit Button */
+.submit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.18s, box-shadow 0.2s;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.submit-button:hover {
+    background: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.submit-button:active {
+    transform: scale(0.97);
+    box-shadow: var(--shadow-sm);
+}
+
+.submit-button i {
+    font-size: 1.2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .booking-container {
+        padding: 2rem;
+    }
+
+    .booking-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .booking-main {
+        padding: 6rem 1rem 2rem;
+    }
+
+    .booking-container {
+        padding: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .calendar-section,
+    .form-section {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 1.75rem;
+    }
+
+    .calendar-section,
+    .form-section {
+        padding: 1rem;
+    }
+
+    .form-control {
+        padding: 0.75rem;
+    }
+
+    .submit-button {
+        padding: 0.875rem;
+        font-size: 1rem;
+    }
+
+    .price-summary {
+        padding: 1rem;
+    }
+
+    .total-price,
+    .deposit-price {
+        font-size: 0.95rem;
+    }
+}
+
+/* Booking Main Content */
+.booking-main {
+    padding: 7rem 5% 5rem;
+    min-height: calc(100vh - 200px);
+}
+
+.booking-container h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Booking Grid Layout */
+.booking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Time Slots */
+.time-slots-container {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.time-slots-title {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.selected-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-600);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.selected-date i {
+    color: var(--accent-color);
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.time-slot {
+    padding: 0.75rem;
+    text-align: center;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.time-slot:hover {
+    background: var(--gray-100);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.time-slot.selected {
+    background: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.time-slot.disabled {
+    background: var(--gray-100);
+    color: var(--gray-400);
+    cursor: not-allowed;
+    border-color: var(--gray-200);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments for time slots */
+@media (max-width: 768px) {
+    .time-slots-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .time-slot {
+        padding: 0.625rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Booking Form Section */
+.booking-form-section {
+    padding: 1rem;
+}
+
+.booking-form-section h2 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #444;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(139, 69, 19, 0.2);
+}
+
+/* Form Fields */
+.form-group .required {
+    color: #ff4444;
+    margin-left: 4px;
+}
+
+.field-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0.25rem 0 0.5rem;
+    line-height: 1.4;
+}
+
+/* File Upload */
+.form-group input[type="file"] {
+    padding: 0.8rem;
+    border: 2px dashed var(--primary-color);
+    border-radius: 5px;
+    background: #f9f9f9;
+    cursor: pointer;
+    width: 100%;
+}
+
+.form-group input[type="file"]:hover {
+    background: #f0f0f0;
+    border-color: var(--accent-color);
+}
+
+.file-preview {
+    margin-top: 1rem;
+    max-width: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.file-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Price Summary */
+.price-summary {
+    background: var(--gray-100);
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    margin: 1.5rem 0;
+    border-left: 4px solid var(--accent-color);
+}
+
+.price-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.total-price,
+.deposit-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    padding: 0.5rem;
+    background: var(--white);
+    border-radius: var(--radius-sm);
+}
+
+.total-price {
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+
+.deposit-price {
+    color: var(--primary-color);
+    background: rgba(139, 69, 19, 0.05);
+}
+
+.deposit-price span:last-child {
+    font-weight: 600;
+}
+
+.deposit-note {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    text-align: center;
+    font-style: italic;
+}
+
+/* Confirm Button */
+.confirm-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.confirm-button:hover {
+    background: var(--accent-color);
+}
+
+/* Back Button */
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.back-button:hover {
+    color: var(--accent-color);
+}
+
+/* Form Validation */
+.form-group input.error,
+.form-group select.error {
+    border-color: #ff4444;
+}
+
+.form-group input.error:focus,
+.form-group select.error:focus {
+    box-shadow: 0 0 5px rgba(255, 68, 68, 0.2);
+}
+
+/* Price animations */
+@keyframes priceUpdate {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.total-price span,
+.deposit-price span {
+    display: inline-block;
+}
+
+#total-price,
+#deposit-price {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Price Information */
+.price-info {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-top: 2rem;
+}
+
+.price-info h2 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.price-range,
+.deposit-range {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0.5rem 0;
+}
+
+.deposit-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--gray-100);
+    border-radius: 8px;
+}
+
+.deposit-info h3 {
+    color: var(--primary-color);
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.deposit-note {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0.3rem 0;
+}
+
+.deposit-warning {
+    color: var(--primary-color);
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .price-info {
+        padding: 1.25rem;
+    }
+
+    .price-range {
+        font-size: 1.3rem;
+    }
+
+    .deposit-range {
+        font-size: 1.1rem;
+    }
+}
+
+.time-slot-btn {
+    background: #fff;
+    border: 1px solid var(--accent-color);
+    color: var(--primary-color);
+    border-radius: 6px;
+    padding: 0.5rem 1.2rem;
+    margin: 0.25rem 0.5rem 0.25rem 0;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.18s;
+}
+.time-slot-btn.selected, .time-slot-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    transform: scale(1.08);
+    box-shadow: var(--shadow-md);
+}
+#time-slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes popSelected {
+    0% { transform: scale(1); }
+    60% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+/* Style for disabled/booked time slots */
+.time-slot-btn.disabled {
+    opacity: 0.4; /* Make it visibly faded */
+    cursor: not-allowed;
+    background-color: #f0f0f0; /* Lighter background */
+    border-color: #ddd; /* Lighter border */
+    color: #999; /* Lighter text color */
+    text-decoration: line-through; /* Optional: indicate it's unavailable */
+}
+
+/* Image Upload Styles */
+#current-hair-image,
+#reference-image {
+    padding: 0.75rem;
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius-md);
+    background: var(--white);
+    transition: all 0.3s ease;
+}
+
+#current-hair-image:hover,
+#reference-image:hover {
+    border-color: var(--accent-color);
+    background: var(--light-gray);
+}
+
+#current-hair-preview,
+#image-preview {
+    background: var(--white);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#current-hair-preview-img,
+#preview-img {
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+}
+
+#remove-current-hair-image,
+#remove-image {
+    background: var(--error-color) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.5rem 1rem !important;
+    cursor: pointer !important;
+    font-size: 0.9rem !important;
+    transition: background 0.3s ease !important;
+}
+
+#remove-current-hair-image:hover,
+#remove-image:hover {
+    background: #c82333 !important;
+}
+
+.form-text {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Promo Code Styling */
+#promo-feedback {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#promo-feedback.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+#promo-feedback.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+#discount-info {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid #28a745;
+    box-shadow: var(--shadow-sm);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+#promo-code {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#promo-code:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+}
+
+/* Discount amount animation */
+#discount-amount {
+    animation: priceUpdate 0.3s ease-in-out;
+}
+
+@keyframes priceUpdate {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Time Estimate Styling */
+.time-estimate-info {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--gray-100);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.time-estimate-info h3 {
+    color: var(--primary-color);
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.time-estimate-range {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
+
+.time-estimate-note {
+    font-size: 0.95rem;
+    color: #666;
+    margin: 0.3rem 0;
+}
+
+#time-slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+} 
