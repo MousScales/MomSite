@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'knotless-box-braids': {
             title: 'Box Braids',
             description: 'Box braids offer a versatile and protective styling option. These classic braids can be styled in various ways and provide excellent protection for your natural hair while maintaining a beautiful, neat appearance. We also offer the option to make them knotless for a more natural look with less tension on your scalp.',
+            price: {
+                range: '$230 - $250',
+                note: 'Price varies by length. Human hair option available for +$50'
+            },
             features: [
                 'Versatile styling options',
                 'Excellent protection for natural hair',
@@ -43,6 +47,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'boho-box-braids': {
             title: 'Boho Box Braids',
             description: 'Boho box braids feature curly or wavy pieces left out at the ends or throughout the braids, creating a carefree, bohemian aesthetic perfect for any occasion.',
+            price: {
+                range: '$250 - $280',
+                note: 'Price varies by length. Human hair option available for +$50'
+            },
             features: [
                 'Curly or wavy ends for texture',
                 'Face-framing pieces left out',
@@ -65,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'fulani-braids': {
             title: 'Fulani Braids',
             description: 'Fulani braids are a cultural style featuring cornrows that often lead into box braids, decorated with beads, rings, and accessories for a stunning traditional look.',
+            price: {
+                range: '$230',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Combination of cornrows and box braids',
                 'Traditional cultural significance',
@@ -87,6 +99,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'lemonade-braids': {
             title: 'Lemonade Braids',
             description: 'Lemonade braids are side-swept cornrows that create a beautiful flowing pattern. Made popular by Beyoncé, this style is both elegant and edgy.',
+            price: {
+                range: '$230',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Side-swept cornrow pattern',
                 'Creates flowing, cascading effect',
@@ -109,6 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'stitch-braids': {
             title: 'Stitch Braids',
             description: 'Stitch braids feature a unique braiding technique that creates horizontal "stitched" lines across the scalp, resulting in a distinctive geometric pattern.',
+            price: {
+                range: '$150',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Geometric stitched pattern',
                 'Clean, precise lines',
@@ -131,6 +151,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'tribal-braids': {
             title: 'Tribal Braids',
             description: 'Tribal braids incorporate various traditional African braiding techniques, often featuring intricate patterns, accessories, and cultural elements.',
+            price: {
+                range: '$230',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Traditional African styling techniques',
                 'Intricate and artistic patterns',
@@ -153,6 +177,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'goddess-braids': {
             title: 'Goddess Braids',
             description: 'Goddess braids are thick, chunky cornrows that can be styled in various patterns. They offer a regal, elegant appearance perfect for any occasion.',
+            price: {
+                range: '$230',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Thick, chunky braid pattern',
                 'Elegant and regal appearance',
@@ -192,6 +220,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'cornrows': {
             title: 'Cornrows',
             description: 'Cornrows are a traditional protective hairstyle where hair is braided very close to the scalp in continuous, raised rows. Available in various patterns including feed-in, straight-back, freestyle, zig-zag, and decorative designs like heart shapes.',
+            price: {
+                range: '$60 - $80',
+                note: 'Price varies by style (straight back: $60, styled/designed: $80)'
+            },
             features: [
                 'Multiple pattern options available',
                 'Feed-in technique for natural hairline',
@@ -303,19 +335,23 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'senegalese-twists': {
             title: 'Senegalese Twists',
-            description: 'Senegalese twists are rope-like twists created using synthetic hair extensions. They offer a sleek, elegant appearance with excellent longevity.',
+            description: 'Senegalese twists are a beautiful protective style that uses a special twisting technique to create rope-like strands. This elegant style offers versatility and can last 6-8 weeks with proper care.',
+            price: {
+                range: '$250',
+                note: 'Human hair option available for +$50'
+            },
             features: [
-                'Smooth, rope-like texture',
-                'Elegant and sophisticated look',
-                'Long-lasting protective style',
-                'Low maintenance once installed',
-                'Versatile styling options'
+                'Rope-like twisted strands',
+                'Elegant and versatile style',
+                'Long-lasting protection',
+                'Can be styled in various ways',
+                'Professional and polished look'
             ],
             maintenance: [
-                'Regular scalp moisturizing',
-                'Gentle washing with diluted shampoo',
-                'Sleep with silk scarf or bonnet',
-                'Light oil application for shine'
+                'Wash every 2-3 weeks',
+                'Keep scalp and twists moisturized',
+                'Sleep with a silk or satin scarf',
+                'Avoid heavy products that cause buildup'
             ],
             images: [
                 'images/senegalese-twists-1.jpg',
@@ -325,7 +361,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'passion-twists': {
             title: 'Passion Twists',
-            description: 'Passion twists combine the technique of goddess locs with the convenience of senegalese twists, creating a textured, bohemian-inspired style.',
+            description: 'Passion twists are a modern protective style that combines the technique of Senegalese twists with specially textured hair to create a bohemian, romantic look.',
+            price: {
+                range: '$250',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Textured, bohemian appearance',
                 'Combination of different techniques',
@@ -347,7 +387,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'marley-twists': {
             title: 'Marley Twists',
-            description: 'Marley twists use Marley hair extensions to create natural-looking, textured twists that blend seamlessly with natural hair texture.',
+            description: 'Marley twists use textured hair to create a natural-looking twisted style that is both protective and stylish.',
+            price: {
+                range: '$230',
+                note: 'Human hair option available for +$50'
+            },
             features: [
                 'Natural hair texture appearance',
                 'Blends with natural hair',
@@ -369,7 +413,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'two-strand-twists': {
             title: 'Two Strand Twists',
-            description: 'Two strand twists are a versatile protective style created by twisting two sections of hair around each other. Perfect for natural hair and offers great versatility in styling.',
+            description: 'Two strand twists are a classic natural hair style that protects and promotes healthy hair growth.',
+            price: {
+                range: '$120',
+                note: 'Style uses your natural hair only'
+            },
             features: [
                 'Simple yet elegant protective style',
                 'Works beautifully on natural hair',
@@ -409,7 +457,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'jumbo-box-braids': {
             title: 'Jumbo Box Braids',
-            description: 'Jumbo box braids feature larger, thicker braids that require less installation time while still providing protection and style versatility.',
+            description: 'Jumbo box braids are a bold and beautiful protective style featuring larger sections, perfect for those wanting a statement look with less installation time.',
+            price: {
+                range: '$200 - $230',
+                note: 'Price varies by length. Human hair option available for +$50'
+            },
             features: [
                 'Large, thick braid size',
                 'Faster installation time',
@@ -431,7 +483,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'starter-locs': {
             title: 'Starter Locs',
-            description: 'Starter locs are the beginning stage of dreadlocks, where hair is twisted or braided to start the locking process in a controlled, neat manner.',
+            description: 'Start your loc journey with professional installation of starter locs.',
+            price: {
+                range: '$150',
+                note: 'Price includes initial consultation and styling'
+            },
             features: [
                 'Beginning stage of loc journey',
                 'Controlled starting process',
@@ -453,7 +509,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'locs-retwist': {
             title: 'Locs Retwist',
-            description: 'Loc retwist maintenance involves retightening and reshaping established locs to maintain their neat appearance and promote healthy growth.',
+            description: 'Professional maintenance and retwisting of established locs.',
+            price: {
+                range: '$120+',
+                note: 'Final price will be discussed depending on the amount of locs you have'
+            },
             features: [
                 'Maintains loc shape and neatness',
                 'Promotes healthy loc development',
@@ -475,7 +535,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'lock-retwist-2-strands': {
             title: 'Locs Retwist 2 Strands',
-            description: 'Two-strand twist retwist for locs involves using the two-strand twisting technique to maintain and shape locs, creating defined spiral patterns.',
+            description: 'Professional maintenance and two-strand retwisting of established locs.',
+            price: {
+                range: '$150+',
+                note: 'Final price will be discussed depending on the amount of locs you have'
+            },
             features: [
                 'Two-strand twist technique',
                 'Creates spiral patterns',
@@ -497,7 +561,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'locs-retwist-barrel': {
             title: 'Locs Retwist Barrel',
-            description: 'Barrel retwist technique creates fuller, rounder locs by using specific twisting methods that encourage the hair to form cylindrical shapes.',
+            description: 'Professional maintenance and barrel roll retwisting of established locs.',
+            price: {
+                range: '$130',
+                note: 'Includes styling in barrel roll pattern'
+            },
             features: [
                 'Creates fuller, rounder locs',
                 'Barrel-shaped loc formation',
@@ -519,7 +587,11 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         'weave': {
             title: 'Weave Install',
-            description: 'Professional weave installation using high-quality hair extensions to add length, volume, and versatility to your natural hair. Available in various textures and colors.',
+            description: 'Professional installation of weave extensions.',
+            price: {
+                range: '$130+',
+                note: 'Final price will be discussed depending on the service requirements'
+            },
             features: [
                 'Adds instant length and volume',
                 'Multiple texture and color options',
@@ -542,10 +614,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Get style from URL parameter
+    // Function to get style from URL
     function getStyleFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('style') || 'traditional-box-braids';
+        return urlParams.get('style');
+    }
+
+    // Function to handle booking button click
+    window.bookNow = function() {
+        const selectedStyle = getStyleFromURL();
+        const styleTitle = styleDetails[selectedStyle]?.title;
+        if (styleTitle) {
+            window.location.href = `booking.html?style=${encodeURIComponent(styleTitle)}`;
+        } else {
+            window.location.href = 'booking.html';
+        }
     }
 
     // Update page content based on selected style
@@ -615,16 +698,24 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Update price range to use the standardized pricing
-        const priceRange = document.querySelector('.price-range');
-        if (priceRange) {
-            priceRange.textContent = '$175 - $350';
-        }
+        // Update price
+        updatePriceDisplay(style);
         
         // Update booking link to pass the style parameter
         const bookingLink = document.querySelector('.book-now-btn');
         if (bookingLink) {
             bookingLink.href = `booking.html?style=${encodeURIComponent(details.title)}`;
+        }
+    }
+
+    // Update the price display when the page loads
+    function updatePriceDisplay(style) {
+        const priceRange = document.querySelector('.price-range');
+        const priceNote = document.querySelector('.price-note');
+        
+        if (styleDetails[style] && styleDetails[style].price) {
+            priceRange.textContent = styleDetails[style].price.range;
+            priceNote.textContent = styleDetails[style].price.note;
         }
     }
 

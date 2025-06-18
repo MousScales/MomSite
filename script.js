@@ -43,97 +43,57 @@ const createImagesDirectory = () => {
 };
 
 // Gallery Pagination
-document.addEventListener('DOMContentLoaded', function() {
-    const gallery = {
-        currentPage: 1,
-        pages: document.querySelectorAll('.gallery-grid'),
-        dots: document.querySelectorAll('.page-dot'),
-        prevBtn: document.querySelector('.prev-page'),
-        nextBtn: document.querySelector('.next-page'),
-        totalPages: document.querySelectorAll('.gallery-grid').length,
-
-        init() {
-            this.showPage(1);
-            this.addEventListeners();
-        },
-
-        showPage(pageNumber) {
-            // Hide all pages
-            this.pages.forEach(page => {
-                page.style.display = 'none';
-                page.classList.remove('active');
-            });
-
-            // Show selected page
-            const pageToShow = this.pages[pageNumber - 1];
-            if (pageToShow) {
-                pageToShow.style.display = 'grid';
-                pageToShow.classList.add('active');
+document.addEventListener('DOMContentLoaded', () => {
+    const adminLoginBtn = document.getElementById('admin-login-btn');
+    if (adminLoginBtn) {
+        adminLoginBtn.addEventListener('click', () => {
+            const passkey = prompt('Enter admin passkey:');
+            if (passkey === '111970') {
+                window.location.href = '/admin.html';
+            } else if (passkey !== null) { // Prevents alert if user clicks "Cancel"
+                alert('Incorrect passkey.');
             }
+        });
+    }
 
-            // Update dots
-            this.dots.forEach((dot, index) => {
-                dot.classList.toggle('active', index + 1 === pageNumber);
-            });
+    // Existing gallery logic
+    const galleryGrids = document.querySelectorAll('.gallery-grid');
+    const paginationButtons = document.querySelectorAll('.pagination-button');
+    const pageIndicators = document.querySelectorAll('.page-dot');
+    let currentGalleryIndex = 0;
 
-            // Update buttons
-            this.prevBtn.style.opacity = pageNumber === 1 ? '0.5' : '1';
-            this.nextBtn.style.opacity = pageNumber === this.totalPages ? '0.5' : '1';
+    function showGallery(index) {
+        galleryGrids.forEach((grid, i) => {
+            grid.classList.toggle('active', i === index);
+        });
+        pageIndicators.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+        currentGalleryIndex = index;
+    }
 
-            this.currentPage = pageNumber;
-        },
-
-        next() {
-            if (this.currentPage < this.totalPages) {
-                this.showPage(this.currentPage + 1);
+    paginationButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const direction = button.id === 'next-page' ? 1 : -1;
+            let nextIndex = currentGalleryIndex + direction;
+            if (nextIndex >= galleryGrids.length) {
+                nextIndex = 0;
+            } else if (nextIndex < 0) {
+                nextIndex = galleryGrids.length - 1;
             }
-        },
+            showGallery(nextIndex);
+        });
+    });
 
-        prev() {
-            if (this.currentPage > 1) {
-                this.showPage(this.currentPage - 1);
-            }
-        },
+    pageIndicators.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const index = parseInt(dot.dataset.index, 10);
+            showGallery(index);
+        });
+    });
 
-        addEventListeners() {
-            // Button clicks
-            this.nextBtn.addEventListener('click', () => this.next());
-            this.prevBtn.addEventListener('click', () => this.prev());
-
-            // Dot clicks
-            this.dots.forEach((dot, index) => {
-                dot.addEventListener('click', () => this.showPage(index + 1));
-            });
-
-            // Keyboard navigation
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') this.prev();
-                if (e.key === 'ArrowRight') this.next();
-            });
-
-            // Touch swipe
-            let touchStartX = 0;
-            const galleryContainer = document.querySelector('.gallery-container');
-
-            galleryContainer.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-            });
-
-            galleryContainer.addEventListener('touchend', (e) => {
-                const touchEndX = e.changedTouches[0].clientX;
-                const swipeDistance = touchEndX - touchStartX;
-
-                if (Math.abs(swipeDistance) > 50) { // 50px threshold
-                    if (swipeDistance > 0) {
-                        this.prev();
-                    } else {
-                        this.next();
-                    }
-                }
-            });
-        }
-    };
-
-    // Initialize gallery
-    gallery.init();
+    // Initialize first gallery
+    if (galleryGrids.length > 0) {
+        showGallery(0);
+    }
 }); 

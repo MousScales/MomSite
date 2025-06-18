@@ -7,24 +7,6 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="product.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Meta Pixel Code -->
-    <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '1020625513516289');
-    fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1020625513516289&ev=PageView&noscript=1"
-    /></noscript>
-    <!-- End Meta Pixel Code -->
 </head>
 <body>
     <nav class="navbar">
@@ -62,12 +44,13 @@
             </div>
 
             <!-- Price and Booking Section -->
-                <div class="price-section">
-                    <div class="price-range-box">
-                    <span class="price-range">$175 - $350</span>
-                        <div class="price-note">*Price varies by length and size</div>
+            <div class="price-section">
+                <div class="price-range-box">
+                    <span class="price-range">$0</span>
+                    <div class="price-note"></div>
+                    <div class="additional-note">*All styles can include a wash service for +$20</div>
                 </div>
-                <a href="booking.html" class="book-now-btn">Book Now</a>
+                <button onclick="bookNow()" class="book-now-btn">Book Now</button>
             </div>
 
             <!-- Product Info -->
@@ -128,6 +111,5 @@
     </footer>
 
     <script src="product.js"></script>
-    <script src="pixel-tracking.js"></script>
 </body>
 </html> 

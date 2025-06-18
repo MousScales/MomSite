@@ -1,66 +1,205 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // --- Hair Length Data ---
-    const hairLengthData = {
-        'short': { 
-            price: 175, 
-            deposit: 53, 
-            time: '3 hours', 
-            durationHours: 3,
-            knotlessPrice: 200,
-            knotlessDeposit: 60,
-            addedHairPrice: 225,
-            addedHairDeposit: 68,
-            knotlessAddedHairPrice: 250,
-            knotlessAddedHairDeposit: 75
-        },
-        'medium': { 
-            price: 250, 
-            deposit: 75, 
-            time: '4 hours', 
-            durationHours: 4,
-            knotlessPrice: 275,
-            knotlessDeposit: 83,
-            addedHairPrice: 300,
-            addedHairDeposit: 90,
-            knotlessAddedHairPrice: 325,
-            knotlessAddedHairDeposit: 98
-        },
-        'long': { 
-            price: 300, 
-            deposit: 90, 
-            time: '5 hours', 
-            durationHours: 5,
-            knotlessPrice: 325,
-            knotlessDeposit: 98,
-            addedHairPrice: 350,
-            addedHairDeposit: 105,
-            knotlessAddedHairPrice: 375,
-            knotlessAddedHairDeposit: 113
-        },
-        'extra-long': { 
-            price: 350, 
-            deposit: 105, 
-            time: '6 hours', 
-            durationHours: 6,
-            knotlessPrice: 375,
-            knotlessDeposit: 113,
-            addedHairPrice: 400,
-            addedHairDeposit: 120,
-            knotlessAddedHairPrice: 425,
-            knotlessAddedHairDeposit: 128
-        }
-    };
-    const defaultPriceRange = '$175 - $425';
-    const defaultDepositRange = '$53 - $128';
-    const defaultTimeRange = '3 - 6 hours';
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
-    // --- Calendar and Time Slot Picker ---
-    const customCalendar = document.getElementById('custom-calendar');
-    const timeSlotsSection = document.getElementById('time-slots-section');
-    const timeSlotsGrid = document.getElementById('time-slots-grid');
-    const dateInput = document.getElementById('date-input');
-    const timeInput = document.getElementById('time-input');
-    const hairLengthSelect = document.getElementById('hair-length');
+// Initialize Stripe with the public key
+const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3RtZnoiUF2Qvzru3I9fzKmxXUgF22tzJBoYZS3XqYf00QA6fSLqs');
+
+// Initialize Firebase (will be initialized when Firebase scripts are loaded)
+let db;
+
+// Global variables
+let selectedDate = null;
+let currentDate = new Date();
+let unavailableTimes = [];
+let isFetchingUnavailableTimes = false;
+let selectedTimeSlot = null;
+
+// Pricing and Duration Model
+const styleInfo = {
+    'Box Braids': {
+        basePrice: 230,
+        baseDuration: 240,
+        variations: {
+            'regular': {
+                name: 'Regular Box Braids',
+                priceMultiplier: 1
+            },
+            'knotless': {
+                name: 'Knotless Box Braids',
+                priceMultiplier: 1.1
+            }
+        },
+        hasLengthOptions: true,
+        hasHairOptions: true
+    },
+    'Boho Box Braids': {
+        basePrice: 250,
+        baseDuration: 240,
+        longLengthPrice: 280,
+        hasLengthOptions: true,
+        hasHairOptions: true
+    },
+    'Cornrows': {
+        basePrice: 60,
+        baseDuration: 90,
+        hasLengthOptions: false,
+        hasHairOptions: false,
+        variations: {
+            'straight-back': {
+                name: 'Straight Back Cornrows',
+                priceMultiplier: 1
+            },
+            'styled': {
+                name: 'Styled/Designed Cornrows',
+                priceMultiplier: 1.33333
+            }
+        }
+    },
+    'Jumbo Box Braids': {
+        basePrice: 200,
+        baseDuration: 180,
+        longLengthPrice: 230,
+        hasLengthOptions: true,
+        hasHairOptions: true
+    },
+    'Fulani Braids': {
+        basePrice: 230,
+        baseDuration: 300,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Goddess Braids': {
+        basePrice: 230,
+        baseDuration: 270,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Lemonade Braids': {
+        basePrice: 230,
+        baseDuration: 240,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Marley Twists': {
+        basePrice: 230,
+        baseDuration: 240,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Passion Twist': {
+        basePrice: 250,
+        baseDuration: 210,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Loc Retwist': {
+        basePrice: 120,
+        baseDuration: 120,
+        hasLengthOptions: false,
+        hasHairOptions: false,
+        isVariablePricing: true,
+        pricingNote: 'Final price will be discussed depending on the amount of locs you have'
+    },
+    'Loc Retwist 2 Strand': {
+        basePrice: 150,
+        baseDuration: 150,
+        hasLengthOptions: false,
+        hasHairOptions: false,
+        isVariablePricing: true,
+        pricingNote: 'Final price will be discussed depending on the amount of locs you have'
+    },
+    'Loc Retwist Barrel': {
+        basePrice: 130,
+        baseDuration: 120,
+        hasLengthOptions: false,
+        hasHairOptions: false
+    },
+    'Weave Install': {
+        basePrice: 130,
+        baseDuration: 180,
+        hasLengthOptions: false,
+        hasHairOptions: false,
+        isVariablePricing: true,
+        pricingNote: 'Final price will be discussed depending on the service requirements'
+    },
+    'Senegalese Twists': {
+        basePrice: 250,
+        baseDuration: 270,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Starter Locs': {
+        basePrice: 150,
+        baseDuration: 180,
+        hasLengthOptions: false,
+        hasHairOptions: false
+    },
+    'Stitch Braids': {
+        basePrice: 150,
+        baseDuration: 180,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Tribal Braids': {
+        basePrice: 230,
+        baseDuration: 360,
+        hasLengthOptions: false,
+        hasHairOptions: true
+    },
+    'Two Strand Twist': {
+        basePrice: 120,
+        baseDuration: 210,
+        hasLengthOptions: false,
+        hasHairOptions: false
+    },
+    'Weave': { 
+        basePrice: 250, 
+        baseDuration: 180,
+        hasLengthOptions: false,
+        hasHairOptions: false
+    }
+};
+
+const lengthMultipliers = {
+    'medium': {
+        price: 1,
+        duration: 1
+    },
+    'long': {
+        price: 1.1,
+        duration: 1.2
+    }
+};
+
+const addOnCosts = {
+    'wash': {
+        price: 20,
+        duration: 30
+    },
+    'human-hair': {
+        price: 50,
+        duration: 0
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Firestore
+    db = firebase.firestore();
+
+    // Get style from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedStyle = urlParams.get('style');
+    if (selectedStyle) {
+        const selectedStyleInput = document.getElementById('selected-style');
+        if (selectedStyleInput) {
+            selectedStyleInput.value = selectedStyle;
+            // Trigger price calculation
+            calculatePrice();
+        }
+    }
+
+    // Initialize form elements
+    const bookingForm = document.getElementById('booking-form');
     const selectedStyleInput = document.getElementById('selected-style');
     const boxBraidsVariationGroup = document.getElementById('box-braids-variation-group');
     const boxBraidsVariationSelect = document.getElementById('box-braids-variation');
@@ -68,13 +207,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const cornrowsVariationSelect = document.getElementById('cornrows-variation');
     const twoStrandTwistsVariationGroup = document.getElementById('two-strand-twists-variation-group');
     const twoStrandTwistsVariationSelect = document.getElementById('two-strand-twists-variation');
+    const hairLengthSelect = document.getElementById('hair-length');
     const hairOptionSelect = document.getElementById('hair-option');
-    const preWashOptionSelect = document.getElementById('pre-wash-option');
-    const preWashGroup = document.getElementById('pre-wash-group');
-    const detanglingOptionSelect = document.getElementById('detangling-option');
-    const detanglingGroup = document.getElementById('detangling-group');
-    const blowdryOptionSelect = document.getElementById('blowdry-option');
-    const blowdryGroup = document.getElementById('blowdry-group');
+    const preWashSelect = document.getElementById('pre-wash-option');
     const currentHairImageInput = document.getElementById('current-hair-image');
     const currentHairPreview = document.getElementById('current-hair-preview');
     const currentHairPreviewImg = document.getElementById('current-hair-preview-img');
@@ -83,650 +218,618 @@ document.addEventListener('DOMContentLoaded', function() {
     const imagePreview = document.getElementById('image-preview');
     const previewImg = document.getElementById('preview-img');
     const removeImageBtn = document.getElementById('remove-image');
-
-    // Promo code elements
     const promoCodeInput = document.getElementById('promo-code');
     const promoFeedback = document.getElementById('promo-feedback');
-    const promoMessage = document.getElementById('promo-message');
-    const discountInfo = document.getElementById('discount-info');
-    const promoCodeDisplay = document.getElementById('promo-code-display');
-    const discountAmount = document.getElementById('discount-amount');
+    const durationElement = document.getElementById('estimated-duration');
+    const totalPriceElement = document.getElementById('total-price');
+    const depositAmountElement = document.getElementById('deposit-amount');
+    const calendarElement = document.getElementById('calendar');
+    const timeSlotsContainer = document.getElementById('time-slots-container');
+    const appointmentDateTimeInput = document.getElementById('appointment-datetime');
 
-    // Track current calendar month/year
-    let calendarYear = (new Date()).getFullYear();
-    let calendarMonth = (new Date()).getMonth();
-    let selectedDate = null;
-    let monthlyBookings = {}; // Store bookings for the current month
-    let selectedCurrentHairFile = null; // Store the selected current hair image file
-    let selectedImageFile = null; // Store the selected reference image file
-    
-    // Promo code state
-    let isPromoCodeValid = false;
-    let promoDiscount = 0;
-    const validPromoCodes = {
-        'MAYAFIRST': 0.05 // 5% discount
-    };
-
-    function formatDate(date) {
-        return date.toISOString().split('T')[0];
+    // Show relevant variation fields based on selected style
+    if (selectedStyle === "Box Braids" || selectedStyle === "Jumbo Box Braids") {
+        boxBraidsVariationGroup.style.display = 'block';
+    } else if (selectedStyle === "Cornrows") {
+        cornrowsVariationGroup.style.display = 'block';
+    } else if (selectedStyle === "Two Strand Twist") {
+        twoStrandTwistsVariationGroup.style.display = 'block';
     }
 
-    // Helper to check if a time slot conflicts with existing bookings
-    function isSlotBooked(dateStr, timeSlot, durationHours, bookings) {
-        const slotStart = new Date(`${dateStr}T${timeSlot}:00-04:00`);
-        const slotEnd = new Date(slotStart.getTime() + durationHours * 60 * 60 * 1000);
-
-        for (const booking of bookings) {
-            const bookingStart = new Date(booking.start);
-            const bookingEnd = new Date(booking.end);
-
-            // Check for overlap: starts within booking OR ends within booking OR booking is fully within slot
-            if ((slotStart < bookingEnd && slotEnd > bookingStart)) {
-                 return true; // Found an overlap
+    // Initialize visibility of hair length and options based on style
+    const baseInfo = styleInfo[selectedStyle];
+    if (baseInfo) {
+        const hairLengthGroup = document.getElementById('hair-length-group');
+        const hairOptionGroup = document.getElementById('hair-option-group');
+        
+        // Show/hide hair length options
+        if (hairLengthGroup) {
+            hairLengthGroup.style.display = baseInfo.hasLengthOptions ? 'block' : 'none';
+            if (!baseInfo.hasLengthOptions) {
+                document.getElementById('hair-length').value = '';
             }
         }
-        return false; // No overlap
+
+        // Show/hide hair option selection
+        if (hairOptionGroup) {
+            hairOptionGroup.style.display = baseInfo.hasHairOptions ? 'block' : 'none';
+            if (!baseInfo.hasHairOptions) {
+                document.getElementById('hair-option').value = 'synthetic';
+            }
+        }
+
+        // Initialize price calculation
+        calculatePrice();
+    }
+    
+    // Create calendar structure
+    function createCalendarStructure() {
+        calendarElement.innerHTML = `
+            <div class="calendar-wrapper">
+                <div class="calendar-header">
+                    <button id="prev-month" class="calendar-nav-btn">&lt;</button>
+                    <div id="calendar-month-year"></div>
+                    <button id="next-month" class="calendar-nav-btn">&gt;</button>
+                </div>
+                <div class="calendar-weekdays">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+                <div id="calendar-days" class="calendar-days"></div>
+            </div>
+        `;
     }
 
-    function renderCalendar(year = calendarYear, month = calendarMonth) {
-        calendarYear = year;
-        calendarMonth = month;
+    // Initialize the calendar
+    function initCalendar() {
+        createCalendarStructure();
+        currentDate.setDate(1); // Set to first day of current month
+        renderCalendar();
+        fetchUnavailableTimes(); // Fetch initial unavailable times
+        
+        // Add navigation event listeners
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+            fetchUnavailableTimes(); // Refresh unavailable times for new month
+        });
+        
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+            fetchUnavailableTimes(); // Refresh unavailable times for new month
+        });
+    }
 
-        customCalendar.innerHTML = '<div class="loading-indicator">Loading availability...</div>';
+    // Helper function to check if a date is in the past
+    function isDateInPast(dateToCheck) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        dateToCheck.setHours(0, 0, 0, 0);
+        return dateToCheck < today;
+    }
 
-        const availabilityUrl = `/api/availability?month=${year}-${(month + 1).toString().padStart(2, '0')}`;
-        console.log('Fetching availability from:', availabilityUrl);
+    // Helper function to check if a time slot is in the past
+    function isTimeSlotInPast(slotDateTime) {
+        const now = new Date();
+        const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60000);
+        return slotDateTime < thirtyMinutesFromNow;
+    }
 
-        fetch(availabilityUrl, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+    // Render the calendar
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Update header
+        const monthYear = document.getElementById('calendar-month-year');
+        monthYear.textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // Clear previous calendar
+        const daysContainer = document.getElementById('calendar-days');
+        daysContainer.innerHTML = '';
+        
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < firstDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'calendar-day empty';
+            daysContainer.appendChild(emptyDay);
+        }
+        
+        // Add the days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            dayElement.textContent = day;
+            
+            const currentDateToCheck = new Date(year, month, day);
+            
+            // Check if this day is today
+            const today = new Date();
+            if (currentDateToCheck.toDateString() === today.toDateString()) {
+                dayElement.classList.add('today');
             }
-        })
-            .then(res => {
-                console.log('Availability fetch response status:', res.status);
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
+            
+            // Check if this day is in the past or is a Sunday
+            if (isDateInPast(new Date(year, month, day)) || currentDateToCheck.getDay() === 0) {
+                dayElement.classList.add('past');
+                if (currentDateToCheck.getDay() === 0) {
+                    dayElement.title = 'Closed on Sundays';
                 }
-                return res.json();
-            })
-            .then(data => {
-                console.log('Availability data received:', data);
-                monthlyBookings = Array.isArray(data) ? data : [];
-                // Now render the calendar with fetched data
-                const today = new Date();
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                let html = '';
-                const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-                html += `<div class="calendar-nav">
-                    <button type="button" id="prev-month">&#8592;</button>
-                    <span class="calendar-month-label">${monthNames[month]} ${year}</span>
-                    <button type="button" id="next-month">&#8594;</button>
-                </div>`;
-                html += '<table class="simple-calendar"><thead><tr>';
-                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                days.forEach(d => html += `<th>${d}</th>`);
-                html += '</tr></thead><tbody>';
-                let date = 1;
-                for (let i = 0; i < 6; i++) {
-                    html += '<tr>';
-                    for (let j = 0; j < 7; j++) {
-                        if (i === 0 && j < firstDay.getDay()) {
-                            html += '<td></td>';
-                        } else if (date > lastDay.getDate()) {
-                            html += '<td></td>';
-                        } else {
-                            const cellDate = new Date(year, month, date);
-                            const isPast = cellDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                            const isSelected = selectedDate && formatDate(cellDate) === formatDate(selectedDate);
-
-                            // Check if the day has any bookings
-                            const hasBooking = monthlyBookings.some(booking => {
-                                // Ensure booking.start is a valid date string before creating a Date object
-                                try {
-                                    const bookingStartDay = booking.start ? new Date(booking.start).toDateString() : null;
-                                    return bookingStartDay && cellDate.toDateString() === bookingStartDay;
-                                } catch (e) {
-                                    console.error('Error parsing booking date:', booking.start, e);
-                                    return false;
-                                }
-                            });
-
-                            let classes = ['calendar-cell'];
-                            if (isPast) classes.push('disabled');
-                            if (isSelected) classes.push('selected');
-                            if (hasBooking && !isPast) classes.push('has-booking');
-
-                            html += `<td class="${classes.join(' ')}" data-date="${formatDate(cellDate)}">${date}</td>`;
-                            date++;
-                        }
+            } else {
+                // Add click event for future dates
+                dayElement.addEventListener('click', () => {
+                    // Remove previous selection
+                    const prevSelected = document.querySelector('.calendar-day.selected');
+                    if (prevSelected) {
+                        prevSelected.classList.remove('selected');
                     }
-                    html += '</tr>';
-                    if (date > lastDay.getDate()) break;
-                }
-                html += '</tbody></table>';
-                customCalendar.innerHTML = html; // Render the actual calendar
-
-                // Add event listeners AFTER rendering
-                const prevMonthButton = document.getElementById('prev-month');
-                const nextMonthButton = document.getElementById('next-month');
-
-                if(prevMonthButton) prevMonthButton.onclick = function() {
-                    let newMonth = calendarMonth - 1;
-                    let newYear = calendarYear;
-                    if (newMonth < 0) { newMonth = 11; newYear--; }
-                    renderCalendar(newYear, newMonth);
-                };
-
-                if(nextMonthButton) nextMonthButton.onclick = function() {
-                    let newMonth = calendarMonth + 1;
-                    let newYear = calendarYear;
-                    if (newMonth > 11) { newMonth = 0; newYear++; }
-                    renderCalendar(newYear, newMonth);
-                };
-
-                customCalendar.querySelectorAll('.calendar-cell').forEach(cell => {
-                    if (!cell.classList.contains('disabled')) {
-                        cell.addEventListener('click', function() {
-                            const selected = customCalendar.querySelector('.selected');
-                            if (selected) selected.classList.remove('selected');
-                            cell.classList.add('selected');
-                            dateInput.value = cell.dataset.date;
-                            selectedDate = new Date(cell.dataset.date);
-                            showTimeSlots(cell.dataset.date);
-                        });
-                    }
+                    
+                    // Add selected class
+                    dayElement.classList.add('selected');
+                    selectedDate = currentDateToCheck;
+                    
+                    // Show time slots
+                    showTimeSlots(currentDateToCheck);
                 });
+            }
+            
+            daysContainer.appendChild(dayElement);
+        }
+    }
+    
+    // Check if a time slot is unavailable
+    function isSlotUnavailable(slotDateTime, appointmentDuration) {
+        // Convert appointment duration from minutes to milliseconds
+        const appointmentDurationMs = appointmentDuration * 60 * 1000;
+        const slotEndTime = new Date(slotDateTime.getTime() + appointmentDurationMs);
 
-            })
-            .catch(error => {
-                console.error('Network or HTTP error fetching availability:', error);
-                 customCalendar.innerHTML = '<div class="error-message">Network error. Please check your backend server.</div>';
+        // Count how many overlapping appointments exist for this time slot
+        const concurrentAppointments = unavailableTimes.filter(unavailable => {
+            const unavailableStart = new Date(unavailable.start);
+            const unavailableEnd = new Date(unavailable.end);
+
+            // Check for any type of overlap
+            return (
+                (slotDateTime >= unavailableStart && slotDateTime < unavailableEnd) || // New appointment starts during existing
+                (slotEndTime > unavailableStart && slotEndTime <= unavailableEnd) || // New appointment ends during existing
+                (slotDateTime <= unavailableStart && slotEndTime >= unavailableEnd) // New appointment encompasses existing
+            );
+        }).length;
+
+        // Allow booking if there are fewer than 2 concurrent appointments
+        const isUnavailable = concurrentAppointments >= 2;
+
+        if (isUnavailable) {
+            console.log('Slot unavailable - too many concurrent appointments:', {
+                slot: {
+                    start: slotDateTime.toISOString(),
+                    end: slotEndTime.toISOString()
+                },
+                concurrentCount: concurrentAppointments
             });
-    }
-
-    function showTimeSlots(dateStr) {
-        const slots = [];
-        // Example slots: 9:00 AM - 5:00 PM, every 30 min
-        for (let h = 9; h <= 16; h++) {
-            slots.push(`${h.toString().padStart(2, '0')}:00`);
-            slots.push(`${h.toString().padStart(2, '0')}:30`);
         }
-        timeSlotsGrid.innerHTML = '';
 
-        // Get selected hair length duration for conflict checking
-        const selectedHairLength = hairLengthSelect.value;
-        const durationHours = hairLengthData[selectedHairLength]?.durationHours || 2; // Default to 2 if not found
-
-        slots.forEach(slot => {
-            // Convert to 12-hour format for display
-            const [hour, minute] = slot.split(':');
-            let hourNum = parseInt(hour);
-            const ampm = hourNum >= 12 ? 'PM' : 'AM';
-            let displayHour = hourNum % 12;
-            if (displayHour === 0) displayHour = 12;
-            const display = `${displayHour}:${minute} ${ampm}`;
-
-            // Check if this slot is booked
-            const isBooked = isSlotBooked(dateStr, slot, durationHours, monthlyBookings);
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'time-slot-btn';
-            if (isBooked) {
-                btn.classList.add('disabled');
-                btn.disabled = true;
-            }
-            btn.textContent = display;
-            btn.onclick = function() {
-                if (!isBooked) {
-                    timeSlotsGrid.querySelectorAll('.selected').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    timeInput.value = slot; // keep value in 24hr for backend
-                }
-            };
-            timeSlotsGrid.appendChild(btn);
-        });
-        timeSlotsSection.style.display = 'block';
+        return isUnavailable;
     }
 
-    // --- Dynamic Price/Deposit/Time ---
-    function updatePriceAndTime() {
-        const hairLength = hairLengthSelect.value;
+    // Show time slots for selected date
+    function showTimeSlots(date) {
+        if (!date) return;
+
+        // Clear previous time slots
+        timeSlotsContainer.innerHTML = '<h3>Select Time</h3>';
+        timeSlotsContainer.classList.remove('hidden');
+
+        // Use selected style or a default if not set
         const selectedStyle = selectedStyleInput.value;
-        const boxBraidsVariation = boxBraidsVariationSelect?.value;
-        const cornrowsVariation = cornrowsVariationSelect?.value;
-        const twoStrandTwistsVariation = twoStrandTwistsVariationSelect?.value;
-        const hairOption = hairOptionSelect?.value;
-        const preWashOption = preWashOptionSelect?.value;
-        const detanglingOption = detanglingOptionSelect?.value;
-        const blowdryOption = blowdryOptionSelect?.value;
-        const priceRange = document.querySelector('.price-range');
-        const depositRange = document.querySelector('.deposit-range');
-        const timeEstimateRange = document.querySelector('.time-estimate-range');
-        const timeEstimateNote = document.querySelector('.time-estimate-note');
-        
-        if (hairLength && hairLengthData[hairLength]) {
-            const data = hairLengthData[hairLength];
-            let price, deposit, time;
-            
-            // Determine pricing based on style, variation, and hair option
-            if (selectedStyle === 'Box Braids' && boxBraidsVariation === 'knotless') {
-                if (hairOption === 'added') {
-                    price = data.knotlessAddedHairPrice;
-                    deposit = data.knotlessAddedHairDeposit;
-                } else {
-                    price = data.knotlessPrice;
-                    deposit = data.knotlessDeposit;
-                }
+        const styleData = styleInfo[selectedStyle] || { basePrice: 150, baseDuration: 240 };
+
+        // Calculate total duration in minutes
+        const lengthMultiplier = lengthMultipliers[hairLengthSelect.value]?.duration || 1;
+        const baseDuration = styleData.baseDuration;
+        const washDuration = preWashSelect.value === 'wash' ? addOnCosts.wash.duration : 0;
+        const totalDuration = Math.ceil((baseDuration * lengthMultiplier) + washDuration);
+
+        // Create time slots wrapper
+        const timeSlotsWrapper = document.createElement('div');
+        timeSlotsWrapper.className = 'time-slots-wrapper';
+
+        let availableCount = 0;
+        timeSlots.forEach(timeSlot => {
+            const timeButton = document.createElement('button');
+            timeButton.type = 'button';
+            timeButton.className = 'time-slot-btn';
+            timeButton.textContent = timeSlot;
+
+            // Convert timeSlot string to Date object
+            const [time, meridiem] = timeSlot.split(' ');
+            const [hours, minutes] = time.split(':');
+            const slotDateTime = new Date(date);
+            let hour = parseInt(hours);
+            if (meridiem === 'PM' && hour !== 12) hour += 12;
+            if (meridiem === 'AM' && hour === 12) hour = 0;
+            slotDateTime.setHours(hour, parseInt(minutes), 0, 0);
+
+            // Check if slot is in the past or has too many concurrent appointments
+            const isInPast = isTimeSlotInPast(slotDateTime);
+            const isUnavailable = isSlotUnavailable(slotDateTime, totalDuration);
+
+            if (isInPast || isUnavailable) {
+                timeButton.disabled = true;
+                timeButton.classList.add('unavailable');
+                timeButton.title = isInPast ? 'This time has passed' : 'This time slot is fully booked';
             } else {
-                if (hairOption === 'added') {
-                    price = data.addedHairPrice;
-                    deposit = data.addedHairDeposit;
-                } else {
-                    price = data.price;
-                    deposit = data.deposit;
+                // Count concurrent appointments for this slot
+                const concurrentCount = unavailableTimes.filter(unavailable => {
+                    const unavailableStart = new Date(unavailable.start);
+                    const unavailableEnd = new Date(unavailable.end);
+                    const slotEndTime = new Date(slotDateTime.getTime() + (totalDuration * 60 * 1000));
+
+                    return (
+                        (slotDateTime >= unavailableStart && slotDateTime < unavailableEnd) ||
+                        (slotEndTime > unavailableStart && slotEndTime <= unavailableEnd) ||
+                        (slotDateTime <= unavailableStart && slotEndTime >= unavailableEnd)
+                    );
+                }).length;
+
+                availableCount++;
+                if (concurrentCount === 1) {
+                    timeButton.classList.add('concurrent-one');
                 }
-            }
-            
-            // Add designed cornrows upcharge if selected
-            if (selectedStyle === 'Cornrows' && cornrowsVariation === 'designed') {
-                price += 25;
-                deposit += 8; // 30% of the $25 upcharge (25 * 0.3 = 7.5, rounded to 8)
-            }
-            
-            // Add two strand twists upcharge if selected
-            if (selectedStyle === 'Two Strand Twists' && twoStrandTwistsVariation === 'braided-roots') {
-                price += 30;
-                deposit += 9; // 30% of the $30 upcharge (30 * 0.3 = 9)
-            }
-
-            // Add pre-wash service charge if selected
-            if (preWashOption === 'yes' && selectedStyle !== 'Weave Install') {
-                price += 30;
-                deposit += 9; // 30% of the $30 pre-wash charge (30 * 0.3 = 9)
-            }
-
-            // Add detangling service charge if selected
-            if (detanglingOption === 'yes' && !selectedStyle.toLowerCase().includes('loc') && selectedStyle !== 'Weave Install') {
-                price += 25;
-                deposit += 8; // 30% of the $25 detangling charge (25 * 0.3 = 7.5, rounded to 8)
-            }
-
-            // Add blow-dry service charge if selected
-            if (blowdryOption === 'yes' && !selectedStyle.toLowerCase().includes('loc') && selectedStyle !== 'Weave Install') {
-                price += 35;
-                deposit += 11; // 30% of the $35 blow-dry charge (35 * 0.3 = 10.5, rounded to 11)
-            }
-            
-            // Apply promo code discount if valid
-            let discountAmountValue = 0;
-            if (isPromoCodeValid && promoDiscount > 0) {
-                discountAmountValue = Math.round(price * promoDiscount);
-                price = price - discountAmountValue;
-                deposit = Math.round(price * 0.30); // Recalculate deposit based on discounted price
+                timeButton.title = concurrentCount === 1 ? 'One stylist already booked at this time' : 'Available';
                 
-                // Show discount info
-                discountInfo.style.display = 'block';
-                promoCodeDisplay.textContent = promoCodeInput.value.toUpperCase();
-                discountAmount.textContent = `-$${discountAmountValue}`;
-            } else {
-                // Hide discount info
-                discountInfo.style.display = 'none';
+                timeButton.addEventListener('click', () => {
+                    document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('active'));
+                    timeButton.classList.add('active');
+                    selectedTimeSlot = timeSlot;
+
+                    const isoDateTime = new Date(date);
+                    const [time, meridiem] = timeSlot.split(' ');
+                    const [hours, minutes] = time.split(':');
+                    let hour = parseInt(hours);
+                    if (meridiem === 'PM' && hour !== 12) hour += 12;
+                    if (meridiem === 'AM' && hour === 12) hour = 0;
+                    isoDateTime.setHours(hour, parseInt(minutes), 0, 0);
+                    appointmentDateTimeInput.value = isoDateTime.toISOString();
+                });
             }
+            timeSlotsWrapper.appendChild(timeButton);
+        });
+
+        if (availableCount === 0) {
+            const msg = document.createElement('div');
+            msg.style.color = '#888';
+            msg.style.margin = '2rem 0';
+            msg.style.textAlign = 'center';
+            msg.textContent = 'No available times for this day. Please select another date.';
+            timeSlotsContainer.appendChild(msg);
+        }
+
+        timeSlotsContainer.appendChild(timeSlotsWrapper);
+    }
+
+    function formatTimeForISO(timeSlot) { // e.g., "9:00 AM"
+        const [time, period] = timeSlot.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (period === 'PM' && hours < 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    function formatDuration(minutes) {
+        if (isNaN(minutes) || minutes === 0) return "TBD";
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        let durationString = '';
+        if (hours > 0) durationString += `${hours}h`;
+        if (mins > 0) durationString += ` ${mins}m`;
+        return durationString.trim();
+    }
+
+    function calculatePrice() {
+        const selectedStyle = document.getElementById('selected-style').value;
+        const hairLength = document.getElementById('hair-length').value;
+        const hairOption = document.getElementById('hair-option').value;
+        const preWashOption = document.getElementById('pre-wash-option').value;
+        const cornrowsVariation = document.getElementById('cornrows-variation')?.value;
+        
+        const totalPriceElement = document.getElementById('total-price');
+        const durationElement = document.getElementById('estimated-duration');
+        const depositAmountElement = document.getElementById('deposit-amount');
+        const hairLengthGroup = document.getElementById('hair-length-group');
+        const cornrowsGroup = document.getElementById('cornrows-variation-group');
+        const hairOptionGroup = document.getElementById('hair-option-group');
+        const pricingNoteElement = document.getElementById('pricing-note');
+
+        // Reset UI elements if no style is selected or style doesn't exist
+        if (!selectedStyle || !styleInfo[selectedStyle]) {
+            totalPriceElement.textContent = '$0';
+            durationElement.textContent = 'TBD';
+            depositAmountElement.textContent = '$0';
+            if (pricingNoteElement) pricingNoteElement.style.display = 'none';
+            if (hairLengthGroup) hairLengthGroup.style.display = 'none';
+            if (cornrowsGroup) cornrowsGroup.style.display = 'none';
+            if (hairOptionGroup) hairOptionGroup.style.display = 'none';
+            return { price: 0, duration: 0 };
+        }
+
+        const baseInfo = styleInfo[selectedStyle];
+
+        // Show/hide relevant form sections
+        if (hairLengthGroup) {
+            hairLengthGroup.style.display = baseInfo.hasLengthOptions ? 'block' : 'none';
+            if (!baseInfo.hasLengthOptions) {
+                document.getElementById('hair-length').value = '';
+            }
+        }
+
+        // Show/hide cornrows variation selection
+        if (cornrowsGroup) {
+            cornrowsGroup.style.display = selectedStyle === 'Cornrows' ? 'block' : 'none';
+        }
+
+        // Show/hide hair option selection
+        if (hairOptionGroup) {
+            hairOptionGroup.style.display = baseInfo.hasHairOptions ? 'block' : 'none';
+            if (!baseInfo.hasHairOptions) {
+                document.getElementById('hair-option').value = 'synthetic';
+            }
+        }
+
+        // Show/hide pricing note
+        if (pricingNoteElement) {
+            if (baseInfo.isVariablePricing && baseInfo.pricingNote) {
+                pricingNoteElement.textContent = baseInfo.pricingNote;
+                pricingNoteElement.style.display = 'block';
+            } else {
+                pricingNoteElement.style.display = 'none';
+            }
+        }
+
+        let finalPrice = baseInfo.basePrice;
+        let finalDuration = baseInfo.baseDuration;
+
+        // Apply cornrows variation pricing
+        if (selectedStyle === 'Cornrows' && cornrowsVariation && baseInfo.variations[cornrowsVariation]) {
+            finalPrice *= baseInfo.variations[cornrowsVariation].priceMultiplier;
+        }
+
+        // For non-variable pricing styles, apply length and hair options
+        if (!baseInfo.isVariablePricing) {
+            // Apply length multiplier only if style has length options
+            if (baseInfo.hasLengthOptions && hairLength === 'long') {
+                if (selectedStyle === 'Boho Box Braids' || selectedStyle === 'Jumbo Box Braids') {
+                    finalPrice = baseInfo.longLengthPrice;
+                } else {
+                    finalPrice = 250;
+                }
+                finalDuration *= lengthMultipliers['long'].duration;
+            }
+
+            // Add human hair cost if selected and style has hair options
+            if (baseInfo.hasHairOptions && hairOption === 'human-hair') {
+                finalPrice += addOnCosts['human-hair'].price;
+            }
+        }
+
+        // Add wash cost if selected (applies to all styles)
+        if (preWashOption === 'wash') {
+            finalPrice += addOnCosts['wash'].price;
+            finalDuration += addOnCosts['wash'].duration;
+        }
+
+        // Calculate deposit based on the current total price
+        const deposit = finalPrice * 0.30;
+
+        // Update UI
+        if (baseInfo.isVariablePricing) {
+            totalPriceElement.textContent = `$${finalPrice}+`;
+            depositAmountElement.textContent = `$${deposit.toFixed(2)}`;
+            durationElement.textContent = formatDuration(finalDuration);
+        } else if (baseInfo.hasLengthOptions && !hairLength) {
+            const minPrice = baseInfo.basePrice;
+            const maxPrice = baseInfo.longLengthPrice || 250;
+            const minDuration = baseInfo.baseDuration;
+            const maxDuration = baseInfo.baseDuration * lengthMultipliers['long'].duration;
             
-            time = data.time;
-            
-            priceRange.textContent = `$${price}`;
-            depositRange.textContent = `$${deposit}`;
-            timeEstimateRange.textContent = time;
-            timeEstimateNote.textContent = '* Estimated time for your selected hair length';
+            totalPriceElement.textContent = `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+            durationElement.textContent = `${formatDuration(minDuration)} - ${formatDuration(maxDuration)}`;
+            depositAmountElement.textContent = 'Calculated upon selection';
         } else {
-            priceRange.textContent = defaultPriceRange;
-            depositRange.textContent = defaultDepositRange;
-            timeEstimateRange.textContent = defaultTimeRange;
-            timeEstimateNote.textContent = '* Select your hair length above to see exact time';
-            // Hide discount info when no hair length selected
-            discountInfo.style.display = 'none';
-        }
-    }
-
-    // Promo code validation function
-    function validatePromoCode(code) {
-        const trimmedCode = code.trim().toUpperCase();
-        
-        if (trimmedCode === '') {
-            // Reset promo code state when empty
-            isPromoCodeValid = false;
-            promoDiscount = 0;
-            promoFeedback.style.display = 'none';
-            updatePriceAndTime();
-            return;
-        }
-        
-        if (validPromoCodes[trimmedCode]) {
-            isPromoCodeValid = true;
-            promoDiscount = validPromoCodes[trimmedCode];
-            promoFeedback.style.display = 'block';
-            promoMessage.textContent = `✅ Promo code applied! You'll save ${Math.round(promoDiscount * 100)}% on your total.`;
-            promoMessage.style.color = '#28a745';
-        } else {
-            isPromoCodeValid = false;
-            promoDiscount = 0;
-            promoFeedback.style.display = 'block';
-            promoMessage.textContent = '❌ Invalid promo code. Please check and try again.';
-            promoMessage.style.color = '#dc3545';
-        }
-        
-        updatePriceAndTime();
-    }
-
-    // Function to show/hide variation fields based on selected style
-    function toggleStyleVariations() {
-        const selectedStyle = selectedStyleInput.value;
-        
-        // Hide all variation groups first
-        boxBraidsVariationGroup.style.display = 'none';
-        cornrowsVariationGroup.style.display = 'none';
-        twoStrandTwistsVariationGroup.style.display = 'none';
-        preWashGroup.style.display = 'none';
-        detanglingGroup.style.display = 'none';
-        blowdryGroup.style.display = 'none';
-        
-        // Show relevant variation group based on selected style
-        if (selectedStyle === 'Box Braids') {
-            boxBraidsVariationGroup.style.display = 'block';
-        } else if (selectedStyle === 'Cornrows') {
-            cornrowsVariationGroup.style.display = 'block';
-        } else if (selectedStyle === 'Two Strand Twists') {
-            twoStrandTwistsVariationGroup.style.display = 'block';
-        }
-        
-        // Show pre-wash option for all styles except weave
-        if (selectedStyle !== 'Weave Install') {
-            preWashGroup.style.display = 'block';
+            totalPriceElement.textContent = `$${finalPrice.toFixed(2)}`;
+            durationElement.textContent = formatDuration(finalDuration);
+            depositAmountElement.textContent = `$${deposit.toFixed(2)}`;
         }
 
-        // Show detangling and blow-dry options for all styles except locs and weave
-        if (!selectedStyle.toLowerCase().includes('loc') && selectedStyle !== 'Weave Install') {
-            detanglingGroup.style.display = 'block';
-            blowdryGroup.style.display = 'block';
-        }
-        
-        updatePriceAndTime();
+        return { price: finalPrice, duration: finalDuration };
     }
 
-    // Add event listeners
-    hairLengthSelect.addEventListener('change', updatePriceAndTime);
-    if (selectedStyleInput) {
-        selectedStyleInput.addEventListener('change', toggleStyleVariations);
+    // Initialize price calculation
+    calculatePrice();
+
+    async function uploadImage(file) {
+        const storageRef = firebase.storage().ref();
+        const fileName = `${Date.now()}-${file.name}`;
+        const fileRef = storageRef.child(fileName);
+        await fileRef.put(file);
+        return fileRef.getDownloadURL();
     }
-    if (boxBraidsVariationSelect) {
-        boxBraidsVariationSelect.addEventListener('change', updatePriceAndTime);
-    }
-    if (cornrowsVariationSelect) {
-        cornrowsVariationSelect.addEventListener('change', updatePriceAndTime);
-    }
-    if (twoStrandTwistsVariationSelect) {
-        twoStrandTwistsVariationSelect.addEventListener('change', updatePriceAndTime);
-    }
-    if (hairOptionSelect) {
-        hairOptionSelect.addEventListener('change', updatePriceAndTime);
-    }
-    if (preWashOptionSelect) {
-        preWashOptionSelect.addEventListener('change', updatePriceAndTime);
-    }
-    if (detanglingOptionSelect) {
-        detanglingOptionSelect.addEventListener('change', updatePriceAndTime);
-    }
-    if (blowdryOptionSelect) {
-        blowdryOptionSelect.addEventListener('change', updatePriceAndTime);
-    }
-    
-    // Promo code event listeners
-    if (promoCodeInput) {
-        // Validate promo code on input (with debouncing)
-        let promoCodeTimeout;
-        promoCodeInput.addEventListener('input', function(e) {
-            clearTimeout(promoCodeTimeout);
-            promoCodeTimeout = setTimeout(() => {
-                validatePromoCode(e.target.value);
-            }, 500); // Wait 500ms after user stops typing
+
+    // Initialize everything when the page loads
+    if (calendarElement && timeSlotsContainer) {
+        initCalendar();
+        fetchUnavailableTimes(); // Fetch initial unavailable times
+        
+        // Add event listeners for form fields that affect duration
+        hairLengthSelect.addEventListener('change', () => {
+            calculatePrice();
+            if (selectedDate) {
+                showTimeSlots(selectedDate); // Refresh time slots when duration changes
+            }
         });
         
-        // Also validate on blur (when user leaves the field)
-        promoCodeInput.addEventListener('blur', function(e) {
-            validatePromoCode(e.target.value);
+        preWashSelect.addEventListener('change', () => {
+            calculatePrice();
+            if (selectedDate) {
+                showTimeSlots(selectedDate);
+            }
         });
+        
+        // Refresh unavailable times periodically
+        setInterval(fetchUnavailableTimes, 5 * 60 * 1000); // Refresh every 5 minutes
+    } else {
+        console.error('Calendar element not found!');
     }
+
+    // Add event listeners for price calculation
+    hairLengthSelect.addEventListener('change', calculatePrice);
+    hairOptionSelect.addEventListener('change', calculatePrice);
+    preWashSelect.addEventListener('change', calculatePrice);
     
-    // Initialize visibility and pricing
-    toggleStyleVariations();
-    updatePriceAndTime();
+    // Handle form submission
+    bookingForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    // --- Form Submission (Initiate Stripe Checkout) ---
-    const proceedToPayButton = document.getElementById('proceed-to-pay-button');
-    const form = document.getElementById('booking-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const currentHairImage = document.getElementById('current-hair-image').files[0];
 
-    // Initialize Stripe.js with your publishable key
-    // TODO: Replace 'YOUR_STRIPE_PUBLISHABLE_KEY' with your actual key
-    const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3RtZnoiUF2Qvzru3I9fzKmxXUgF22tzJBoYZS3XqYf00QA6fSLqs');
-
-    proceedToPayButton.addEventListener('click', async function(e) {
-        e.preventDefault(); // Prevent default form submission
-
-        const name = document.getElementById('full-name').value.trim();
-        const phone = document.getElementById('phone-number').value.trim();
-        const style = document.getElementById('selected-style').value.trim();
-        const hair_length = hairLengthSelect.value;
-        const date = dateInput.value;
-        const time = timeInput.value;
-        const notes = document.getElementById('notes').value.trim();
-        const boxBraidsVariation = boxBraidsVariationSelect?.value || '';
-        const cornrowsVariation = cornrowsVariationSelect?.value || '';
-        const twoStrandTwistsVariation = twoStrandTwistsVariationSelect?.value || '';
-        const hairOption = hairOptionSelect?.value || '';
-        const preWashOption = preWashOptionSelect?.value || 'no';
-        const detanglingOption = detanglingOptionSelect?.value || 'no';
-        const blowdryOption = blowdryOptionSelect?.value || 'no';
-
-        // Basic validation
-        if (!name || !phone || !style || !hair_length || !date || !time || !hairOption) {
-            alert('Please fill out all required fields and select a date and time.');
-            return;
-        }
-        
-        // Validate current hair image (mandatory)
-        if (!selectedCurrentHairFile) {
-            alert('Please upload a photo of your current hair.');
-            return;
-        }
-        
-        // Validate box braids variation if box braids is selected
-        if (style === 'Box Braids' && !boxBraidsVariation) {
-            alert('Please select the type of box braids you want.');
-            return;
-        }
-        
-        // Validate cornrows variation if cornrows is selected
-        if (style === 'Cornrows' && !cornrowsVariation) {
-            alert('Please select the cornrows style you want.');
-            return;
-        }
-        
-        // Validate two strand twists variation if two strand twists is selected
-        if (style === 'Two Strand Twists' && !twoStrandTwistsVariation) {
-            alert('Please select the two strand twists style you want.');
+        // Validate current hair photo
+        if (!currentHairImage) {
+            alert('Please provide a current photo of your hair.');
             return;
         }
 
-        // Disable button and show a simple indicator
-        proceedToPayButton.disabled = true;
-        proceedToPayButton.textContent = 'Processing...';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
 
         try {
-            // Use FormData to handle file upload
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('phone', phone);
-            formData.append('style', style);
-            formData.append('hair_length', hair_length);
-            formData.append('date', date);
-            formData.append('time', time);
-            formData.append('notes', notes);
-            formData.append('box_braids_variation', boxBraidsVariation);
-            formData.append('cornrows_variation', cornrowsVariation);
-            formData.append('two_strand_twists_variation', twoStrandTwistsVariation);
-            formData.append('hair_option', hairOption);
-            formData.append('pre_wash_option', preWashOption);
-            formData.append('detangling_option', detanglingOption);
-            formData.append('blowdry_option', blowdryOption);
+            submitBtn.textContent = 'Uploading Images...';
             
-            // Add promo code data
-            const promoCode = promoCodeInput?.value?.trim().toUpperCase() || '';
-            formData.append('promo_code', promoCode);
-            formData.append('promo_discount', promoDiscount.toString());
+            // Upload images
+            const referenceImage = document.getElementById('reference-image').files[0];
             
-            // Add mandatory current hair image
-            if (selectedCurrentHairFile) {
-                formData.append('current_hair_image', selectedCurrentHairFile);
-            }
-            
-            // Add optional reference image if selected
-            if (selectedImageFile) {
-                formData.append('reference_image', selectedImageFile);
-            }
+            const currentHairImageUrl = await uploadImage(currentHairImage);
+            const referenceImageUrl = referenceImage ? await uploadImage(referenceImage) : null;
 
-            const response = await fetch('http://127.0.0.1:5000/api/create-checkout-session', {
+            // Get form data
+            const formData = new FormData(bookingForm);
+            const { price, duration } = calculatePrice();
+
+            // Create booking data object with underscores instead of hyphens
+            const bookingData = {
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                appointment_datetime: formData.get('appointment-datetime'),
+                selected_style: formData.get('selected-style'),
+                hair_length: formData.get('hair-length'),
+                hair_option: formData.get('hair-option'),
+                pre_wash_option: formData.get('pre-wash-option'),
+                notes: formData.get('notes'),
+                total_price: price,
+                duration: duration,
+                currentHairImageURL: currentHairImageUrl,
+                referenceImageURL: referenceImageUrl,
+                box_braids_variation: formData.get('box-braids-variation'),
+                cornrows_variation: formData.get('cornrows-variation'),
+                two_strand_twists_variation: formData.get('two-strand-twists-variation')
+            };
+
+            submitBtn.textContent = 'Creating Checkout...';
+            const response = await fetch(ENDPOINTS.CREATE_BOOKING, {
                 method: 'POST',
-                body: formData // Use FormData instead of JSON
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bookingData)
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                // Redirect to Stripe Checkout
-                const { sessionId } = data;
-                const result = await stripe.redirectToCheckout({
-                    sessionId: sessionId,
-                });
-
-                if (result.error) {
-                    // If `redirectToCheckout` fails due to a browser or network error, display the localized error message to the customer.
-                    alert(result.error.message);
-                }
-            } else {
-                // Handle errors from the backend (e.g., validation errors, Stripe API errors)
-                alert(data.error || 'An error occurred while initiating payment.');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Server error');
             }
+
+            const { sessionId } = await response.json();
+            
+            // Redirect to Stripe Checkout
+            const result = await stripe.redirectToCheckout({
+                sessionId: sessionId
+            });
+
+            if (result.error) {
+                throw new Error(result.error.message);
+            }
+            
         } catch (error) {
-            console.error('Error initiating payment:', error);
-            alert('An unexpected error occurred. Please try again.');
-        } finally {
-            // Re-enable the button
-            proceedToPayButton.disabled = false;
-            proceedToPayButton.innerHTML = '<i class="fas fa-calendar-check"></i> Proceed to Pay Deposit';
+            console.error("Error creating checkout session:", error);
+            alert(`Could not process payment: ${error.message}`);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Book Appointment';
         }
     });
 
-    // Initial render of calendar and setup
-    renderCalendar();
-    
-    // --- Handle Style Parameter from URL ---
-    function getStyleFromURL() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('style') || 'Box Braids';
-    }
-    
-    // Set the selected style from URL parameter
-    if (selectedStyleInput) {
-        const styleFromURL = getStyleFromURL();
-        selectedStyleInput.value = styleFromURL;
-        toggleStyleVariations(); // Call this after setting the style
-    }
+    // Fetch unavailable times from Firestore
+    async function fetchUnavailableTimes() {
+        if (isFetchingUnavailableTimes) {
+            console.log('Already fetching unavailable times, skipping duplicate request');
+            return;
+        }
 
-    // --- Image Upload Handling ---
-    // Current Hair Image (Mandatory)
-    if (currentHairImageInput) {
-        currentHairImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validate file type
-                if (!file.type.startsWith('image/')) {
-                    alert('Please select a valid image file for your current hair photo.');
-                    currentHairImageInput.value = '';
-                    return;
-                }
+        isFetchingUnavailableTimes = true;
+
+        try {
+            const db = firebase.firestore();
+            const bookingsSnapshot = await db.collection('bookings')
+                .where('status', 'in', ['confirmed', 'pending'])
+                .get();
+
+            // Convert bookings to unavailable time slots
+            unavailableTimes = bookingsSnapshot.docs.map(doc => {
+                const booking = doc.data();
+                const startTime = new Date(booking.appointmentDateTime);
+                const endTime = new Date(startTime.getTime() + (parseInt(booking.duration) * 60 * 1000));
                 
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('Current hair image file is too large. Please select an image under 5MB.');
-                    currentHairImageInput.value = '';
-                    return;
-                }
-                
-                selectedCurrentHairFile = file;
-                
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    currentHairPreviewImg.src = e.target.result;
-                    currentHairPreview.style.display = 'block';
+                return {
+                    start: startTime.toISOString(),
+                    end: endTime.toISOString()
                 };
-                reader.readAsDataURL(file);
+            });
+
+            // If a date is selected, refresh the time slots
+            if (selectedDate) {
+                showTimeSlots(selectedDate);
             }
-        });
-    }
 
-    if (removeCurrentHairImageBtn) {
-        removeCurrentHairImageBtn.addEventListener('click', function() {
-            currentHairImageInput.value = '';
-            selectedCurrentHairFile = null;
-            currentHairPreview.style.display = 'none';
-            currentHairPreviewImg.src = '';
-        });
-    }
-
-    // Reference Image (Optional)
-    if (referenceImageInput) {
-        referenceImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validate file type
-                if (!file.type.startsWith('image/')) {
-                    alert('Please select a valid image file.');
-                    referenceImageInput.value = '';
-                    return;
-                }
-                
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('Image file is too large. Please select an image under 5MB.');
-                    referenceImageInput.value = '';
-                    return;
-                }
-                
-                selectedImageFile = file;
-                
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+            return unavailableTimes;
+        } catch (error) {
+            console.error('Error fetching unavailable times:', error);
+            if (error.message !== 'Failed to fetch' && !error.message.includes('Network Error')) {
+                alert('There was an error loading the calendar. Please refresh the page or try again later.');
             }
-        });
+            return [];
+        } finally {
+            isFetchingUnavailableTimes = false;
+        }
     }
 
-    if (removeImageBtn) {
-        removeImageBtn.addEventListener('click', function() {
-            referenceImageInput.value = '';
-            selectedImageFile = null;
-            imagePreview.style.display = 'none';
-            previewImg.src = '';
-        });
-    }
+    // Calculate initial price
+    calculatePrice();
+
+    // Available time slots (9 AM to 7 PM, 30-minute intervals)
+    const timeSlots = [
+        '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+        '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
+        '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
+        '6:00 PM', '6:30 PM', '7:00 PM'
+    ];
 });

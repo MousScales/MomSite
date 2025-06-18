@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'two strand twists': ['two', 'strand', 'twists', 'natural', 'protective', 'simple'],
         'starter locs': ['starter', 'locs', 'dreadlocks', 'beginning'],
         'locs retwist': ['locs', 'retwist', 'maintenance', 'dreadlocks'],
-        'locs retwist 2 strands': ['locs', 'retwist', 'strands', 'twist'],
+        'lock retwist 2 strands': ['locs', 'lock', 'retwist', 'strands', 'twist'],
         'locs retwist barrel': ['locs', 'retwist', 'barrel', 'spiral'],
         'weave install': ['weave', 'install', 'extensions', 'hair', 'length', 'volume', 'sew-in']
     };

@@ -1,248 +1,56 @@
-from flask import Flask, request, jsonify, send_file, redirect
-from flask_cors import CORS
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-import datetime
-import stripe
 import os
-import json
-from urllib.parse import quote
-from werkzeug.utils import secure_filename
-import uuid
+from flask import Flask, request, jsonify, redirect, send_file
 from dotenv import load_dotenv
+import stripe
+import firebase_admin
+from firebase_admin import credentials, firestore
+from flask_cors import CORS
+import datetime
 
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+# --- App Initialization ---
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# Configure upload settings
-UPLOAD_FOLDER = '/tmp/uploads'  # Use /tmp for Vercel
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-
-# Create uploads directory if it doesn't exist
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-SCOPES = ['https://www.googleapis.com/auth/calendar']
-CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID', 'bizmoustaphagueye@gmail.com')
-
-# Get service account info from environment variable
-service_account_info = os.getenv('GOOGLE_SERVICE_ACCOUNT_INFO')
-if service_account_info:
-    service_account_info = json.loads(service_account_info)
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_info, scopes=SCOPES)
-else:
-    # Fallback to file if environment variable is not set
-    SERVICE_ACCOUNT_FILE = 'service_account.json'
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
-service = build('calendar', 'v3', credentials=credentials)
+# --- Firebase Initialization ---
+try:
+    # IMPORTANT: Create a serviceAccountKey.json file and place it in your
+    # project root
+    cred = credentials.Certificate('serviceAccountKey.json')
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("Firebase initialized successfully.")
+except Exception as e:
+    print(f"CRITICAL: Failed to initialize Firebase: {e}")
+    db = None
 
 # --- Stripe Configuration ---
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+YOUR_DOMAIN = 'http://127.0.0.1:5500'
 
-# --- Hair Length Data for Pricing/Duration ---
-HAIR_LENGTH_DATA = {
-    'short': { 
-        'price': 175, 
-        'deposit': 53, 
-        'time': '3 hours', 
-        'durationHours': 3,
-        'knotlessPrice': 200,
-        'knotlessDeposit': 60,
-        'addedHairPrice': 225,
-        'addedHairDeposit': 68,
-        'knotlessAddedHairPrice': 250,
-        'knotlessAddedHairDeposit': 75
-    },
-    'medium': { 
-        'price': 250, 
-        'deposit': 75, 
-        'time': '4 hours', 
-        'durationHours': 4,
-        'knotlessPrice': 275,
-        'knotlessDeposit': 83,
-        'addedHairPrice': 300,
-        'addedHairDeposit': 90,
-        'knotlessAddedHairPrice': 325,
-        'knotlessAddedHairDeposit': 98
-    },
-    'long': { 
-        'price': 300, 
-        'deposit': 90, 
-        'time': '5 hours', 
-        'durationHours': 5,
-        'knotlessPrice': 325,
-        'knotlessDeposit': 98,
-        'addedHairPrice': 350,
-        'addedHairDeposit': 105,
-        'knotlessAddedHairPrice': 375,
-        'knotlessAddedHairDeposit': 113
-    },
-    'extra-long': { 
-        'price': 350, 
-        'deposit': 105, 
-        'time': '6 hours', 
-        'durationHours': 6,
-        'knotlessPrice': 375,
-        'knotlessDeposit': 113,
-        'addedHairPrice': 400,
-        'addedHairDeposit': 120,
-        'knotlessAddedHairPrice': 425,
-        'knotlessAddedHairDeposit': 128
-    }
-}
+if not stripe.api_key:
+    print("CRITICAL: STRIPE_SECRET_KEY environment variable not set.")
 
-def create_calendar_event(name, phone, style, hair_length, date_str, time_str, notes='', box_braids_variation='', hair_option='', cornrows_variation='', two_strand_twists_variation='', current_hair_image='', reference_image='', promo_code='', discount_amount=0, final_price=0):
-    """Helper function to create a Google Calendar event"""
-    try:
-        # Calculate start and end times
-        duration_hours = HAIR_LENGTH_DATA.get(hair_length, {}).get('durationHours', 3)
-        
-        # Parse the date and time
-        appointment_datetime = datetime.datetime.strptime(f'{date_str} {time_str}', '%Y-%m-%d %H:%M')
-        
-        # Convert to timezone aware datetime (EST/EDT)
-        timezone_offset = datetime.timedelta(hours=-5)  # EST is UTC-5
-        appointment_datetime_aware = appointment_datetime.replace(tzinfo=datetime.timezone(timezone_offset))
-        start_time_iso = appointment_datetime_aware.isoformat()
+# --- API Routes ---
 
-        end_datetime_aware = appointment_datetime_aware + datetime.timedelta(hours=duration_hours)
-        end_time_iso = end_datetime_aware.isoformat()
 
-        # Create the event description
-        description_parts = [
-            f'Phone: {phone}',
-            f'Style: {style}',
-            f'Hair Length: {hair_length}'
-        ]
-        
-        if style == 'Box Braids' and box_braids_variation:
-            description_parts.append(f'Type: {box_braids_variation.title()} Box Braids')
-        
-        if style == 'Cornrows' and cornrows_variation:
-            cornrows_description = 'Designed Cornrows' if cornrows_variation == 'designed' else 'Straight Back Cornrows'
-            description_parts.append(f'Style: {cornrows_description}')
-        
-        if style == 'Two Strand Twists' and two_strand_twists_variation:
-            twists_description = 'Two Strand Twists with Braided Roots' if two_strand_twists_variation == 'braided-roots' else 'Regular Two Strand Twists'
-            description_parts.append(f'Style: {twists_description}')
-        
-        if hair_option:
-            hair_description = 'With Hair Extensions' if hair_option == 'added' else 'Natural Hair Only'
-            description_parts.append(f'Hair: {hair_description}')
-        
-        # Add pricing information
-        if final_price > 0:
-            description_parts.append(f'Total Price: ${final_price}')
-            
-        if promo_code and discount_amount > 0:
-            description_parts.append(f'Promo Code: {promo_code} (Saved ${discount_amount})')
-        
-        if current_hair_image:
-            description_parts.append(f'Current Hair Photo: {current_hair_image} (check uploads folder)')
-        
-        if reference_image:
-            description_parts.append(f'Reference Image: {reference_image} (check uploads folder)')
-        
-        if notes:
-            description_parts.append(f'Notes: {notes}')
-            
-        description = '\n'.join(description_parts)
-        
-        # Create the calendar event
-        event = {
-            'summary': f'Hair Appointment: {name}',
-            'description': description,
-            'start': {'dateTime': start_time_iso, 'timeZone': 'America/New_York'},
-            'end': {'dateTime': end_time_iso, 'timeZone': 'America/New_York'},
-            'colorId': '8',  # Use a nice color for hair appointments
-        }
-
-        created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
-        print(f'✅ Google Calendar event created successfully: {created_event.get("htmlLink")}')
-        return created_event
-        
-    except Exception as e:
-        print(f'❌ Error creating Google Calendar event: {e}')
-        raise e
-
-# --- Endpoint to create Stripe Checkout Session ---
 @app.route('/api/create-checkout-session', methods=['POST'])
 def create_checkout_session():
+    """
+    Creates a Stripe Checkout session for a new booking deposit.
+    """
+    if not stripe.api_key:
+        return jsonify(error="Stripe is not configured on the server."), 500
+
     try:
-        # Handle both JSON and FormData
-        if request.is_json:
-            data = request.json
-            uploaded_file = None
-            current_hair_file = None
-        else:
-            # Handle FormData (when file is uploaded)
-            data = request.form.to_dict()
-            uploaded_file = request.files.get('reference_image')
-            current_hair_file = request.files.get('current_hair_image')
-        
-        name = data.get('name')
-        phone = data.get('phone')
-        style = data.get('style')
-        hair_length = data.get('hair_length')
-        date_str = data.get('date')
-        time_str = data.get('time')
-        notes = data.get('notes', '').strip()
-        box_braids_variation = data.get('box_braids_variation', '')
-        hair_option = data.get('hair_option', '')
-        cornrows_variation = data.get('cornrows_variation', '')
-        two_strand_twists_variation = data.get('two_strand_twists_variation', '')
-        
-        # Handle file uploads
-        reference_image_filename = ''
-        current_hair_image_filename = ''
-        
-        if uploaded_file and allowed_file(uploaded_file.filename):
-            # Generate a unique filename
-            filename = str(uuid.uuid4()) + '_' + secure_filename(uploaded_file.filename)
-            uploaded_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            reference_image_filename = filename
-            
-        if current_hair_file and allowed_file(current_hair_file.filename):
-            # Generate a unique filename
-            filename = str(uuid.uuid4()) + '_' + secure_filename(current_hair_file.filename)
-            current_hair_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            current_hair_image_filename = filename
+        data = request.get_json()  # Changed from request.form.to_dict()
+        total_price = float(data.get('total_price', 0))  # Changed from total_price_str
+        deposit_amount = int(total_price * 0.30 * 100)  # 30% deposit in cents
 
-        # Get pricing based on hair length and options
-        length_data = HAIR_LENGTH_DATA.get(hair_length, HAIR_LENGTH_DATA['medium'])
-        base_price = length_data['price']
-        deposit_amount = length_data['deposit']
-        
-        # Adjust price based on options
-        if style == 'Box Braids' and box_braids_variation == 'knotless':
-            if hair_option == 'added':
-                base_price = length_data['knotlessAddedHairPrice']
-                deposit_amount = length_data['knotlessAddedHairDeposit']
-            else:
-                base_price = length_data['knotlessPrice']
-                deposit_amount = length_data['knotlessDeposit']
-        elif hair_option == 'added':
-            base_price = length_data['addedHairPrice']
-            deposit_amount = length_data['addedHairDeposit']
-
-        # Create Stripe checkout session
-        success_url = request.host_url.rstrip('/') + '/booking-success?session_id={CHECKOUT_SESSION_ID}'
-        cancel_url = request.host_url.rstrip('/') + '/booking.html'
+        if deposit_amount < 50:  # Stripe's minimum charge is $0.50
+            return jsonify(error="Deposit amount is too low to process."), 400
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -250,213 +58,388 @@ def create_checkout_session():
                 'price_data': {
                     'currency': 'usd',
                     'product_data': {
-                        'name': f'Deposit for {style}',
-                        'description': f'Hair Length: {hair_length}, Date: {date_str}, Time: {time_str}',
+                        'name': 'Appointment Deposit',
+                        'description': f"Deposit for {data.get('selected_style', 'a hairstyle')}",
                     },
-                    'unit_amount': int(deposit_amount * 100),  # Convert to cents
+                    'unit_amount': deposit_amount,
                 },
                 'quantity': 1,
             }],
             mode='payment',
-            success_url=success_url,
-            cancel_url=cancel_url,
+            success_url=f"{YOUR_DOMAIN}/booking-success.html?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{YOUR_DOMAIN}/booking.html",
             metadata={
-                'name': name,
-                'phone': phone,
-                'style': style,
-                'hair_length': hair_length,
-                'date': date_str,
-                'time': time_str,
-                'notes': notes[:500] if notes else '',  # Limit notes to 500 chars for metadata
-                'box_braids_variation': box_braids_variation,
-                'hair_option': hair_option,
-                'cornrows_variation': cornrows_variation,
-                'two_strand_twists_variation': two_strand_twists_variation,
-                'reference_image': reference_image_filename,
-                'current_hair_image': current_hair_image_filename,
-                'total_price': str(base_price),
-                'deposit_amount': str(deposit_amount)
+                'customerName': data.get('name'),
+                'phoneNumber': data.get('phone'),
+                'email': data.get('email'),
+                'appointmentDateTime': data.get('appointment-datetime'),
+                'selectedStyle': data.get('selected_style'),
+                'hairLength': data.get('hair_length'),
+                'hairOption': data.get('hair_option'),
+                'preWashOption': data.get('pre_wash_option'),
+                'detanglingOption': data.get('detangling_option'),
+                'notes': data.get('notes'),
+                'totalPrice': str(total_price),
+                'duration': data.get('duration'),
+                'currentHairImageURL': data.get('currentHairImageURL'),
+                'referenceImageURL': data.get('referenceImageURL'),
+                'boxBraidsVariation': data.get('box_braids_variation'),
+                'cornrowsVariation': data.get('cornrows_variation'),
+                'twoStrandTwistsVariation': data.get('two_strand_twists_variation')
             }
         )
-        
-        return jsonify({'id': checkout_session.id})
+        return jsonify({'url': checkout_session.url})
 
     except Exception as e:
-        print(f'Error creating checkout session: {e}')
-        return jsonify({'error': str(e)}), 500
+        print(f"Error creating checkout session: {e}")
+        return jsonify(error={"message": str(e)}), 500
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    payload = request.get_data()
-    sig_header = request.headers.get('Stripe-Signature')
+
+@app.route('/api/booking-success', methods=['POST'])
+def booking_success():
+    """
+    Handles the successful payment callback from Stripe.
+    Verifies the session and saves the booking to Firebase.
+    """
+    print("\n--- /api/booking-success endpoint hit ---")
+
+    if not db:
+        print("Error: Database is not configured on the server.")
+        return jsonify(error="Database is not configured on the server."), 500
+
+    session_id = request.json.get('session_id')
+    if not session_id:
+        print("Error: Session ID is missing from the request.")
+        return jsonify(error='Session ID is missing'), 400
+
+    print(f"Received session_id: {session_id}")
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, WEBHOOK_SECRET
-        )
-    except ValueError as e:
-        # Invalid payload
-        return 'Invalid payload', 400
-    except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        return 'Invalid signature', 400
+        session = stripe.checkout.Session.retrieve(session_id)
+        print(
+            f"Successfully retrieved Stripe session. Payment Status: {session.payment_status}")
 
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        
-        # Get customer details from session metadata
-        metadata = session.metadata
-        name = metadata.get('name', '')
-        phone = metadata.get('phone', '')
-        style = metadata.get('style', '')
-        hair_length = metadata.get('hair_length', '')
-        date_str = metadata.get('date', '')
-        time_str = metadata.get('time', '')
-        notes = metadata.get('notes', '')
-        box_braids_variation = metadata.get('box_braids_variation', '')
-        hair_option = metadata.get('hair_option', '')
-        cornrows_variation = metadata.get('cornrows_variation', '')
-        two_strand_twists_variation = metadata.get('two_strand_twists_variation', '')
-        reference_image = metadata.get('reference_image', '')
-        current_hair_image = metadata.get('current_hair_image', '')
-        total_price = float(metadata.get('total_price', 0))
-        deposit_amount = float(metadata.get('deposit_amount', 0))
-        
-        try:
-            # Create calendar event
-            create_calendar_event(
-                name=name,
-                phone=phone,
-                style=style,
-                hair_length=hair_length,
-                date_str=date_str,
-                time_str=time_str,
-                notes=notes,
-                box_braids_variation=box_braids_variation,
-                hair_option=hair_option,
-                cornrows_variation=cornrows_variation,
-                two_strand_twists_variation=two_strand_twists_variation,
-                current_hair_image=current_hair_image,
-                reference_image=reference_image,
-                final_price=total_price
-            )
-            return 'Success', 200
-        except Exception as e:
-            print(f'Error creating calendar event: {e}')
-            return str(e), 500
+        if session.payment_status == 'paid':
+            metadata = session.metadata
+            print(f"Payment successful. Metadata received: {metadata}")
 
-    return 'Success', 200
+            total_price = float(metadata.get('totalPrice', 0))
 
-@app.route('/api/availability')
-def availability():
-    # Get month from query param (format: YYYY-MM)
-    month = request.args.get('month', '')
-    if not month:
-        return jsonify({'error': 'Month parameter is required'}), 400
-    
-    try:
-        # Parse the month string to get start and end dates
-        year, month = map(int, month.split('-'))
-        start_date = datetime.datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1)
+            booking_data = {
+                'customerName': metadata.get('customerName'),
+                'phoneNumber': metadata.get('phoneNumber'),
+                'email': metadata.get('email'),
+                'appointmentDateTime': metadata.get('appointmentDateTime'),
+                'selectedStyle': metadata.get('selectedStyle'),
+                'hairLength': metadata.get('hairLength'),
+                'hairOption': metadata.get('hairOption'),
+                'preWashOption': metadata.get('preWashOption'),
+                'detanglingOption': metadata.get('detanglingOption'),
+                'notes': metadata.get('notes'),
+                'totalPrice': total_price,
+                'depositPaid': session.amount_total / 100.0,
+                'duration': metadata.get('duration'),
+                'status': 'confirmed',
+                'createdAt': firestore.SERVER_TIMESTAMP,
+                'stripeSessionId': session_id,
+                'currentHairImageURL': metadata.get('currentHairImageURL'),
+                'referenceImageURL': metadata.get('referenceImageURL'),
+                'boxBraidsVariation': metadata.get('boxBraidsVariation'),
+                'cornrowsVariation': metadata.get('cornrowsVariation'),
+                'twoStrandTwistsVariation': metadata.get('twoStrandTwistsVariation'),
+                'currentHairImage': metadata.get('currentHairImage'),
+                'referenceImage': metadata.get('referenceImage')
+            }
+
+            print(
+                f"Attempting to save following booking data to Firebase: {booking_data}")
+
+            update_time, doc_ref = db.collection('bookings').add(booking_data)
+            print(
+                f"Successfully saved booking to Firebase. Document ID: {doc_ref.id}")
+
+            # Convert non-serializable fields for the JSON response
+            response_data = booking_data.copy()
+            response_data['createdAt'] = datetime.datetime.utcnow().isoformat()
+
+            return jsonify({'status': 'success', 'booking': response_data})
         else:
-            end_date = datetime.datetime(year, month + 1, 1)
+            print(
+                f"Payment not successful. Status was: {session.payment_status}")
+            return jsonify(
+                {'status': 'error', 'message': 'Payment not successful.'}), 400
 
-        # Convert to RFC3339 timestamp
-        start_date = start_date.isoformat() + 'Z'  # 'Z' indicates UTC
-        end_date = end_date.isoformat() + 'Z'
+    except Exception as e:
+        print(f"An exception occurred in booking success endpoint: {e}")
+        return jsonify(error={"message": str(e)}), 500
 
-        # Call the Calendar API
-        events_result = service.events().list(
-            calendarId=CALENDAR_ID,
-            timeMin=start_date,
-            timeMax=end_date,
-            singleEvents=True,
-            orderBy='startTime'
-        ).execute()
-        events = events_result.get('items', [])
 
-        # Format events for frontend
-        formatted_events = []
-        for event in events:
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            end = event['end'].get('dateTime', event['end'].get('date'))
-            formatted_events.append({
-                'start': start,
-                'end': end
+@app.route('/api/get-bookings', methods=['GET'])
+def get_bookings():
+    """
+    Retrieves all bookings from the Firestore database.
+    """
+    if not db:
+        return jsonify(error="Database is not configured."), 500
+
+    try:
+        bookings_ref = db.collection('bookings')
+        all_bookings = []
+        for doc in bookings_ref.stream():
+            booking = doc.to_dict()
+            booking['id'] = doc.id  # Add the document ID
+
+            # Convert datetime fields to ISO 8601 strings
+            for key, value in booking.items():
+                if isinstance(value, datetime.datetime):
+                    booking[key] = value.isoformat()
+
+            all_bookings.append(booking)
+
+        return jsonify(all_bookings)
+    except Exception as e:
+        print(f"Error fetching bookings: {e}")
+        return jsonify(
+    error=f"An error occurred while fetching bookings: {e}"), 500
+
+
+@app.route('/api/get-booking-months', methods=['GET'])
+def get_booking_months():
+    """
+    Returns a sorted list of unique months that have bookings.
+    """
+    if not db:
+        return jsonify(error="Database is not configured."), 500
+    try:
+        bookings_ref = db.collection('bookings')
+        all_bookings = bookings_ref.stream()
+
+        months = set()
+        for booking in all_bookings:
+            data = booking.to_dict()
+            if 'appointmentDateTime' in data:
+                try:
+                    # Stored as string, e.g., '2024-05-20T10:00'
+                    dt = datetime.datetime.fromisoformat(
+                        data['appointmentDateTime'].split('T')[0])
+                    months.add(datetime.date(dt.year, dt.month, 1))
+                except (ValueError, TypeError):
+                    # Handle cases where the date format might be different or
+                    # invalid
+                    continue
+
+        # Sort dates, newest first
+        sorted_months = sorted(list(months), reverse=True)
+
+        # Format for response
+        formatted_months = [{'year': d.year, 'month': d.month}
+            for d in sorted_months]
+
+        return jsonify(formatted_months)
+    except Exception as e:
+        print(f"Error fetching booking months: {e}")
+        return jsonify(error=f"An error occurred: {e}"), 500
+
+
+@app.route('/api/dashboard-stats', methods=['GET'])
+def get_dashboard_stats():
+    """
+    Retrieves aggregated statistics for the admin dashboard.
+    """
+    if not db:
+        return jsonify(error="Database is not configured."), 500
+
+    try:
+        year = request.args.get('year', type=int)
+        month = request.args.get('month', type=int)
+
+        bookings_ref = db.collection('bookings')
+
+        if year and month:
+            # Filter by month
+            start_of_month = datetime.datetime(year, month, 1)
+            if month == 12:
+                end_of_month = datetime.datetime(year + 1, 1, 1)
+            else:
+                end_of_month = datetime.datetime(year, month + 1, 1)
+
+            all_docs = []
+            for doc in bookings_ref.stream():
+                booking = doc.to_dict()
+                try:
+                    dt_str = booking.get('appointmentDateTime')
+                    if dt_str:
+                        appt_dt = datetime.datetime.fromisoformat(dt_str)
+                        if start_of_month <= appt_dt < end_of_month:
+                            booking['id'] = doc.id
+                            for key, value in booking.items():
+                                if isinstance(value, datetime.datetime):
+                                    booking[key] = value.isoformat()
+                            all_docs.append(booking)
+                except (ValueError, TypeError):
+                    continue
+            all_bookings_data = all_docs
+        elif year:
+            # Filter by year
+            start_of_year = datetime.datetime(year, 1, 1)
+            end_of_year = datetime.datetime(year + 1, 1, 1)
+            all_docs = []
+            for doc in bookings_ref.stream():
+                booking = doc.to_dict()
+                try:
+                    dt_str = booking.get('appointmentDateTime')
+                    if dt_str:
+                        appt_dt = datetime.datetime.fromisoformat(dt_str)
+                        if start_of_year <= appt_dt < end_of_year:
+                            booking['id'] = doc.id
+                            for key, value in booking.items():
+                                if isinstance(value, datetime.datetime):
+                                    booking[key] = value.isoformat()
+                            all_docs.append(booking)
+                except (ValueError, TypeError):
+                    continue
+            all_bookings_data = all_docs
+        else:
+            all_docs = []
+            for doc in bookings_ref.stream():
+                booking = doc.to_dict()
+                booking['id'] = doc.id
+                for key, value in booking.items():
+                    if isinstance(value, datetime.datetime):
+                        booking[key] = value.isoformat()
+                all_docs.append(booking)
+            all_bookings_data = all_docs
+
+        # Total Bookings
+        total_bookings = len(all_bookings_data)
+
+        if total_bookings == 0:
+            return jsonify({
+                'stats': {
+                    'totalBookings': 0,
+                    'totalCustomers': 0,
+                    'totalSales': 0,
+                    'totalRevenue': 0,
+                    'favoriteStyle': 'N/A',
+                    'favoriteStyleCount': 0
+                },
+                'bookings': []
             })
 
-        return jsonify(formatted_events)
-    except Exception as e:
-        print(f'Error fetching availability: {e}')
-        return jsonify({'error': str(e)}), 500
+        # Total Customers (unique by email)
+        customer_emails = {booking.get('email') for booking in all_bookings_data if booking.get('email')}
+        total_customers = len(customer_emails)
 
-@app.route('/debug/test-calendar', methods=['GET'])
-def test_calendar():
+        # Total Sales is the sum of the full price of all bookings
+        total_sales = sum(booking.get('totalPrice', 0) for booking in all_bookings_data)
+        
+        # Total Revenue is 90% of total sales
+        total_revenue = total_sales * 0.9
+
+        # Favorite Style
+        style_counts = {}
+        for booking in all_bookings_data:
+            style = booking.get('selectedStyle')
+            if style:
+                style_counts[style] = style_counts.get(style, 0) + 1
+        
+        if style_counts:
+            favorite_style = max(style_counts, key=style_counts.get)
+            favorite_style_count = style_counts[favorite_style]
+        else:
+            favorite_style = 'N/A'
+            favorite_style_count = 0
+
+        stats = {
+            'totalBookings': total_bookings,
+            'totalCustomers': total_customers,
+            'totalSales': total_sales,
+            'totalRevenue': total_revenue,
+            'favoriteStyle': favorite_style,
+            'favoriteStyleCount': favorite_style_count
+        }
+
+        return jsonify({'stats': stats, 'bookings': all_bookings_data})
+
+    except Exception as e:
+        print(f"Error fetching dashboard stats: {e}")
+        return jsonify(error=f"An error occurred while fetching dashboard stats: {e}"), 500
+
+@app.route('/api/get-unavailable-times', methods=['GET'])
+def get_unavailable_times():
+    """
+    Retrieves all booked time slots to prevent double bookings.
+    Returns a list of time slots that are already booked.
+    """
+    if not db:
+        return jsonify(error="Database is not configured."), 500
+
     try:
-        # Test creating a calendar event
-        event = create_calendar_event(
-            name="Test User",
-            phone="123-456-7890",
-            style="Test Style",
-            hair_length="medium",
-            date_str="2024-02-01",
-            time_str="10:00",
-            notes="This is a test event"
-        )
-        return jsonify({
-            'success': True,
-            'message': 'Calendar event created successfully',
-            'event': event
-        })
+        # Get the date range from query parameters (optional)
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+
+        # Query bookings collection
+        bookings_ref = db.collection('bookings')
+        
+        # Get all bookings
+        bookings = bookings_ref.stream()
+        
+        # Process each booking to extract unavailable times
+        unavailable_times = []
+        for booking in bookings:
+            booking_data = booking.to_dict()
+            
+            # Get the appointment date and time
+            appointment_datetime = booking_data.get('appointmentDateTime')
+            if not appointment_datetime:
+                continue
+
+            # Parse the appointment datetime
+            try:
+                start_time = datetime.datetime.fromisoformat(appointment_datetime)
+                
+                # If date range is provided, filter by it
+                if start_date_str and end_date_str:
+                    start_date = datetime.datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                    end_date = datetime.datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+                    
+                    # Skip if outside the requested date range
+                    if start_time < start_date or start_time > end_date:
+                        continue
+
+                # Get the duration in minutes (default to 120 if not specified)
+                duration_str = booking_data.get('duration', '120')
+                try:
+                    duration_minutes = float(duration_str)
+                except ValueError:
+                    # If duration is like "2 hours", extract the number
+                    duration_minutes = float(duration_str.split()[0]) * 60
+
+                # Calculate end time based on duration
+                end_time = start_time + datetime.timedelta(minutes=duration_minutes)
+                
+                # Add the time slot to unavailable times
+                unavailable_times.append({
+                    'start': start_time.isoformat(),
+                    'end': end_time.isoformat(),
+                    'title': 'Booked',  # Generic title to maintain privacy
+                    'duration': duration_minutes / 60  # Convert to hours
+                })
+            except (ValueError, TypeError) as e:
+                print(f"Error processing booking {booking.id}: {e}")
+                continue
+
+        return jsonify(unavailable_times)
+
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error fetching unavailable times: {e}")
+        return jsonify(error=f"An error occurred while fetching unavailable times: {e}"), 500
 
-@app.route('/booking-success.html')
-def booking_success_page():
-    return send_file('booking-success.html')
-
-@app.route('/booking-success')
-def booking_success():
-    return redirect('/booking-success.html')
-
-@app.route('/debug/webhook-info')
-def webhook_info():
-    return jsonify({
-        'webhook_url': request.host_url.rstrip('/') + '/webhook',
-        'webhook_secret': WEBHOOK_SECRET
-    })
-
-@app.route('/styles.css')
-def serve_styles_css():
-    return send_file('styles.css')
-
-@app.route('/booking.css')
-def serve_booking_css():
-    return send_file('booking.css')
-
-@app.route('/script.js')
-def serve_script_js():
-    return send_file('script.js')
-
-@app.route('/booking.js')
-def serve_booking_js():
-    return send_file('booking.js')
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+# --- HTML Page Routes ---
 
 @app.route('/')
-def home():
-    return send_file('index.html')
-
-@app.route('/index.html')
-def serve_index():
+def serve_home():
     return send_file('index.html')
 
 @app.route('/booking.html')
@@ -467,21 +450,17 @@ def serve_booking():
 def serve_catalog():
     return send_file('catalog.html')
 
-@app.route('/styles-catalog.html')
-def serve_styles_catalog():
-    return send_file('styles-catalog.html')
-
 @app.route('/product.html')
 def serve_product():
     return send_file('product.html')
 
-@app.route('/images/<filename>')
-def serve_images(filename):
-    return send_file(os.path.join('images', filename))
+@app.route('/admin.html')
+def serve_admin():
+    return send_file('admin.html')
 
-@app.route('/header.png')
-def serve_header():
-    return send_file('header.png')
+@app.route('/booking-success.html')
+def serve_booking_success():
+    return send_file('booking-success.html')
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(port=5500, debug=True) 

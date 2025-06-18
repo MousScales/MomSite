@@ -366,10 +366,29 @@ footer {
 
 .footer-bottom {
     text-align: center;
-    padding-top: 2rem;
+    padding: 1.5rem 0;
     margin-top: 2rem;
     border-top: 1px solid var(--light-gray);
+    font-size: 0.9rem;
     color: var(--soft-grey);
+}
+
+.admin-login-button {
+    background: none;
+    border: 1px solid var(--light-gray);
+    color: var(--soft-grey);
+    padding: 5px 10px;
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.admin-login-button:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
 }
 
 .creator-credit {

@@ -56,3 +56,6 @@ uploads/
 # System files
 .DS_Store
 Thumbs.db
+
+# New additions
+serviceAccountKey.json
