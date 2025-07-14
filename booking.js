@@ -731,19 +731,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: formData.get('name'),
                 phone: formData.get('phone'),
                 email: formData.get('email'),
-                appointment_datetime: formData.get('appointment-datetime'),
-                selected_style: formData.get('selected-style'),
-                hair_length: formData.get('hair-length'),
-                hair_option: formData.get('hair-option'),
-                pre_wash_option: formData.get('pre-wash-option'),
+                appointmentDateTime: formData.get('appointment-datetime'),
+                selectedStyle: formData.get('selected-style'),
+                hairLength: formData.get('hair-length'),
+                hairOption: formData.get('hair-option'),
+                preWashOption: formData.get('pre-wash-option'),
                 notes: formData.get('notes'),
-                total_price: price,
+                totalPrice: price,
                 duration: duration,
                 currentHairImageURL: currentHairImageUrl,
                 referenceImageURL: referenceImageUrl,
-                box_braids_variation: formData.get('box-braids-variation'),
-                cornrows_variation: formData.get('cornrows-variation'),
-                two_strand_twists_variation: formData.get('two-strand-twists-variation')
+                boxBraidsVariation: formData.get('box-braids-variation'),
+                cornrowsVariation: formData.get('cornrows-variation'),
+                twoStrandTwistsVariation: formData.get('two-strand-twists-variation')
             };
 
             submitBtn.textContent = 'Creating Checkout...';
