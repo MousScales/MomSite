@@ -715,6 +715,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Validate appointment date and time
+            const appointmentDateTime = formData.get('appointment-datetime');
+            if (!appointmentDateTime) {
+                alert('Please select a date and time for your appointment.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Book Appointment';
+                return;
+            }
+
             submitBtn.textContent = 'Uploading Images...';
             
             // Upload images
