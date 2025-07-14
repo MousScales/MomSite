@@ -8,15 +8,15 @@
  */
 
 const {onRequest} = require("firebase-functions/v2/https");
-const {defineString} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const stripe = require("stripe");
 const cors = require("cors")({origin: true});
 
-// Define configuration parameters
-const stripeKey = defineString("STRIPE_KEY");
 // Production domain URL
 const DOMAIN_URL = "https://www.mayaafricanhairbraid.com";
+// Stripe secret key - split for readability
+const STRIPE_SECRET_KEY = "sk_test_51REifLRqvuBtPAdXRTp97iSuVIpCbbsxwc087FA10" +
+  "CKCrpOqr5ZYpc0fagAvqoQXS3ZWYh8t7dhXhR04uLkBq8tF00v2RXirWg";
 
 admin.initializeApp();
 
@@ -92,13 +92,6 @@ exports.createCheckoutSession = onRequest((request, response) => {
     }
 
     try {
-      // Get configuration values
-      const stripeKeyValue = stripeKey.value();
-
-      if (!stripeKeyValue) {
-        throw new Error("Missing Stripe API key in configuration");
-      }
-
       const data = request.body;
       const totalPrice = parseFloat(data.total_price || 0);
       // 30% deposit in cents
@@ -109,7 +102,7 @@ exports.createCheckoutSession = onRequest((request, response) => {
       }
 
       // Initialize Stripe with the secret key
-      const stripeClient = stripe(stripeKeyValue);
+      const stripeClient = stripe(STRIPE_SECRET_KEY);
 
       // Create a temporary booking document to store the data
       const tempBookingRef = admin.firestore().collection("temp_bookings").doc();
@@ -125,7 +118,7 @@ exports.createCheckoutSession = onRequest((request, response) => {
       await tempBookingRef.set(bookingData);
 
       // Create success URL with session ID and booking ID
-      const successUrl = new URL("/booking-success.html", DOMAIN_URL);
+      const successUrl = new URL("/api/handlePaymentSuccess", DOMAIN_URL);
       successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
       successUrl.searchParams.set("booking_id", tempBookingRef.id);
 
@@ -174,14 +167,8 @@ exports.handlePaymentSuccess = onRequest(async (request, response) => {
       throw new Error("Missing session_id or booking_id");
     }
 
-    // Get configuration values
-    const stripeKeyValue = stripeKey.value();
-    if (!stripeKeyValue) {
-      throw new Error("Missing Stripe API key in configuration");
-    }
-
     // Initialize Stripe
-    const stripeClient = stripe(stripeKeyValue);
+    const stripeClient = stripe(STRIPE_SECRET_KEY);
 
     // Verify payment status
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
