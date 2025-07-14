@@ -700,24 +700,25 @@ document.addEventListener('DOMContentLoaded', function() {
     bookingForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
+        // Disable submit button and show loading state
         const submitBtn = document.getElementById('submit-btn');
-        const currentHairImage = document.getElementById('current-hair-image').files[0];
-
-        // Validate current hair photo
-        if (!currentHairImage) {
-            alert('Please provide a current photo of your hair.');
-            return;
-        }
-
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';
 
         try {
+            // Validate current hair photo
+            const currentHairImage = document.getElementById('current-hair-image').files[0];
+            if (!currentHairImage) {
+                alert('Please provide a current photo of your hair.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Book Appointment';
+                return;
+            }
+
             submitBtn.textContent = 'Uploading Images...';
             
             // Upload images
             const referenceImage = document.getElementById('reference-image').files[0];
-            
             const currentHairImageUrl = await uploadImage(currentHairImage);
             const referenceImageUrl = referenceImage ? await uploadImage(referenceImage) : null;
 
@@ -725,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(bookingForm);
             const { price, duration } = calculatePrice();
 
-            // Create booking data object with underscores instead of hyphens
+            // Create booking data object
             const bookingData = {
                 name: formData.get('name'),
                 phone: formData.get('phone'),
@@ -746,6 +747,8 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             submitBtn.textContent = 'Creating Checkout...';
+
+            // Create Stripe checkout session
             const response = await fetch(ENDPOINTS.CREATE_BOOKING, {
                 method: 'POST',
                 headers: {
@@ -797,13 +800,20 @@ document.addEventListener('DOMContentLoaded', function() {
             unavailableTimes = bookingsSnapshot.docs.map(doc => {
                 const booking = doc.data();
                 const startTime = new Date(booking.appointmentDateTime);
-                const endTime = new Date(startTime.getTime() + (parseInt(booking.duration) * 60 * 1000));
-                
+                const duration = parseInt(booking.duration) || 0;
+                let startISO = null, endISO = null;
+                if (!isNaN(startTime.getTime())) {
+                    const endTime = new Date(startTime.getTime() + (duration * 60 * 1000));
+                    startISO = startTime.toISOString();
+                    endISO = endTime.toISOString();
+                } else {
+                    console.warn('Invalid appointmentDateTime:', booking.appointmentDateTime, booking);
+                }
                 return {
-                    start: startTime.toISOString(),
-                    end: endTime.toISOString()
+                    start: startISO,
+                    end: endISO
                 };
-            });
+            }).filter(slot => slot.start && slot.end); // Only keep valid slots
 
             // If a date is selected, refresh the time slots
             if (selectedDate) {
