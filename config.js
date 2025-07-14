@@ -7,7 +7,7 @@ var ENDPOINTS = {
     GET_UNAVAILABLE_TIMES: 'https://us-central1-connect-2a17c.cloudfunctions.net/getUnavailableTimes',
     GET_BOOKING_MONTHS: `${API_BASE_URL}/get-booking-months`,
     GET_DASHBOARD_STATS: `${API_BASE_URL}/dashboard-stats`,
-    CREATE_BOOKING: 'https://us-central1-connect-2a17c.cloudfunctions.net/createCheckoutSession',
+    CREATE_BOOKING: 'https://www.mayaafricanhairbraid.com/api/createCheckoutSession',
     HANDLE_PAYMENT: 'https://us-central1-connect-2a17c.cloudfunctions.net/handlePaymentSuccess',
     VERIFY_BOOKING: `${API_BASE_URL}/verify-booking`,
     WEBHOOK: `${API_BASE_URL}/webhook`
