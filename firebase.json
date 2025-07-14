@@ -5,8 +5,7 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "functions/**",
-      "booking-success.html"
+      "functions/**"
     ],
     "rewrites": [
       {
