@@ -200,12 +200,9 @@ exports.handlePaymentSuccess = onRequest(async (request, response) => {
     // Delete the temporary booking
     await tempBookingRef.delete();
 
-    // Redirect to success page
+    // Redirect to homepage after successful payment
     const vercelDomain = "https://mayaafricanhairbraid.vercel.app";
-    const redirectUrl =
-      `${vercelDomain}/booking-success.html?session_id=${sessionId}` +
-      `&booking_id=${bookingId}`;
-    response.redirect(redirectUrl);
+    response.redirect(vercelDomain + "/");
   } catch (error) {
     console.error("Error handling payment success:", error);
     response.redirect("/booking-error.html?error=" + encodeURIComponent(error.message));
