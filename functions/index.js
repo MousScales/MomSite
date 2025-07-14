@@ -118,7 +118,8 @@ exports.createCheckoutSession = onRequest((request, response) => {
       await tempBookingRef.set(bookingData);
 
       // Create success URL with session ID and booking ID
-      const successUrl = new URL("/api/handlePaymentSuccess", DOMAIN_URL);
+      const firebaseFunctionsDomain = "https://us-central1-connect-2a17c.cloudfunctions.net";
+      const successUrl = new URL("/handlePaymentSuccess", firebaseFunctionsDomain);
       successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
       successUrl.searchParams.set("booking_id", tempBookingRef.id);
 
@@ -201,9 +202,8 @@ exports.handlePaymentSuccess = onRequest(async (request, response) => {
     await tempBookingRef.delete();
 
     // Redirect to success page
-    const redirectUrl =
-      `https://mayaafricanhairbraid.vercel.app/booking-success.html?` +
-      `session_id=${sessionId}&booking_id=${bookingId}`;
+    const vercelDomain = "https://mayaafricanhairbraid.vercel.app";
+    const redirectUrl = `${vercelDomain}/booking-success.html?session_id=${sessionId}&booking_id=${bookingId}`;
     response.redirect(redirectUrl);
   } catch (error) {
     console.error("Error handling payment success:", error);
