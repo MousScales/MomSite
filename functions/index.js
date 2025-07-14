@@ -118,7 +118,7 @@ exports.createCheckoutSession = onRequest((request, response) => {
       await tempBookingRef.set(bookingData);
 
       // Create success URL with session ID and booking ID
-      const successUrl = new URL("/api/handlePaymentSuccess", DOMAIN_URL);
+      const successUrl = new URL("https://handlepaymentsuccess-2znamu4p5q-uc.a.run.app");
       successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
       successUrl.searchParams.set("booking_id", tempBookingRef.id);
 
