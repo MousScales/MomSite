@@ -1340,14 +1340,20 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         const selectedStyle = formData.get('style');
         const styleConfig = styleConfigurations[selectedStyle];
         
+        console.log('Form submission - Selected style:', selectedStyle);
+        console.log('Form submission - Style config:', styleConfig);
+        
         if (styleConfig && styleConfig.specificOptions) {
             Object.keys(styleConfig.specificOptions).forEach(optionKey => {
                 const value = formData.get(optionKey);
+                console.log(`Form submission - ${optionKey}:`, value);
                 if (value) {
                     styleSpecificOptions[optionKey] = value;
                 }
             });
         }
+        
+        console.log('Form submission - Final styleSpecificOptions:', styleSpecificOptions);
 
             const bookingData = {
                 name: formData.get('name'),
