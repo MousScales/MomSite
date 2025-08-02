@@ -241,7 +241,7 @@ exports.updateBooking = onRequest({
         console.log(`Successfully deleted old Google Calendar event for booking ${bookingId}`);
         
         // Then create the new event
-        await syncToGoogleCalendar(updatedData);
+        await createGoogleCalendarEvent(updatedData);
         console.log(`Successfully synced rescheduled booking ${bookingId} to Google Calendar`);
       } catch (calendarError) {
         console.error("Error syncing to Google Calendar:", calendarError);
@@ -321,6 +321,186 @@ async function deleteGoogleCalendarEvent(bookingId) {
   } catch (error) {
     console.error("Error deleting Google Calendar event:", error);
     // Don't throw error, just log it
+  }
+}
+
+// Helper function to create Google Calendar event
+async function createGoogleCalendarEvent(bookingData) {
+  try {
+    // Get Google Calendar credentials from environment
+    const credentialsJson = process.env.GOOGLE_CALENDAR_CREDENTIALS;
+    const calendarId = process.env.GOOGLE_CALENDAR_ID;
+    
+    if (!credentialsJson || !calendarId) {
+      console.error("Missing Google Calendar configuration");
+      return;
+    }
+    
+    // Parse credentials
+    const credentials = JSON.parse(credentialsJson);
+    
+    // Set up Google Calendar API
+    const auth = new google.auth.GoogleAuth({
+      credentials: credentials,
+      scopes: ['https://www.googleapis.com/auth/calendar']
+    });
+    
+    const calendar = google.calendar({version: 'v3', auth});
+    
+    // Create start and end times
+    const appointmentDate = bookingData.appointmentDate || bookingData.date;
+    const appointmentTime = bookingData.appointmentTime || bookingData.time;
+    const duration = parseInt(bookingData.duration) || 2; // Default 2 hours
+    
+    if (!appointmentDate || !appointmentTime) {
+      console.error("Missing appointment date or time", {appointmentDate, appointmentTime});
+      return;
+    }
+    
+    // Parse the date and time more robustly
+    let startDateTime;
+    try {
+      // Parse the time as local time
+      const [hours, minutes] = appointmentTime.split(':').map(Number);
+      const [year, month, day] = appointmentDate.split('-').map(Number);
+      
+      // Create date in local time
+      startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
+      
+      // Add 4 hours to convert from UTC to EST
+      // This ensures the time appears correctly in the Google Calendar
+      startDateTime = new Date(startDateTime.getTime() + (4 * 60 * 60 * 1000));
+      
+    } catch (error) {
+      console.error('Error parsing date/time:', error);
+      return;
+    }
+    
+    const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000));
+    
+    // Function to generate style options text
+    function generateStyleOptionsText(bookingData) {
+      let optionsText = '';
+      
+      // Always show wash service status
+      if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service']) {
+        if (bookingData.styleSpecificOptions['wash-service'] === 'wash') {
+          optionsText += `• Wash Service: Wash & Condition (+$30)\n`;
+        } else {
+          optionsText += `• Wash Service: Not selected\n`;
+        }
+      } else {
+        optionsText += `• Wash Service: Not selected\n`;
+      }
+      
+      // Always show detangle service status
+      if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service']) {
+        if (bookingData.styleSpecificOptions['detangle-service'] === 'detangle') {
+          optionsText += `• Detangling Service: Detangle Hair (+$20)\n`;
+        } else {
+          optionsText += `• Detangling Service: Not selected\n`;
+        }
+      } else {
+        optionsText += `• Detangling Service: Not selected\n`;
+      }
+      
+      // Add other style-specific options
+      if (bookingData.styleSpecificOptions) {
+        Object.keys(bookingData.styleSpecificOptions).forEach(key => {
+          // Skip wash and detangle services as they're handled above
+          if (key !== 'wash-service' && key !== 'detangle-service') {
+            const value = bookingData.styleSpecificOptions[key];
+            if (value && value !== 'no-wash' && value !== 'no-detangle' && value !== 'none') {
+              // Format the key to be more readable
+              const formattedKey = key
+                .replace(/-/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+              
+              // Format the value
+              let formattedValue = value;
+              
+              // Handle specific field formatting
+              if (key.includes('knotless') && value === 'knotless') {
+                formattedValue = 'Knotless Style (+$30)';
+              } else if (key.includes('human') && value.includes('human')) {
+                formattedValue = 'Human Hair (+$60)';
+              } else if (key === 'hairLength') {
+                formattedValue = value.charAt(0).toUpperCase() + value.slice(1);
+              } else {
+                // Convert kebab-case or camelCase values to readable format
+                formattedValue = formattedValue
+                  .replace(/-/g, ' ')
+                  .replace(/([A-Z])/g, ' $1')
+                  .split(' ')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ');
+              }
+              
+              optionsText += `• ${formattedKey}: ${formattedValue}\n`;
+            }
+          }
+        });
+      }
+      
+      return optionsText || 'No additional options selected';
+    }
+    
+    // Create calendar event
+    const event = {
+      summary: `${bookingData.name} - ${bookingData.style}`,
+      description: `
+👤 CLIENT INFORMATION
+Name: ${bookingData.name}
+📞 Phone: ${bookingData.phone}
+
+✂️ STYLE DETAILS
+Style: ${bookingData.style}
+${bookingData.hairLength ? `Hair Length: ${bookingData.hairLength}` : ''}
+${generateStyleOptionsText(bookingData)}
+
+🧴 SERVICES
+Wash: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Yes (+$30)' : 'No'}
+Detangle: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Yes (+$20)' : 'No'}
+
+💰 PRICING INFORMATION
+Total Price: $${bookingData.totalPrice}
+Deposit Paid: $${bookingData.depositAmount}
+Remaining Balance: $${bookingData.totalPrice - bookingData.depositAmount}
+
+📝 ADDITIONAL NOTES
+${bookingData.notes || 'None'}
+      `.trim(),
+      start: {
+        dateTime: startDateTime.toISOString(),
+        timeZone: 'America/New_York', // Adjust to your timezone
+      },
+      end: {
+        dateTime: endDateTime.toISOString(),
+        timeZone: 'America/New_York', // Adjust to your timezone
+      },
+      colorId: bookingData.status === 'confirmed' ? '10' : '11', // Green for confirmed, Red for pending
+      extendedProperties: {
+        private: {
+          bookingId: bookingData.bookingId,
+          source: 'maya-hair-booking'
+        }
+      }
+    };
+    
+    // Insert event into calendar
+    const result = await calendar.events.insert({
+      calendarId: calendarId,
+      resource: event,
+    });
+    
+    console.log('Event created:', result.data.id);
+    
+  } catch (error) {
+    console.error("Error creating Google Calendar event:", error);
+    throw error;
   }
 }
 
