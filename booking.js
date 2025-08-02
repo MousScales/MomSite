@@ -48,6 +48,39 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
 
     // Style-specific configurations with custom options for each style
     const styleConfigurations = {
+        'test': {
+            name: 'Test',
+            basePrices: { custom: 100 },
+            duration: { custom: 2 },
+            specificOptions: {
+                'custom-duration': {
+                    label: 'Custom Duration (hours)',
+                    type: 'number',
+                    required: true,
+                    min: 1,
+                    max: 8,
+                    price: 0
+                },
+                'wash-service': {
+                    label: 'Wash Service',
+                    type: 'select',
+                    required: false,
+                    options: [
+                        { value: 'no-wash', label: 'No wash needed', price: 0 },
+                        { value: 'wash', label: 'Wash & Condition', price: 30 }
+                    ]
+                },
+                'detangle-service': {
+                    label: 'Detangling Service',
+                    type: 'select',
+                    required: false,
+                    options: [
+                        { value: 'no-detangle', label: 'No detangling needed', price: 0 },
+                        { value: 'detangle', label: 'Detangle Hair', price: 20 }
+                    ]
+                }
+            }
+        },
         'cornrows': {
             name: 'Cornrows',
             basePrices: { nostyle: 80 },
@@ -657,8 +690,22 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                                 `<option value="${opt.value}" data-price="${opt.price}">${opt.label}${opt.price !== 0 ? ` (+$${opt.price})` : ''}</option>`
                             ).join('')}
                         </select>
-            </div>
-        `;
+                    </div>
+                `;
+                fieldsContainer.innerHTML += fieldHtml;
+            } else if (option.type === 'number') {
+                const isConditional = option.dependsOn && option.dependsOnValue;
+                const conditionalStyle = isConditional ? 'style="display: none;"' : '';
+                
+                const fieldHtml = `
+                    <div class="form-group" id="${optionKey}-container" ${conditionalStyle}>
+                        <label for="${optionKey}">${option.label}${option.required ? ' *' : ''}</label>
+                        <input type="number" id="${optionKey}" name="${optionKey}" 
+                               min="${option.min || 1}" max="${option.max || 8}" 
+                               value="${option.default || ''}" 
+                               ${option.required ? 'required' : ''}>
+                    </div>
+                `;
                 fieldsContainer.innerHTML += fieldHtml;
             }
         });
@@ -677,6 +724,11 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                     
                     // Update duration for cornrows when style choice changes
                     if (styleKey === 'cornrows' && optionKey === 'style-choice') {
+                        updateDuration();
+                    }
+                    
+                    // Update duration for test style when custom duration changes
+                    if (styleKey === 'test' && optionKey === 'custom-duration') {
                         updateDuration();
                     }
                 });
@@ -857,6 +909,14 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             // Special handling for cornrows (duration is always 1 hour)
             if (selectedStyle === 'cornrows') {
                 duration = 1; // Cornrows - always 1 hour regardless of style choice
+            } else if (selectedStyle === 'test') {
+                // For test style, get duration from custom-duration field
+                const customDurationField = document.querySelector('input[name="custom-duration"]');
+                if (customDurationField && customDurationField.value) {
+                    duration = parseInt(customDurationField.value);
+                } else {
+                    duration = 2; // Default duration for test
+                }
             } else {
                 // For styles with single length or no length options
                 if (!styleConfig.hairLengthOptions || styleConfig.hairLengthOptions.length <= 1) {
