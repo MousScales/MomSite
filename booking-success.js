@@ -207,24 +207,24 @@ function populateBookingDetails(booking) {
             
             <div class="detail-section">
                 <h3><i class="fas fa-list"></i> Additional Services</h3>
-                ${booking.preWash && booking.preWash !== 'none' ? `
+                ${booking.styleSpecificOptions && booking.styleSpecificOptions['wash-service'] && booking.styleSpecificOptions['wash-service'] === 'wash' ? `
                 <div class="detail-item">
-                    <span class="detail-label">Pre-Wash:</span>
-                    <span class="detail-value">${booking.preWash}</span>
+                    <span class="detail-label">Wash Service:</span>
+                    <span class="detail-value">Wash & Condition (+$30)</span>
                 </div>
                 ` : ''}
-                ${booking.detangling && booking.detangling !== 'none' ? `
+                ${booking.styleSpecificOptions && booking.styleSpecificOptions['detangle-service'] && booking.styleSpecificOptions['detangle-service'] === 'detangle' ? `
                 <div class="detail-item">
-                    <span class="detail-label">Detangling:</span>
-                    <span class="detail-value">${booking.detangling}</span>
+                    <span class="detail-label">Detangling Service:</span>
+                    <span class="detail-value">Detangle Hair (+$20)</span>
                 </div>
                 ` : ''}
-                ${!booking.preWash || booking.preWash === 'none' ? !booking.detangling || booking.detangling === 'none' ? `
+                ${(!booking.styleSpecificOptions || (!booking.styleSpecificOptions['wash-service'] || booking.styleSpecificOptions['wash-service'] === 'no-wash') && (!booking.styleSpecificOptions['detangle-service'] || booking.styleSpecificOptions['detangle-service'] === 'no-detangle')) ? `
                 <div class="detail-item">
                     <span class="detail-label">Additional Services:</span>
                     <span class="detail-value">None</span>
                 </div>
-                ` : '' : ''}
+                ` : ''}
             </div>
             
             <div class="detail-section pricing-section">
@@ -413,8 +413,8 @@ ${bookingData.hairLength ? `Hair Length: ${bookingData.hairLength}` : ''}
 
 
 ADDITIONAL SERVICES
-Pre-Wash: ${bookingData.preWash || 'None'}
-Detangling: ${bookingData.detangling || 'None'}
+${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Wash Service: Wash & Condition (+$30)' : 'Wash Service: None'}
+${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Detangling Service: Detangle Hair (+$20)' : 'Detangling Service: None'}
 
 PRICING INFORMATION
 Total Price: $${bookingData.totalPrice}
@@ -425,7 +425,7 @@ ${bookingData.notes ? `SPECIAL REQUESTS\n${bookingData.notes}` : ''}
 
 SALON INFORMATION
 Address: 116 Ocean Avenue, New London, CT 06320
-Business Hours: Monday - Saturday: 7:00 AM - 8:00 PM, Sunday: Closed
+Business Hours: Monday - Saturday: 7:00 AM - 6:00 PM, Sunday: Closed
 Payment: Cash and Card accepted
 
 IMPORTANT INFORMATION
@@ -559,19 +559,19 @@ function createPDFContent() {
                     <span style="color: black;">●</span> Additional Services
                 </h3>
                 <table style="width: 100%; border-collapse: collapse;">
-                    ${bookingData.preWash && bookingData.preWash !== 'none' ? `
+                    ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? `
                     <tr>
-                        <td style="padding: 8px 0; font-weight: bold; width: 40%;">Pre-Wash:</td>
-                        <td style="padding: 8px 0;">${bookingData.preWash}</td>
+                        <td style="padding: 8px 0; font-weight: bold; width: 40%;">Wash Service:</td>
+                        <td style="padding: 8px 0;">Wash & Condition (+$30)</td>
                     </tr>
                     ` : ''}
-                    ${bookingData.detangling && bookingData.detangling !== 'none' ? `
+                    ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? `
                     <tr>
-                        <td style="padding: 8px 0; font-weight: bold;">Detangling:</td>
-                        <td style="padding: 8px 0;">${bookingData.detangling}</td>
+                        <td style="padding: 8px 0; font-weight: bold;">Detangling Service:</td>
+                        <td style="padding: 8px 0;">Detangle Hair (+$20)</td>
                     </tr>
                     ` : ''}
-                    ${(!bookingData.preWash || bookingData.preWash === 'none') && (!bookingData.detangling || bookingData.detangling === 'none') ? `
+                    ${(!bookingData.styleSpecificOptions || (!bookingData.styleSpecificOptions['wash-service'] || bookingData.styleSpecificOptions['wash-service'] === 'no-wash') && (!bookingData.styleSpecificOptions['detangle-service'] || bookingData.styleSpecificOptions['detangle-service'] === 'no-detangle')) ? `
                     <tr>
                         <td style="padding: 8px 0; font-weight: bold; width: 40%;">Additional Services:</td>
                         <td style="padding: 8px 0;">None</td>
@@ -623,7 +623,7 @@ function createPDFContent() {
                     </tr>
                     <tr>
                         <td style="padding: 8px 0; font-weight: bold;">Business Hours:</td>
-                        <td style="padding: 8px 0;">Monday - Saturday: 7:00 AM - 8:00 PM<br>Sunday: Closed</td>
+                        <td style="padding: 8px 0;">Monday - Saturday: 7:00 AM - 6:00 PM<br>Sunday: Closed</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px 0; font-weight: bold;">Payment:</td>
