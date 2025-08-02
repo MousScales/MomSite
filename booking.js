@@ -1347,8 +1347,17 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             Object.keys(styleConfig.specificOptions).forEach(optionKey => {
                 const value = formData.get(optionKey);
                 console.log(`Form submission - ${optionKey}:`, value);
+                
+                // Always include the option, even if it's empty or has a default "no" value
                 if (value) {
                     styleSpecificOptions[optionKey] = value;
+                } else {
+                    // Set default "no" values for wash and detangle services if not selected
+                    if (optionKey === 'wash-service') {
+                        styleSpecificOptions[optionKey] = 'no-wash';
+                    } else if (optionKey === 'detangle-service') {
+                        styleSpecificOptions[optionKey] = 'no-detangle';
+                    }
                 }
             });
         }
