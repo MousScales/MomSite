@@ -240,18 +240,18 @@ exports.syncToGoogleCalendar = onRequest({
       // Parse the date and time more robustly
       let startDateTime;
       try {
-        // Try parsing as ISO string first
-        if (appointmentTime.includes('T')) {
-          startDateTime = new Date(appointmentDate + 'T' + appointmentTime);
-        } else {
-          // Parse as local date and time
-          startDateTime = new Date(appointmentDate + ' ' + appointmentTime);
-        }
+        // Parse the time as local time in Eastern Time (ET)
+        const [hours, minutes] = appointmentTime.split(':').map(Number);
+        const [year, month, day] = appointmentDate.split('-').map(Number);
         
-        // If parsing failed, try alternative format
-        if (isNaN(startDateTime.getTime())) {
-          startDateTime = new Date(appointmentDate + 'T' + appointmentTime + ':00');
-        }
+        // Create date in Eastern Time
+        startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
+        
+        // Convert to Eastern Time (ET)
+        const etOffset = -5; // EST is UTC-5, EDT is UTC-4 (we'll use EST for simplicity)
+        const utcTime = startDateTime.getTime() + (startDateTime.getTimezoneOffset() * 60000);
+        startDateTime = new Date(utcTime + (etOffset * 60 * 60 * 1000));
+        
       } catch (error) {
         console.error('Error parsing date/time:', error);
         return response.status(400).json({error: "Invalid date/time format"});
