@@ -59,6 +59,15 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     console.log('Protocol:', window.location.protocol);
     console.log('Hostname:', window.location.hostname);
     
+    // Check if we're on a supported device
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMac = /Mac/.test(navigator.userAgent);
+    
+    console.log('Is Safari:', isSafari);
+    console.log('Is iOS:', isIOS);
+    console.log('Is Mac:', isMac);
+    
     if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
         applePaySupported = true;
         console.log('Apple Pay is supported');
@@ -120,11 +129,16 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 });
             } else {
                 console.log('Apple Pay is not available on this device');
+                console.log('Reason: Payment request not supported');
                 applePayButtonContainer.style.display = 'none';
             }
+        }).catch(function(error) {
+            console.error('Error checking Apple Pay support:', error);
+            applePayButtonContainer.style.display = 'none';
         });
     } else {
         console.log('Apple Pay is not supported on this browser');
+        console.log('Reason: ApplePaySession not available or canMakePayments returned false');
     }
 
     // Style-specific configurations with custom options for each style
@@ -1542,7 +1556,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     
                     if (response.ok) {
                         console.log('Booking saved successfully');
-                    } else {
+    } else {
                         console.log('Firebase Functions not available, will save on success page');
                     }
                 } catch (error) {
@@ -1605,8 +1619,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         e.preventDefault();
 
         if (!validateForm()) {
-            return;
-        }
+                return;
+            }
 
         // Show loading state
         const submitBtn = document.querySelector('.submit-btn');
@@ -1698,13 +1712,13 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     // Save booking to database
                     try {
                         const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
-                            method: 'POST',
-                            headers: {
+                method: 'POST',
+                headers: {
                                 'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(bookingData)
-                        });
-                        
+                },
+                body: JSON.stringify(bookingData)
+            });
+
                         if (response.ok) {
                             console.log('Booking saved successfully');
                         } else {
@@ -1764,8 +1778,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 errorElement.textContent = error.message;
                 submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-                return;
-            }
+            return;
+        }
 
             // Payment successful
             if (paymentIntent.status === 'succeeded') {
