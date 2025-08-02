@@ -955,8 +955,23 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         if (styleValue) {
             console.log('Setting style to:', styleValue);
             styleSelect.value = styleValue;
+            
+            // Create style-specific fields
+            createStyleSpecificFields(styleValue);
+            
+            // Update hair length options
+            updateHairLengthOptions(styleValue);
+            
+            // Update pricing
+            updatePricing();
+            
+            // Update duration
+            updateDuration();
+            
             // Trigger the change event to update the form
             styleSelect.dispatchEvent(new Event('change'));
+            
+            console.log('Style auto-selection completed for:', styleValue);
         }
     }
 
