@@ -240,17 +240,18 @@ exports.syncToGoogleCalendar = onRequest({
       // Parse the date and time more robustly
       let startDateTime;
       try {
-        // Parse the time as local time in Eastern Time (ET)
+        // Parse the time as local time
         const [hours, minutes] = appointmentTime.split(':').map(Number);
         const [year, month, day] = appointmentDate.split('-').map(Number);
         
-        // Create date in Eastern Time
+        // Create date in local time
         startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
         
-        // Convert to Eastern Time (ET)
-        const etOffset = -5; // EST is UTC-5, EDT is UTC-4 (we'll use EST for simplicity)
-        const utcTime = startDateTime.getTime() + (startDateTime.getTimezoneOffset() * 60000);
-        startDateTime = new Date(utcTime + (etOffset * 60 * 60 * 1000));
+        // Adjust for timezone - since the calendar is set to America/New_York
+        // and we want the time to appear as the local time the user selected
+        // we need to account for the timezone offset
+        const localOffset = startDateTime.getTimezoneOffset() * 60000; // Convert to milliseconds
+        startDateTime = new Date(startDateTime.getTime() + localOffset);
         
       } catch (error) {
         console.error('Error parsing date/time:', error);
