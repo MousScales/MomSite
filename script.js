@@ -865,6 +865,17 @@ async function confirmReschedule() {
         return;
     }
     
+    // Get the confirm button and disable it
+    const confirmBtn = document.getElementById('confirm-reschedule-btn');
+    const originalText = confirmBtn.innerHTML;
+    
+    // Show loading state
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        Rescheduling...
+    `;
+    
     try {
         // Format the new date and time
         const newDate = selectedRescheduleDate.toISOString().split('T')[0];
@@ -907,6 +918,10 @@ async function confirmReschedule() {
     } catch (error) {
         console.error('Error rescheduling appointment:', error);
         alert('Failed to reschedule appointment. Please try again or call us at 860-425-0751.');
+    } finally {
+        // Restore button state
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
     }
 }
 

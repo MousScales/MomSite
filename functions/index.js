@@ -187,7 +187,7 @@ exports.searchBookingsByPhone = onRequest({
 
 // Update Booking Function
 exports.updateBooking = onRequest({
-  secrets: ["DOMAIN_URL"]
+  secrets: ["DOMAIN_URL", "GOOGLE_CALENDAR_CREDENTIALS", "GOOGLE_CALENDAR_ID"]
 }, (request, response) => {
   cors(request, response, async () => {
     if (request.method !== "POST") {
@@ -236,13 +236,19 @@ exports.updateBooking = onRequest({
       
       // Sync to Google Calendar
       try {
-        // First, delete the old Google Calendar event
-        await deleteGoogleCalendarEvent(bookingId);
-        console.log(`Successfully deleted old Google Calendar event for booking ${bookingId}`);
+        console.log(`Starting Google Calendar sync for booking ${bookingId}`);
         
-        // Then create the new event
+        // First, delete ALL old Google Calendar events for this booking
+        await deleteGoogleCalendarEvent(bookingId);
+        console.log(`Successfully cleaned up old Google Calendar events for booking ${bookingId}`);
+        
+        // Wait a moment to ensure deletion is processed
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Then create exactly ONE new event
         await createGoogleCalendarEvent(updatedData);
-        console.log(`Successfully synced rescheduled booking ${bookingId} to Google Calendar`);
+        console.log(`Successfully created new Google Calendar event for booking ${bookingId}`);
+        
       } catch (calendarError) {
         console.error("Error syncing to Google Calendar:", calendarError);
         // Don't fail the entire operation if Google Calendar sync fails
@@ -303,17 +309,20 @@ async function deleteGoogleCalendarEvent(bookingId) {
     const events = await calendar.events.list({
       calendarId: calendarId,
       privateExtendedProperty: `bookingId=${bookingId}`,
-      maxResults: 1
+      maxResults: 10
     });
     
-    // Delete the event if found
+    console.log(`Found ${events.data.items ? events.data.items.length : 0} events for booking ${bookingId}`);
+    
+    // Delete all events found for this booking
     if (events.data.items && events.data.items.length > 0) {
-      const eventId = events.data.items[0].id;
-      await calendar.events.delete({
-        calendarId: calendarId,
-        eventId: eventId
-      });
-      console.log(`Deleted Google Calendar event ${eventId} for booking ${bookingId}`);
+      for (const event of events.data.items) {
+        await calendar.events.delete({
+          calendarId: calendarId,
+          eventId: event.id
+        });
+        console.log(`Deleted Google Calendar event ${event.id} for booking ${bookingId}`);
+      }
     } else {
       console.log(`No Google Calendar event found for booking ${bookingId}`);
     }
@@ -489,6 +498,18 @@ ${bookingData.notes || 'None'}
         }
       }
     };
+    
+    // Check if an event already exists for this booking
+    const existingEvents = await calendar.events.list({
+      calendarId: calendarId,
+      privateExtendedProperty: `bookingId=${bookingData.bookingId}`,
+      maxResults: 1
+    });
+    
+    if (existingEvents.data.items && existingEvents.data.items.length > 0) {
+      console.log(`Event already exists for booking ${bookingData.bookingId}, skipping creation`);
+      return;
+    }
     
     // Insert event into calendar
     const result = await calendar.events.insert({
