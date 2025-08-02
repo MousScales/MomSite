@@ -620,8 +620,13 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
 
     // Function to create style-specific form fields
     function createStyleSpecificFields(styleKey) {
+        console.log('createStyleSpecificFields called with:', styleKey);
         const styleConfig = styleConfigurations[styleKey];
+        console.log('Style config found:', styleConfig);
+        console.log('Style config specificOptions:', styleConfig?.specificOptions);
+        
         if (!styleConfig || !styleConfig.specificOptions) {
+            console.log('No style config or specific options, hiding section');
             document.getElementById('style-specific-options').style.display = 'none';
             return;
         }
@@ -659,6 +664,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         });
         
         // Show the section
+        console.log('Showing style-specific-options section');
         document.getElementById('style-specific-options').style.display = 'block';
         
         // Add event listeners to new fields for price updates and conditional logic
@@ -957,18 +963,23 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             styleSelect.value = styleValue;
             
             // Create style-specific fields
+            console.log('Creating style-specific fields for:', styleValue);
             createStyleSpecificFields(styleValue);
             
             // Update hair length options
+            console.log('Updating hair length options for:', styleValue);
             updateHairLengthOptions(styleValue);
             
             // Update pricing
+            console.log('Updating pricing for:', styleValue);
             updatePricing();
             
             // Update duration
+            console.log('Updating duration for:', styleValue);
             updateDuration();
             
             // Trigger the change event to update the form
+            console.log('Triggering change event for:', styleValue);
             styleSelect.dispatchEvent(new Event('change'));
             
             console.log('Style auto-selection completed for:', styleValue);
