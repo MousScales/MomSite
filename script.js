@@ -1,3 +1,103 @@
+// Global functions for appointment actions
+async function cancelAppointment(bookingId) {
+    const warningMessage = `⚠️ IMPORTANT CANCELLATION NOTICE ⚠️
+
+• Your deposit is NON-REFUNDABLE
+• Once cancelled, you must rebook a new appointment
+• Rescheduling is a better option - you keep your deposit
+
+Would you like to:
+1. Cancel (lose deposit, must rebook)
+2. Reschedule instead (keep deposit, change date/time)
+
+
+Click OK to cancel, or Cancel to keep your appointment.`;
+
+    if (confirm(warningMessage)) {
+        // Show final confirmation
+        const finalConfirm = confirm(`Are you absolutely sure you want to cancel?
+
+⚠️ This will:
+• Delete your appointment permanently
+• Your deposit will NOT be refunded
+• You'll need to book a new appointment
+
+This action cannot be undone.`);
+
+        if (finalConfirm) {
+            try {
+                // Call the cancel booking API
+                const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/cancelBooking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bookingId: bookingId
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Appointment cancelled successfully! You will receive a confirmation shortly.\n\nTo book a new appointment, please visit our booking page.');
+                    
+                    // Refresh the search results
+                    const searchBtn = document.getElementById('search-btn');
+                    if (searchBtn) {
+                        searchBtn.click();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    if (errorData.error && errorData.error.includes('48 hours')) {
+                        alert('⚠️ Cancellation Not Available\n\nCancellation is not available within 48 hours of your appointment.\n\nFor urgent cancellation needs, please call us at:\n📞 860-425-0751');
+                    } else {
+                        throw new Error(errorData.error || 'Failed to cancel appointment');
+                    }
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                alert('Failed to cancel appointment. Please try again or call us at 860-425-0751.');
+            }
+        }
+    }
+}
+
+function rescheduleAppointment(bookingId) {
+    // Get the appointment data from the card
+    const appointmentCard = document.querySelector(`[data-booking-id="${bookingId}"]`);
+    if (!appointmentCard) {
+        alert('Appointment not found. Please try refreshing the page.');
+        return;
+    }
+    
+    // Extract appointment data from the card
+    const appointmentData = {
+        bookingId: bookingId,
+        name: appointmentCard.querySelector('.detail-item:nth-child(3) span').textContent.replace('Name: ', ''),
+        phone: appointmentCard.querySelector('.detail-item:nth-child(4) span').textContent.replace('Phone: ', ''),
+        style: appointmentCard.querySelector('.detail-item:nth-child(2) span').textContent.replace('Style: ', ''),
+        appointmentDate: appointmentCard.querySelector('.appointment-date').textContent,
+        appointmentTime: appointmentCard.querySelector('.detail-item:nth-child(1) span').textContent.replace('Time: ', ''),
+        duration: appointmentCard.querySelector('.detail-item:nth-child(5) span').textContent.replace('Duration: ', '').replace(' hours', ''),
+        totalPrice: parseFloat(appointmentCard.querySelector('.detail-item:nth-child(7) span').textContent.replace('Total Price: $', '')),
+        depositAmount: parseFloat(appointmentCard.querySelector('.detail-item:nth-child(8) span').textContent.replace('Deposit: $', '').replace(' (Paid)', '').replace(' (Pending)', '')),
+        hairLength: appointmentCard.querySelector('.detail-item:nth-child(6) span')?.textContent.replace('Hair Length: ', '') || '',
+        notes: appointmentCard.querySelector('.detail-item:nth-child(10) span')?.textContent.replace('Notes: ', '') || ''
+    };
+    
+    // Check if appointment is within 48 hours
+    const appointmentDateTime = new Date(appointmentData.appointmentDate + ' ' + appointmentData.appointmentTime);
+    const now = new Date();
+    const timeDifference = appointmentDateTime.getTime() - now.getTime();
+    const hoursDifference = timeDifference / (1000 * 60 * 60);
+    
+    if (hoursDifference <= 48) {
+        alert('⚠️ Rescheduling Not Available\n\nRescheduling is not available within 48 hours of your appointment.\n\nFor urgent rescheduling needs, please call us at:\n📞 860-425-0751\n\nWe\'ll do our best to accommodate your request!');
+        return;
+    }
+    
+    showRescheduleModal(appointmentData);
+}
+
 // Admin Login Functionality
 document.addEventListener('DOMContentLoaded', function() {
     const adminLoginBtn = document.getElementById('admin-login-btn');
@@ -454,41 +554,6 @@ let currentRescheduleAppointment = null;
 let selectedRescheduleDate = null;
 let selectedRescheduleTime = null;
 
-function rescheduleAppointment(bookingId) {
-    // Find the appointment data
-    const appointmentCard = document.querySelector(`[data-booking-id="${bookingId}"]`);
-    if (!appointmentCard) {
-        alert('Appointment not found');
-        return;
-    }
-    
-    // Get appointment data from the card
-    const appointmentData = {
-        bookingId: bookingId,
-        name: appointmentCard.querySelector('.detail-item:nth-child(3) span').textContent.replace('Name: ', ''),
-        phone: appointmentCard.querySelector('.detail-item:nth-child(4) span').textContent.replace('Phone: ', ''),
-        style: appointmentCard.querySelector('.detail-item:nth-child(2) span').textContent.replace('Style: ', ''),
-        currentDate: appointmentCard.querySelector('.appointment-date').textContent,
-        currentTime: appointmentCard.querySelector('.detail-item:nth-child(1) span').textContent.replace('Time: ', ''),
-        totalPrice: appointmentCard.querySelector('.detail-item:nth-child(5) span').textContent.replace('Total: $', ''),
-        depositAmount: appointmentCard.querySelector('.detail-item:nth-child(6) span').textContent.replace('Deposit: $', '').split(' ')[0]
-    };
-    
-    // Check if appointment is within 48 hours
-    const appointmentDateTime = new Date(appointmentData.currentDate + ' ' + appointmentData.currentTime);
-    const now = new Date();
-    const timeDifference = appointmentDateTime.getTime() - now.getTime();
-    const hoursDifference = timeDifference / (1000 * 60 * 60);
-    
-    if (hoursDifference <= 48) {
-        alert(`⚠️ Rescheduling Not Available\n\nYour appointment is scheduled for ${appointmentData.currentDate} at ${appointmentData.currentTime}.\n\nRescheduling is not available within 48 hours of your appointment.\n\nFor urgent rescheduling needs, please call us at:\n📞 860-425-0751\n\nWe'll do our best to accommodate your request!`);
-        return;
-    }
-    
-    currentRescheduleAppointment = appointmentData;
-    showRescheduleModal(appointmentData);
-}
-
 function showRescheduleModal(appointmentData) {
     const modal = document.getElementById('reschedule-modal');
     const appointmentInfo = document.getElementById('reschedule-appointment-info');
@@ -510,11 +575,11 @@ function showRescheduleModal(appointmentData) {
         </div>
         <div class="appointment-info-item">
             <i class="fas fa-calendar"></i>
-            <span>${appointmentData.currentDate}</span>
+            <span>${appointmentData.appointmentDate}</span>
         </div>
         <div class="appointment-info-item">
             <i class="fas fa-clock"></i>
-            <span>${appointmentData.currentTime}</span>
+            <span>${appointmentData.appointmentTime}</span>
         </div>
     `;
     
@@ -766,7 +831,7 @@ function setupRescheduleModalListeners() {
 
 function preSelectCurrentAppointment(appointmentData) {
     // Parse the current appointment date
-    const currentDateStr = appointmentData.currentDate;
+    const currentDateStr = appointmentData.appointmentDate;
     let currentDate;
     
     // Try to parse the date from various formats
@@ -787,7 +852,7 @@ function preSelectCurrentAppointment(appointmentData) {
     }
     
     // Parse the current appointment time
-    const currentTimeStr = appointmentData.currentTime;
+    const currentTimeStr = appointmentData.appointmentTime;
     let currentHour;
     
     if (currentTimeStr.includes(':')) {
@@ -1027,8 +1092,8 @@ async function confirmReschedule() {
             bookingId: currentRescheduleAppointment.bookingId,
             newDate: newDate,
             newTime: newTime,
-            originalDate: currentRescheduleAppointment.currentDate,
-            originalTime: currentRescheduleAppointment.currentTime
+            originalDate: currentRescheduleAppointment.appointmentDate,
+            originalTime: currentRescheduleAppointment.appointmentTime
         };
         
         const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/updateBooking', {
@@ -1068,67 +1133,5 @@ async function confirmReschedule() {
         // Restore button state
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = originalText;
-    }
-}
-
-async function cancelAppointment(bookingId) {
-    const warningMessage = `⚠️ IMPORTANT CANCELLATION NOTICE ⚠️
-
-• Your deposit is NON-REFUNDABLE
-• Once cancelled, you must rebook a new appointment
-• Rescheduling is a better option - you keep your deposit
-
-Would you like to:
-1. Cancel (lose deposit, must rebook)
-2. Reschedule instead (keep deposit, change date/time)
-
-
-Click OK to cancel, or Cancel to keep your appointment.`;
-
-    if (confirm(warningMessage)) {
-        // Show final confirmation
-        const finalConfirm = confirm(`Are you absolutely sure you want to cancel?
-
-⚠️ This will:
-• Delete your appointment permanently
-• Your deposit will NOT be refunded
-• You'll need to book a new appointment
-
-This action cannot be undone.`);
-
-        if (finalConfirm) {
-            try {
-                // Call the cancel booking API
-                const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/cancelBooking', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        bookingId: bookingId
-                    })
-                });
-                
-                if (response.ok) {
-                    alert('Appointment cancelled successfully! You will receive a confirmation shortly.\n\nTo book a new appointment, please visit our booking page.');
-                    
-                    // Refresh the search results
-                    const searchBtn = document.getElementById('search-btn');
-                    if (searchBtn) {
-                        searchBtn.click();
-                    }
-                } else {
-                    const errorData = await response.json();
-                    if (errorData.error && errorData.error.includes('48 hours')) {
-                        alert('⚠️ Cancellation Not Available\n\nCancellation is not available within 48 hours of your appointment.\n\nFor urgent cancellation needs, please call us at:\n📞 860-425-0751');
-                    } else {
-                        throw new Error(errorData.error || 'Failed to cancel appointment');
-                    }
-                }
-            } catch (error) {
-                console.error('Error cancelling appointment:', error);
-                alert('Failed to cancel appointment. Please try again or call us at 860-425-0751.');
-            }
-        }
     }
 } 
