@@ -926,6 +926,40 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     });
     hairLengthSelect.addEventListener('change', () => updateDuration());
 
+    // Auto-select style from URL parameter
+    const styleFromURL = getStyleFromURL();
+    if (styleFromURL) {
+        console.log('Style from URL:', styleFromURL);
+        // Map the style title to the style value
+        const styleMapping = {
+            'box-braids': 'box-braids',
+            'boho-braids': 'boho-braids',
+            'fulani-braids': 'fulani-braids',
+            'lemonade-braids': 'lemonade-braids',
+            'passion-twists': 'passion-twists',
+            'senegalese-twists': 'senegalese-twists',
+            'marley-twists': 'marley-twists',
+            'two-strand-twists': 'two-strand-twists',
+            'locs-retwist': 'locs-retwist',
+            'loc-retwist-2-strands': 'loc-retwist-2-strands',
+            'barrel-twists': 'barrel-twists',
+            'starter-locs': 'starter-locs',
+            'weave': 'weave',
+            'cornrows': 'cornrows',
+            'jumbo-braids': 'jumbo-braids',
+            'stitch-braids': 'stitch-braids',
+            'tribal-braids': 'tribal-braids'
+        };
+        
+        const styleValue = styleMapping[styleFromURL];
+        if (styleValue) {
+            console.log('Setting style to:', styleValue);
+            styleSelect.value = styleValue;
+            // Trigger the change event to update the form
+            styleSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
 
     // Calendar functionality
     let currentDate = new Date();
@@ -1436,34 +1470,6 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     function getStyleFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('style');
-    }
-
-    // Pre-select style if passed in URL
-    const styleFromURL = getStyleFromURL();
-    if (styleFromURL) {
-        // Map the style title to the style value
-        const styleMapping = {
-            'Box Braids': 'box-braids',
-            'Traditional Box Braids': 'traditional-box-braids',
-            'Boho Box Braids': 'boho-box-braids',
-            'Fulani Braids': 'fulani-braids',
-            'Lemonade Braids': 'lemonade-braids',
-            'Goddess Braids': 'goddess-braids',
-            'Passion Twists': 'passion-twists',
-            'Senegalese Twists': 'senegalese-twists',
-            'Marley Twists': 'marley-twists',
-            'Two Strand Twists': 'two-strand-twists',
-            'Locs Retwist': 'locs-retwist',
-            'Starter Locs': 'starter-locs',
-            'Weave': 'weave',
-            'Cornrows': 'cornrows'
-        };
-        
-        const styleValue = styleMapping[styleFromURL];
-        if (styleValue) {
-            styleSelect.value = styleValue;
-            updatePricing();
-        }
     }
 
 
