@@ -249,50 +249,56 @@ exports.syncToGoogleCalendar = onRequest({
       function generateStyleOptionsText(bookingData) {
         let optionsText = '';
         
-        // Iterate through all booking data to find style-specific options
-        Object.keys(bookingData).forEach(key => {
-          // Skip basic fields that are already displayed elsewhere
-          const skipFields = ['name', 'phone', 'style', 'duration', 'appointmentDate', 'appointmentTime', 
-                             'date', 'time', 'displayTime', 'totalPrice', 'depositAmount', 'depositPaid', 
-                             'paymentMethod', 'status', 'bookingId', 'notes', 'styleImage', 'hairImage',
-                             'preWash', 'detangling'];
-          
-          if (!skipFields.includes(key) && bookingData[key] && bookingData[key] !== '' && bookingData[key] !== 'no-wash' && bookingData[key] !== 'no-detangle' && bookingData[key] !== 'none') {
-            // Format the key to be more readable
-            const formattedKey = key
-              .replace(/-/g, ' ')
-              .replace(/([A-Z])/g, ' $1')
-              .split(' ')
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ');
-            
-            // Format the value
-            let formattedValue = bookingData[key];
-            
-            // Handle specific field formatting
-            if (key.includes('wash') && bookingData[key] === 'wash') {
-              formattedValue = 'Wash & Condition (+$30)';
-            } else if (key.includes('detangle') && bookingData[key] === 'detangle') {
-              formattedValue = 'Detangle Hair (+$20)';
-            } else if (key.includes('knotless') && bookingData[key] === 'knotless') {
-              formattedValue = 'Knotless Style (+$30)';
-            } else if (key.includes('human') && bookingData[key].includes('human')) {
-              formattedValue = 'Human Hair (+$60)';
-            } else if (key === 'hairLength') {
-              formattedValue = bookingData[key].charAt(0).toUpperCase() + bookingData[key].slice(1);
-            } else {
-              // Convert kebab-case or camelCase values to readable format
-              formattedValue = formattedValue
-                .replace(/-/g, ' ')
-                .replace(/([A-Z])/g, ' $1')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
+        // Check for wash service
+        if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash') {
+          optionsText += `• Wash Service: Wash & Condition (+$30)\n`;
+        }
+        
+        // Check for detangle service
+        if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle') {
+          optionsText += `• Detangling Service: Detangle Hair (+$20)\n`;
+        }
+        
+        // Add other style-specific options
+        if (bookingData.styleSpecificOptions) {
+          Object.keys(bookingData.styleSpecificOptions).forEach(key => {
+            // Skip wash and detangle services as they're handled above
+            if (key !== 'wash-service' && key !== 'detangle-service') {
+              const value = bookingData.styleSpecificOptions[key];
+              if (value && value !== 'no-wash' && value !== 'no-detangle' && value !== 'none') {
+                // Format the key to be more readable
+                const formattedKey = key
+                  .replace(/-/g, ' ')
+                  .replace(/([A-Z])/g, ' $1')
+                  .split(' ')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ');
+                
+                // Format the value
+                let formattedValue = value;
+                
+                // Handle specific field formatting
+                if (key.includes('knotless') && value === 'knotless') {
+                  formattedValue = 'Knotless Style (+$30)';
+                } else if (key.includes('human') && value.includes('human')) {
+                  formattedValue = 'Human Hair (+$60)';
+                } else if (key === 'hairLength') {
+                  formattedValue = value.charAt(0).toUpperCase() + value.slice(1);
+                } else {
+                  // Convert kebab-case or camelCase values to readable format
+                  formattedValue = formattedValue
+                    .replace(/-/g, ' ')
+                    .replace(/([A-Z])/g, ' $1')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                }
+                
+                optionsText += `• ${formattedKey}: ${formattedValue}\n`;
+              }
             }
-            
-            optionsText += `• ${formattedKey}: ${formattedValue}\n`;
-          }
-        });
+          });
+        }
         
         return optionsText || 'No additional options selected';
       }
@@ -301,28 +307,55 @@ exports.syncToGoogleCalendar = onRequest({
       const event = {
         summary: `${bookingData.name} - ${bookingData.style}`,
         description: `
-📋 BOOKING DETAILS
-Client: ${bookingData.name}
+📋 BOOKING CONFIRMATION
+
+👤 CLIENT INFORMATION
+Name: ${bookingData.name}
 Phone: ${bookingData.phone}
-Service: ${bookingData.style}
+
+📅 APPOINTMENT DETAILS
+Date: ${new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}
+Time: ${bookingData.displayTime || bookingData.time}
 Duration: ${duration} hours
+
+✂️ SERVICE DETAILS
+Style: ${bookingData.style}
 ${bookingData.hairLength ? `Hair Length: ${bookingData.hairLength}` : ''}
+
+📋 ADDITIONAL SERVICES
+${generateStyleOptionsText(bookingData)}
 
 💰 PRICING
 Total Price: $${bookingData.totalPrice}
-Deposit Paid: $${bookingData.depositAmount}
-Status: ${bookingData.status || 'Confirmed'}
-Booking ID: ${bookingData.bookingId}
+Deposit Required: $${bookingData.depositAmount}
+Remaining Balance: $${bookingData.totalPrice - bookingData.depositAmount}
 
-🎨 STYLE OPTIONS
-${generateStyleOptionsText(bookingData)}
-
-📝 NOTES
-${bookingData.notes || 'No special notes'}
+📝 SPECIAL REQUESTS
+${bookingData.notes || 'None'}
 
 📸 REFERENCE IMAGES
 ${bookingData.styleImage ? `✅ Style Reference: Provided` : '❌ Style Reference: Not provided'}
 ${bookingData.hairImage ? `✅ Hair Image: Provided` : '❌ Hair Image: Not provided'}
+
+🏢 SALON INFORMATION
+Address: 116 Ocean Avenue, New London, CT 06320
+Business Hours: Monday - Saturday: 7:00 AM - 6:00 PM, Sunday: Closed
+Payment: Cash and Card accepted
+
+📋 IMPORTANT INFORMATION
+• Please arrive 10 minutes before your scheduled appointment time
+• Bring any reference photos you'd like to show
+• Payment (deposit and remaining balance) will be collected at the salon
+• If you need to reschedule, please contact us at least 24 hours in advance
+• We accept cash and card payments
+
+Booking ID: ${bookingData.bookingId}
+Status: ${bookingData.status || 'Confirmed'}
         `.trim(),
         start: {
           dateTime: startDateTime.toISOString(),
