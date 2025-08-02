@@ -182,7 +182,7 @@ exports.syncToGoogleCalendar = onRequest({
     if (request.method !== "POST") {
       return response.status(405).json({error: "Method not allowed"});
     }
-
+    
     try {
       const bookingData = request.body;
       
@@ -463,7 +463,7 @@ ${bookingData.notes || 'None'}
         colorId: bookingData.status === 'confirmed' ? '10' : '11', // Green for confirmed, Red for pending
         extendedProperties: {
           private: {
-            bookingId: bookingData.bookingId,
+          bookingId: bookingData.bookingId,
             source: 'maya-hair-booking'
           }
         }
@@ -486,9 +486,9 @@ ${bookingData.notes || 'None'}
       
     } catch (error) {
       console.error("Error syncing to Google Calendar:", error);
-      return response.status(500).json({
+      return response.status(500).json({ 
         error: `An error occurred while syncing to Google Calendar: ${error.message}`
       });
     }
   });
-});
+}); 

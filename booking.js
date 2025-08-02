@@ -657,8 +657,8 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                                 `<option value="${opt.value}" data-price="${opt.price}">${opt.label}${opt.price !== 0 ? ` (+$${opt.price})` : ''}</option>`
                             ).join('')}
                         </select>
-                    </div>
-                `;
+            </div>
+        `;
                 fieldsContainer.innerHTML += fieldHtml;
             }
         });
@@ -1183,7 +1183,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             if (response.ok) {
                 const data = await response.json();
                 existingBookings = data.bookings || data;
-            } else {
+                } else {
                 // Fallback to localStorage
                 const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
                 existingBookings = localBookings.filter(booking => booking.date === dateString);
@@ -1259,7 +1259,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     }
 
     // Initialize calendar
-    initCalendar();
+        initCalendar();
 
 
 
@@ -1445,7 +1445,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                     } else {
                         console.log('Firebase Functions not available, will save on success page');
                     }
-                } catch (error) {
+        } catch (error) {
                     console.log('Error saving to Firebase Functions:', error);
                 }
 
