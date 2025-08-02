@@ -230,6 +230,8 @@ exports.syncToGoogleCalendar = onRequest({
         fullBookingData: bookingData
       });
       
+      console.log("Google Calendar sync - Style specific options:", bookingData.styleSpecificOptions);
+      
       if (!appointmentDate || !appointmentTime) {
         console.error("Missing appointment date or time", {appointmentDate, appointmentTime});
         return response.status(400).json({error: "Missing appointment date or time"});

@@ -56,7 +56,8 @@ function saveBookingToAdmin(bookingData) {
         hairImage: bookingData.hairImage || null,
         bookingId: bookingData.bookingId,
         status: bookingData.status || 'confirmed', // Use confirmed status since payment was successful
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        styleSpecificOptions: bookingData.styleSpecificOptions || {} // Include style-specific options for Google Calendar
     };
 
     // Try to save to Firebase Functions first (if available)
@@ -149,6 +150,7 @@ function populateBookingDetails(booking) {
     // Debug: log the booking data to see what date we're getting
     console.log('Booking data on success page:', booking);
     console.log('Date field:', booking.date);
+    console.log('Style specific options:', booking.styleSpecificOptions);
     
     // Format date and time - parse as local date to avoid timezone issues
     const appointmentDate = new Date(booking.date + 'T00:00:00');
