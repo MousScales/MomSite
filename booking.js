@@ -690,7 +690,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                                 `<option value="${opt.value}" data-price="${opt.price}">${opt.label}${opt.price !== 0 ? ` (+$${opt.price})` : ''}</option>`
                             ).join('')}
                         </select>
-                    </div>
+                </div>
                 `;
                 fieldsContainer.innerHTML += fieldHtml;
             } else if (option.type === 'number') {
@@ -704,8 +704,8 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                                min="${option.min || 1}" max="${option.max || 8}" 
                                value="${option.default || ''}" 
                                ${option.required ? 'required' : ''}>
-                    </div>
-                `;
+            </div>
+        `;
                 fieldsContainer.innerHTML += fieldHtml;
             }
         });
@@ -1238,7 +1238,13 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         if (selectedDate && selectedDateSpan && selectedDateInfo) {
             const dateString = selectedDateSpan.textContent;
             const timeString = formatTime(hour);
-            selectedDateInfo.innerHTML = `Selected Date: <span id="selected-date">${dateString}</span> <span style="margin-left:1em; color:#28a745; font-weight:600;">${timeString}</span>`;
+            
+            // Calculate end time based on duration
+            const duration = parseInt(durationInput.value) || 2;
+            const endHour = hour + duration;
+            const endTimeString = formatTime(endHour);
+            
+            selectedDateInfo.innerHTML = `Selected Date: <span id="selected-date">${dateString}</span> <span style="margin-left:1em; color:#28a745; font-weight:600;">${timeString} - ${endTimeString}</span>`;
         }
     }
 
@@ -1319,6 +1325,9 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             totalSlots,
             availabilityPercentage
         });
+        
+        // Clear any existing classes first
+        indicator.classList.remove('available', 'limited', 'booked');
         
         if (availabilityPercentage >= 70) {
             // Mostly available (green)
