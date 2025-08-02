@@ -432,8 +432,8 @@ Remaining Balance: $${bookingData.totalPrice - bookingData.depositAmount}
 ${bookingData.notes || 'None'}
 
 📸 REFERENCE IMAGES
-${bookingData.styleImage ? `✅ Style Reference: Provided` : '❌ Style Reference: Not provided'}
-${bookingData.hairImage ? `✅ Hair Image: Provided` : '❌ Hair Image: Not provided'}
+${bookingData.styleImage ? `✅ Style Reference: Provided\n${bookingData.styleImage}` : '❌ Style Reference: Not provided'}
+${bookingData.hairImage ? `✅ Hair Image: Provided\n${bookingData.hairImage}` : '❌ Hair Image: Not provided'}
 
 🏢 SALON INFORMATION
 Address: 116 Ocean Avenue, New London, CT 06320
