@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     // Initialize Stripe
-const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3RtZnoiUF2Qvzru3I9fzKmxXUgF22tzJBoYZS3XqYf00QA6fSLqs');
+const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1TppknBz0lU8jmb48a1epPphqTY558sMO5rBzG5z62007VHMn2IL');
     const elements = stripe.elements();
     
     // Create card element
@@ -50,7 +50,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     const styleConfigurations = {
         'test': {
             name: 'Test',
-            basePrices: { custom: 100 },
+            basePrices: { custom: 1 },
             duration: { custom: 2 },
             specificOptions: {
                 'custom-duration': {
