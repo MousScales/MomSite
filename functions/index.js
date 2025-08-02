@@ -410,57 +410,21 @@ exports.syncToGoogleCalendar = onRequest({
       const event = {
         summary: `${bookingData.name} - ${bookingData.style}`,
         description: `
-📋 BOOKING CONFIRMATION
-
 👤 CLIENT INFORMATION
 Name: ${bookingData.name}
-Phone: ${bookingData.phone}
+📞 Phone: ${bookingData.phone}
 
-📅 APPOINTMENT DETAILS
-Date: ${new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}
-Time: ${bookingData.displayTime || bookingData.time}
-Duration: ${duration} hours
-
-✂️ SERVICE DETAILS
+✂️ STYLE DETAILS
 Style: ${bookingData.style}
 ${bookingData.hairLength ? `Hair Length: ${bookingData.hairLength}` : ''}
-
-📋 ADDITIONAL SERVICES
 ${generateStyleOptionsText(bookingData)}
 
-💰 PRICING BREAKDOWN
-${generatePricingBreakdown(bookingData)}
-─────────────────────────
-Total Price: $${bookingData.totalPrice}
-Deposit Required: $${bookingData.depositAmount}
-Remaining Balance: $${bookingData.totalPrice - bookingData.depositAmount}
+🧴 SERVICES
+Wash: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Yes (+$30)' : 'No'}
+Detangle: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Yes (+$20)' : 'No'}
 
-📝 SPECIAL REQUESTS
+📝 ADDITIONAL NOTES
 ${bookingData.notes || 'None'}
-
-📸 REFERENCE IMAGES
-${bookingData.styleImage ? `✅ Style Reference: Provided\n${bookingData.styleImage}` : '❌ Style Reference: Not provided'}
-${bookingData.hairImage ? `✅ Hair Image: Provided\n${bookingData.hairImage}` : '❌ Hair Image: Not provided'}
-
-🏢 SALON INFORMATION
-Address: 116 Ocean Avenue, New London, CT 06320
-Business Hours: Monday - Saturday: 7:00 AM - 6:00 PM, Sunday: Closed
-Payment: Cash and Card accepted
-
-📋 IMPORTANT INFORMATION
-• Please arrive 10 minutes before your scheduled appointment time
-• Bring any reference photos you'd like to show
-• Payment (deposit and remaining balance) will be collected at the salon
-• If you need to reschedule, please contact us at least 24 hours in advance
-• We accept cash and card payments
-
-Booking ID: ${bookingData.bookingId}
-Status: ${bookingData.status || 'Confirmed'}
         `.trim(),
         start: {
           dateTime: startDateTime.toISOString(),
