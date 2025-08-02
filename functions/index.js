@@ -425,6 +425,11 @@ ${generateStyleOptionsText(bookingData)}
 Wash: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Yes (+$30)' : 'No'}
 Detangle: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Yes (+$20)' : 'No'}
 
+💰 PRICING INFORMATION
+Total Price: $${bookingData.totalPrice}
+Deposit Paid: $${bookingData.depositAmount}
+Remaining Balance: $${bookingData.totalPrice - bookingData.depositAmount}
+
 📝 ADDITIONAL NOTES
 ${bookingData.notes || 'None'}
         `.trim(),
