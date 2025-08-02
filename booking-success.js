@@ -135,6 +135,104 @@ function syncToGoogleCalendar(bookingData) {
     });
 }
 
+// Function to generate style options display for success page
+function generateStyleOptionsDisplay(booking) {
+    let optionsHTML = '';
+    
+    // Define fields to skip (basic booking info already displayed elsewhere)
+    const skipFields = ['name', 'phone', 'style', 'duration', 'appointmentDate', 'appointmentTime', 
+                       'date', 'time', 'displayTime', 'totalPrice', 'depositAmount', 'depositPaid', 
+                       'paymentMethod', 'status', 'bookingId', 'notes', 'styleImage', 'hairImage', 'hairLength'];
+    
+    // Track if we found any services
+    let hasWashService = false;
+    let hasDetangleService = false;
+    let hasOtherOptions = false;
+    
+    // Process all booking fields to find style-specific options
+    Object.keys(booking).forEach(key => {
+        if (!skipFields.includes(key) && booking[key] && booking[key] !== '' && 
+            booking[key] !== 'no-wash' && booking[key] !== 'no-detangle' && 
+            booking[key] !== 'none' && booking[key] !== null) {
+            
+            // Format the key to be more readable
+            const formattedKey = key
+                .replace(/-/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            
+            // Format the value based on the field type
+            let formattedValue = booking[key];
+            let showPrice = false;
+            
+            if (key.includes('wash-service') && booking[key] === 'wash') {
+                formattedValue = 'Wash & Condition';
+                showPrice = true;
+                hasWashService = true;
+            } else if (key.includes('detangle-service') && booking[key] === 'detangle') {
+                formattedValue = 'Detangle Hair';
+                showPrice = true;
+                hasDetangleService = true;
+            } else if (key.includes('knotless') && booking[key] === 'knotless') {
+                formattedValue = 'Knotless Style';
+                showPrice = true;
+                hasOtherOptions = true;
+            } else if (key.includes('human') && booking[key].includes('human')) {
+                formattedValue = 'Human Hair Upgrade';
+                showPrice = true;
+                hasOtherOptions = true;
+            } else if (key.includes('consultation')) {
+                formattedValue = 'Price varies - will discuss during appointment';
+                hasOtherOptions = true;
+            } else {
+                // Convert kebab-case or camelCase values to readable format
+                formattedValue = formattedValue
+                    .replace(/-/g, ' ')
+                    .replace(/([A-Z])/g, ' $1')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                hasOtherOptions = true;
+            }
+            
+            // Add the formatted option to display
+            if (showPrice) {
+                const priceMap = {
+                    'wash': '+$30',
+                    'detangle': '+$20',
+                    'knotless': '+$30',
+                    'human': '+$60'
+                };
+                const priceAddition = Object.keys(priceMap).find(p => key.includes(p) || formattedValue.toLowerCase().includes(p));
+                optionsHTML += `
+                <div class="detail-item">
+                    <span class="detail-label">${formattedKey}:</span>
+                    <span class="detail-value">${formattedValue} ${priceAddition ? priceMap[priceAddition] : ''}</span>
+                </div>`;
+            } else {
+                optionsHTML += `
+                <div class="detail-item">
+                    <span class="detail-label">${formattedKey}:</span>
+                    <span class="detail-value">${formattedValue}</span>
+                </div>`;
+            }
+        }
+    });
+    
+    // If no additional options were selected, show a message
+    if (!hasWashService && !hasDetangleService && !hasOtherOptions) {
+        optionsHTML = `
+        <div class="detail-item">
+            <span class="detail-label">Additional Options:</span>
+            <span class="detail-value">None selected</span>
+        </div>`;
+    }
+    
+    return optionsHTML;
+}
+
 function populateBookingDetails(booking) {
     const detailsContainer = document.getElementById('booking-details');
     
@@ -199,32 +297,10 @@ function populateBookingDetails(booking) {
                 ${booking.hairLength ? `
                 <div class="detail-item">
                     <span class="detail-label">Hair Length:</span>
-                    <span class="detail-value">${booking.hairLength}</span>
+                    <span class="detail-value">${booking.hairLength.charAt(0).toUpperCase() + booking.hairLength.slice(1)}</span>
                 </div>
                 ` : ''}
-                
-            </div>
-            
-            <div class="detail-section">
-                <h3><i class="fas fa-list"></i> Additional Services</h3>
-                ${booking.preWash && booking.preWash !== 'none' ? `
-                <div class="detail-item">
-                    <span class="detail-label">Pre-Wash:</span>
-                    <span class="detail-value">${booking.preWash}</span>
-                </div>
-                ` : ''}
-                ${booking.detangling && booking.detangling !== 'none' ? `
-                <div class="detail-item">
-                    <span class="detail-label">Detangling:</span>
-                    <span class="detail-value">${booking.detangling}</span>
-                </div>
-                ` : ''}
-                ${!booking.preWash || booking.preWash === 'none' ? !booking.detangling || booking.detangling === 'none' ? `
-                <div class="detail-item">
-                    <span class="detail-label">Additional Services:</span>
-                    <span class="detail-value">None</span>
-                </div>
-                ` : '' : ''}
+                ${generateStyleOptionsDisplay(booking)}
             </div>
             
             <div class="detail-section pricing-section">
