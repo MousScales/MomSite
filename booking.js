@@ -46,6 +46,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         }
     });
 
+        // Apple Pay temporarily disabled
+    /*
     // Initialize Apple Pay
     let applePaySupported = false;
     let paymentRequest = null;
@@ -105,12 +107,12 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 console.log('Apple Pay is available');
                 applePayButtonContainer.style.display = 'block';
                 
-                            // Handle Apple Pay button click
-            applePayBtn.addEventListener('click', function() {
-                console.log('Apple Pay button clicked');
-                console.log('Payment request:', paymentRequest);
-                paymentRequest.open();
-            });
+                // Handle Apple Pay button click
+                applePayBtn.addEventListener('click', function() {
+                    console.log('Apple Pay button clicked');
+                    console.log('Payment request:', paymentRequest);
+                    paymentRequest.open();
+                });
                 
                 // Handle payment request events
                 paymentRequest.on('paymentmethod', function(ev) {
@@ -140,6 +142,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         console.log('Apple Pay is not supported on this browser');
         console.log('Reason: ApplePaySession not available or canMakePayments returned false');
     }
+    */
 
     // Style-specific configurations with custom options for each style
     const styleConfigurations = {
@@ -985,6 +988,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         document.getElementById('deposit-amount').textContent = `$${depositAmount}`;
         document.getElementById('deposit-due').textContent = `$${depositAmount}`;
         
+        // Apple Pay temporarily disabled
+        /*
         // Update Apple Pay amount if supported
         if (applePaySupported && paymentRequest) {
             paymentRequest.update({
@@ -995,6 +1000,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             });
             console.log('Apple Pay amount updated to:', Math.round(depositAmount * 100), 'cents');
         }
+        */
     }
 
     // Duration calculation based on hair length and style
@@ -1453,6 +1459,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     // Initialize calendar
         initCalendar();
 
+    // Apple Pay temporarily disabled
+    /*
     // Handle Apple Pay payment
     async function handleApplePayPayment(paymentMethod) {
         console.log('Processing Apple Pay payment:', paymentMethod);
@@ -1576,6 +1584,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             submitBtn.disabled = false;
         }
     }
+    */
 
     // Form validation
     function validateForm() {
