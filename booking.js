@@ -1263,6 +1263,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
 
             date: selectedDate.toISOString().split('T')[0],
             time: `${selectedTime.toString().padStart(2, '0')}:00`, // 24-hour format for Google Calendar
+            timeFormatted: formatTime(selectedTime), // Human-readable format for debugging
             displayTime: formatTime(selectedTime), // Keep formatted time for display
             duration: formData.get('duration'),
 

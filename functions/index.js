@@ -227,6 +227,7 @@ exports.syncToGoogleCalendar = onRequest({
         appointmentDate, 
         appointmentTime, 
         duration,
+        timeFormatted: bookingData.timeFormatted,
         fullBookingData: bookingData
       });
       
