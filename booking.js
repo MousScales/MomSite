@@ -932,60 +932,6 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     });
     hairLengthSelect.addEventListener('change', () => updateDuration());
 
-    // Auto-select style from URL parameter
-    const styleFromURL = getStyleFromURL();
-    if (styleFromURL) {
-        console.log('Style from URL:', styleFromURL);
-        // Map the style title to the style value
-        const styleMapping = {
-            'box-braids': 'box-braids',
-            'boho-braids': 'boho-braids',
-            'fulani-braids': 'fulani-braids',
-            'lemonade-braids': 'lemonade-braids',
-            'passion-twists': 'passion-twists',
-            'senegalese-twists': 'senegalese-twists',
-            'marley-twists': 'marley-twists',
-            'two-strand-twists': 'two-strand-twists',
-            'locs-retwist': 'locs-retwist',
-            'loc-retwist-2-strands': 'loc-retwist-2-strands',
-            'barrel-twists': 'barrel-twists',
-            'starter-locs': 'starter-locs',
-            'weave': 'weave',
-            'cornrows': 'cornrows',
-            'jumbo-braids': 'jumbo-braids',
-            'stitch-braids': 'stitch-braids',
-            'tribal-braids': 'tribal-braids'
-        };
-        
-        const styleValue = styleMapping[styleFromURL];
-        if (styleValue) {
-            console.log('Setting style to:', styleValue);
-            styleSelect.value = styleValue;
-            
-            // Create style-specific fields
-            console.log('Creating style-specific fields for:', styleValue);
-            createStyleSpecificFields(styleValue);
-            
-            // Update hair length options
-            console.log('Updating hair length options for:', styleValue);
-            updateHairLengthOptions(styleValue);
-            
-            // Update pricing
-            console.log('Updating pricing for:', styleValue);
-            updatePricing();
-            
-            // Update duration
-            console.log('Updating duration for:', styleValue);
-            updateDuration();
-            
-            // Trigger the change event to update the form
-            console.log('Triggering change event for:', styleValue);
-            styleSelect.dispatchEvent(new Event('change'));
-            
-            console.log('Style auto-selection completed for:', styleValue);
-        }
-    }
-
 
     // Calendar functionality
     let currentDate = new Date();
@@ -1513,7 +1459,59 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         return urlParams.get('style');
     }
 
-
+    // Auto-select style from URL parameter (moved to end of initialization)
+    const styleFromURL = getStyleFromURL();
+    if (styleFromURL) {
+        console.log('Style from URL:', styleFromURL);
+        // Map the style title to the style value
+        const styleMapping = {
+            'box-braids': 'box-braids',
+            'boho-braids': 'boho-braids',
+            'fulani-braids': 'fulani-braids',
+            'lemonade-braids': 'lemonade-braids',
+            'passion-twists': 'passion-twists',
+            'senegalese-twists': 'senegalese-twists',
+            'marley-twists': 'marley-twists',
+            'two-strand-twists': 'two-strand-twists',
+            'locs-retwist': 'locs-retwist',
+            'loc-retwist-2-strands': 'loc-retwist-2-strands',
+            'barrel-twists': 'barrel-twists',
+            'starter-locs': 'starter-locs',
+            'weave': 'weave',
+            'cornrows': 'cornrows',
+            'jumbo-braids': 'jumbo-braids',
+            'stitch-braids': 'stitch-braids',
+            'tribal-braids': 'tribal-braids'
+        };
+        
+        const styleValue = styleMapping[styleFromURL];
+        if (styleValue) {
+            console.log('Setting style to:', styleValue);
+            styleSelect.value = styleValue;
+            
+            // Create style-specific fields
+            console.log('Creating style-specific fields for:', styleValue);
+            createStyleSpecificFields(styleValue);
+            
+            // Update hair length options
+            console.log('Updating hair length options for:', styleValue);
+            updateHairLengthOptions(styleValue);
+            
+            // Update pricing
+            console.log('Updating pricing for:', styleValue);
+            updatePricing();
+            
+            // Update duration
+            console.log('Updating duration for:', styleValue);
+            updateDuration();
+            
+            // Trigger the change event to update the form
+            console.log('Triggering change event for:', styleValue);
+            styleSelect.dispatchEvent(new Event('change'));
+            
+            console.log('Style auto-selection completed for:', styleValue);
+        }
+    }
 
     // Admin login button functionality
     const adminLoginBtn = document.getElementById('admin-login-btn');
