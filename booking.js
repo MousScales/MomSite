@@ -46,6 +46,61 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         }
     });
 
+    // Initialize Apple Pay
+    let applePayButton = null;
+    let applePaySupported = false;
+
+    // Check if Apple Pay is supported
+    console.log('Checking Apple Pay support...');
+    console.log('ApplePaySession available:', !!window.ApplePaySession);
+    console.log('ApplePaySession.canMakePayments available:', !!(window.ApplePaySession && ApplePaySession.canMakePayments));
+    
+    if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
+        applePaySupported = true;
+        console.log('Apple Pay is supported');
+        
+        // Create Apple Pay button
+        const applePayButtonContainer = document.getElementById('apple-pay-button');
+        if (applePayButtonContainer) {
+            // Create payment request for Apple Pay
+            const paymentRequest = stripe.paymentRequest({
+                country: 'US',
+                currency: 'usd',
+                total: {
+                    label: 'Maya African Hair Braiding',
+                    amount: 10, // Start with 10 cents, will be updated
+                },
+                requestPayerName: true,
+                requestPayerEmail: true,
+            });
+            
+            // Create the payment request button
+            applePayButton = elements.create('paymentRequestButton', {
+                paymentRequest: paymentRequest,
+            });
+            
+            // Check if the payment request is supported
+            paymentRequest.canMakePayment().then(function(result) {
+                if (result && result.applePay) {
+                    console.log('Apple Pay is available');
+                    applePayButton.mount('#apple-pay-button');
+                    applePayButtonContainer.style.display = 'block';
+                    
+                    // Handle payment request events
+                    paymentRequest.on('paymentmethod', function(ev) {
+                        console.log('Apple Pay payment method received:', ev.paymentMethod);
+                        // Handle the payment method here
+                    });
+                } else {
+                    console.log('Apple Pay is not available on this device');
+                    applePayButtonContainer.style.display = 'none';
+                }
+            });
+        }
+    } else {
+        console.log('Apple Pay is not supported on this browser');
+    }
+
     // Style-specific configurations with custom options for each style
     const styleConfigurations = {
         'test': {
@@ -889,6 +944,12 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         document.getElementById('deposit-total-price').textContent = `$${totalPrice}`;
         document.getElementById('deposit-amount').textContent = `$${depositAmount}`;
         document.getElementById('deposit-due').textContent = `$${depositAmount}`;
+        
+        // Update Apple Pay amount if supported
+        if (applePaySupported && applePayButton) {
+            // Note: Apple Pay amount will be updated when payment is initiated
+            console.log('Apple Pay amount would be:', Math.round(depositAmount * 100), 'cents');
+        }
     }
 
     // Duration calculation based on hair length and style
@@ -1461,7 +1522,57 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         };
 
         try {
-            // Create payment intent on your server
+            // Check if Apple Pay is being used
+            if (applePaySupported && applePayButton) {
+                // Handle Apple Pay payment
+                console.log('Processing Apple Pay payment');
+                const { error, paymentIntent } = await applePayButton.confirmPayment();
+                
+                if (error) {
+                    console.error('Apple Pay payment failed:', error);
+                    const errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = error.message;
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                if (paymentIntent.status === 'succeeded') {
+                    console.log('Apple Pay payment succeeded:', paymentIntent);
+                    // Update booking data with payment info
+                    bookingData.depositPaid = true;
+                    bookingData.paymentIntentId = paymentIntent.id;
+                    bookingData.status = 'confirmed';
+                    bookingData.paymentMethod = 'apple_pay';
+                    
+                    // Save booking to database
+                    try {
+                        const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(bookingData)
+                        });
+                        
+                        if (response.ok) {
+                            console.log('Booking saved successfully');
+                        } else {
+                            console.log('Firebase Functions not available, will save on success page');
+                        }
+                    } catch (error) {
+                        console.log('Error saving to Firebase Functions:', error);
+                    }
+
+                    // Store booking data in sessionStorage
+                    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+                    window.location.href = 'booking-success.html';
+                    return;
+                }
+            }
+            
+            // Create payment intent on your server for card payment
+            console.log('Creating payment intent with amount:', depositAmount * 100, 'cents');
             const paymentResponse = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/createPaymentIntent', {
                 method: 'POST',
                 headers: {
@@ -1473,8 +1584,13 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 })
             });
 
+            console.log('Payment response status:', paymentResponse.status);
+            console.log('Payment response ok:', paymentResponse.ok);
+
             if (!paymentResponse.ok) {
-                throw new Error('Failed to create payment intent');
+                const errorText = await paymentResponse.text();
+                console.error('Payment intent creation failed:', errorText);
+                throw new Error(`Failed to create payment intent: ${paymentResponse.status} - ${errorText}`);
             }
 
             const { clientSecret } = await paymentResponse.json();

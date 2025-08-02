@@ -458,6 +458,56 @@ body {
     min-height: 1.2rem;
 }
 
+/* Apple Pay Styles */
+.apple-pay-button {
+    margin-bottom: 1rem;
+}
+
+.apple-pay-button button {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 8px;
+    background: #000;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.apple-pay-button button:hover {
+    background: #333;
+}
+
+.apple-pay-button button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.payment-divider {
+    text-align: center;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.payment-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e0e0e0;
+}
+
+.payment-divider span {
+    background: #f8f9fa;
+    padding: 0 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
 .payment-processing {
     display: none;
     text-align: center;
