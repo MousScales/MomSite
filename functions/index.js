@@ -249,14 +249,26 @@ exports.syncToGoogleCalendar = onRequest({
       function generateStyleOptionsText(bookingData) {
         let optionsText = '';
         
-        // Check for wash service
-        if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash') {
-          optionsText += `• Wash Service: Wash & Condition (+$30)\n`;
+        // Always show wash service status
+        if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service']) {
+          if (bookingData.styleSpecificOptions['wash-service'] === 'wash') {
+            optionsText += `• Wash Service: Wash & Condition (+$30)\n`;
+          } else {
+            optionsText += `• Wash Service: Not selected\n`;
+          }
+        } else {
+          optionsText += `• Wash Service: Not selected\n`;
         }
         
-        // Check for detangle service
-        if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle') {
-          optionsText += `• Detangling Service: Detangle Hair (+$20)\n`;
+        // Always show detangle service status
+        if (bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service']) {
+          if (bookingData.styleSpecificOptions['detangle-service'] === 'detangle') {
+            optionsText += `• Detangling Service: Detangle Hair (+$20)\n`;
+          } else {
+            optionsText += `• Detangling Service: Not selected\n`;
+          }
+        } else {
+          optionsText += `• Detangling Service: Not selected\n`;
         }
         
         // Add other style-specific options

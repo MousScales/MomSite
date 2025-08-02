@@ -207,24 +207,14 @@ function populateBookingDetails(booking) {
             
             <div class="detail-section">
                 <h3><i class="fas fa-list"></i> Additional Services</h3>
-                ${booking.styleSpecificOptions && booking.styleSpecificOptions['wash-service'] && booking.styleSpecificOptions['wash-service'] === 'wash' ? `
                 <div class="detail-item">
                     <span class="detail-label">Wash Service:</span>
-                    <span class="detail-value">Wash & Condition (+$30)</span>
+                    <span class="detail-value">${booking.styleSpecificOptions && booking.styleSpecificOptions['wash-service'] && booking.styleSpecificOptions['wash-service'] === 'wash' ? 'Wash & Condition (+$30)' : 'Not selected'}</span>
                 </div>
-                ` : ''}
-                ${booking.styleSpecificOptions && booking.styleSpecificOptions['detangle-service'] && booking.styleSpecificOptions['detangle-service'] === 'detangle' ? `
                 <div class="detail-item">
                     <span class="detail-label">Detangling Service:</span>
-                    <span class="detail-value">Detangle Hair (+$20)</span>
+                    <span class="detail-value">${booking.styleSpecificOptions && booking.styleSpecificOptions['detangle-service'] && booking.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Detangle Hair (+$20)' : 'Not selected'}</span>
                 </div>
-                ` : ''}
-                ${(!booking.styleSpecificOptions || (!booking.styleSpecificOptions['wash-service'] || booking.styleSpecificOptions['wash-service'] === 'no-wash') && (!booking.styleSpecificOptions['detangle-service'] || booking.styleSpecificOptions['detangle-service'] === 'no-detangle')) ? `
-                <div class="detail-item">
-                    <span class="detail-label">Additional Services:</span>
-                    <span class="detail-value">None</span>
-                </div>
-                ` : ''}
             </div>
             
             <div class="detail-section pricing-section">
@@ -413,8 +403,8 @@ ${bookingData.hairLength ? `Hair Length: ${bookingData.hairLength}` : ''}
 
 
 ADDITIONAL SERVICES
-${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Wash Service: Wash & Condition (+$30)' : 'Wash Service: None'}
-${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Detangling Service: Detangle Hair (+$20)' : 'Detangling Service: None'}
+Wash Service: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Wash & Condition (+$30)' : 'Not selected'}
+Detangling Service: ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Detangle Hair (+$20)' : 'Not selected'}
 
 PRICING INFORMATION
 Total Price: $${bookingData.totalPrice}
@@ -559,24 +549,14 @@ function createPDFContent() {
                     <span style="color: black;">●</span> Additional Services
                 </h3>
                 <table style="width: 100%; border-collapse: collapse;">
-                    ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? `
                     <tr>
                         <td style="padding: 8px 0; font-weight: bold; width: 40%;">Wash Service:</td>
-                        <td style="padding: 8px 0;">Wash & Condition (+$30)</td>
+                        <td style="padding: 8px 0;">${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['wash-service'] && bookingData.styleSpecificOptions['wash-service'] === 'wash' ? 'Wash & Condition (+$30)' : 'Not selected'}</td>
                     </tr>
-                    ` : ''}
-                    ${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? `
                     <tr>
                         <td style="padding: 8px 0; font-weight: bold;">Detangling Service:</td>
-                        <td style="padding: 8px 0;">Detangle Hair (+$20)</td>
+                        <td style="padding: 8px 0;">${bookingData.styleSpecificOptions && bookingData.styleSpecificOptions['detangle-service'] && bookingData.styleSpecificOptions['detangle-service'] === 'detangle' ? 'Detangle Hair (+$20)' : 'Not selected'}</td>
                     </tr>
-                    ` : ''}
-                    ${(!bookingData.styleSpecificOptions || (!bookingData.styleSpecificOptions['wash-service'] || bookingData.styleSpecificOptions['wash-service'] === 'no-wash') && (!bookingData.styleSpecificOptions['detangle-service'] || bookingData.styleSpecificOptions['detangle-service'] === 'no-detangle')) ? `
-                    <tr>
-                        <td style="padding: 8px 0; font-weight: bold; width: 40%;">Additional Services:</td>
-                        <td style="padding: 8px 0;">None</td>
-                    </tr>
-                    ` : ''}
                 </table>
             </div>
             
