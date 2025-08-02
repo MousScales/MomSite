@@ -58,6 +58,13 @@ body {
     overflow: hidden;
 }
 
+/* Fix for iOS Safari and mobile devices */
+@supports (-webkit-touch-callout: none) {
+    .hero {
+        background-attachment: scroll;
+    }
+}
+
 .hero::before {
     content: '';
     position: absolute;
@@ -315,6 +322,14 @@ footer {
         font-size: 1.2rem;
     }
     
+    /* Fix hero background for mobile */
+    .hero {
+        background-attachment: scroll;
+        background-position: center center;
+        min-height: 80vh;
+        padding: 0 1rem;
+    }
+    
     .hero h1 {
         font-size: 2.5rem;
     }
@@ -358,12 +373,20 @@ footer {
 }
 
 @media (max-width: 480px) {
+    /* Additional mobile fixes for very small screens */
+    .hero {
+        min-height: 70vh;
+        padding: 0 0.5rem;
+    }
+    
     .hero h1 {
         font-size: 2rem;
+        line-height: 1.1;
     }
     
     .hero p {
         font-size: 1rem;
+        margin-bottom: 2rem;
     }
     
     .section-title {

@@ -1128,16 +1128,6 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 }
             } else {
                 dayElement.addEventListener('click', () => selectDate(date));
-                
-                // Add availability indicator for available dates
-                const availabilityIndicator = document.createElement('div');
-                availabilityIndicator.className = 'availability-indicator';
-                dayElement.appendChild(availabilityIndicator);
-                
-                console.log(`Created availability indicator for ${date.toISOString().split('T')[0]}`);
-                
-                // Calculate and set availability for this day
-                await calculateDayAvailability(date, availabilityIndicator);
             }
             
             calendarDays.appendChild(dayElement);
@@ -1315,94 +1305,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         return `${hour - 12}:00 PM`;
     }
 
-    // Function to calculate day availability and set indicator
-    async function calculateDayAvailability(date, indicator) {
-        const dateString = date.toISOString().split('T')[0];
-        let existingBookings = [];
-        
-        try {
-            // Fetch bookings for this date
-            const response = await fetch(`https://us-central1-connect-2a17c.cloudfunctions.net/getBookingsForDate?date=${dateString}`);
-            if (response.ok) {
-                const data = await response.json();
-                existingBookings = data.bookings || data;
-                } else {
-                // Fallback to localStorage
-                const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
-                existingBookings = localBookings.filter(booking => booking.date === dateString);
-            }
-        } catch (error) {
-            console.log('Error fetching bookings for availability:', error);
-            // Fallback to localStorage
-            const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
-            existingBookings = localBookings.filter(booking => booking.date === dateString);
-        }
-        
-        // Ensure existingBookings is always an array
-        if (!Array.isArray(existingBookings)) {
-            existingBookings = [];
-        }
-        
-        // Calculate availability for each hour
-        let availableSlots = 0;
-        let limitedSlots = 0;
-        let bookedSlots = 0;
-        const totalSlots = businessHours.end - businessHours.start;
-        
-        for (let hour = businessHours.start; hour < businessHours.end; hour++) {
-            let concurrentBookings = 0;
-            
-            // Count concurrent bookings for this time slot
-            for (const booking of existingBookings) {
-                const bookingTime = booking.appointmentTime || booking.time;
-                const bookingStartHour = parseInt(bookingTime.split(':')[0]);
-                const bookingDuration = parseInt(booking.duration) || 2;
-                
-                // Check if this booking overlaps with the current hour
-                if (hour >= bookingStartHour && hour < bookingStartHour + bookingDuration) {
-                    concurrentBookings++;
-                }
-            }
-            
-            // Categorize this time slot
-            if (concurrentBookings === 0) {
-                availableSlots++;
-            } else if (concurrentBookings === 1) {
-                limitedSlots++;
-            } else {
-                bookedSlots++;
-            }
-        }
-        
-        // Determine overall availability for the day
-        const totalAvailable = availableSlots + limitedSlots;
-        const availabilityPercentage = (totalAvailable / totalSlots) * 100;
-        
-        console.log(`Day ${dateString} availability:`, {
-            availableSlots,
-            limitedSlots,
-            bookedSlots,
-            totalSlots,
-            availabilityPercentage
-        });
-        
-        // Clear any existing classes first
-        indicator.classList.remove('available', 'limited', 'booked');
-        
-        if (availabilityPercentage >= 70) {
-            // Mostly available (green)
-            indicator.classList.add('available');
-            console.log(`Day ${dateString}: Green (mostly available)`);
-        } else if (availabilityPercentage >= 30) {
-            // Limited availability (yellow)
-            indicator.classList.add('limited');
-            console.log(`Day ${dateString}: Yellow (limited availability)`);
-        } else {
-            // Mostly booked (red)
-            indicator.classList.add('booked');
-            console.log(`Day ${dateString}: Red (mostly booked)`);
-        }
-    }
+
 
     // Initialize calendar
         initCalendar();
