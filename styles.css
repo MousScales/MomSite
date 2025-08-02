@@ -118,23 +118,227 @@ body {
     text-decoration: none;
     border-radius: 50px;
     font-weight: 600;
-    font-size: 1.1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 2px solid transparent;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid white;
 }
 
 .cta-button:hover {
+    background: transparent;
+    color: white;
     transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-    background: #f5f5f5;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Search Appointments Section */
+.search-appointments-section {
+    padding: 4rem 2rem;
+    background: white;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.search-form {
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.search-input:focus {
+    outline: none;
     border-color: black;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-btn {
+    background: black;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-btn:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+.search-btn:active {
+    transform: translateY(0);
+}
+
+.search-results {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.appointment-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.appointment-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.appointment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.appointment-date {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: black;
+}
+
+.appointment-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.appointment-status.confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.appointment-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.appointment-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-item i {
+    color: #666;
+    width: 16px;
+}
+
+.appointment-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn.reschedule {
+    background: #007bff;
+    color: white;
+}
+
+.action-btn.reschedule:hover {
+    background: #0056b3;
+}
+
+.action-btn.cancel {
+    background: #dc3545;
+    color: white;
+}
+
+.action-btn.cancel:hover {
+    background: #c82333;
+}
+
+.no-appointments {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.no-appointments i {
+    font-size: 3rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid black;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Location Section */
 .location-section {
-    padding: 5rem 2rem;
-    background: white;
+    padding: 4rem 2rem;
+    background: #f8f9fa;
 }
 
 .container {
@@ -148,7 +352,7 @@ body {
     font-weight: 700;
     text-align: center;
     margin-bottom: 3rem;
-    color: #333;
+    color: black;
     position: relative;
 }
 
@@ -158,35 +362,33 @@ body {
     bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 80px;
+    width: 60px;
     height: 3px;
     background: black;
-    border-radius: 2px;
 }
 
 .map-container {
     margin-bottom: 2rem;
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
 }
 
 .map-container:hover {
     transform: translateY(-5px);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
 }
 
 .map-container iframe {
-    border-radius: 15px;
+    width: 100%;
+    height: 450px;
+    border: none;
 }
 
 .location-info {
     text-align: center;
-    padding: 2rem;
-    background: #f5f5f5;
-    border-radius: 15px;
     margin-top: 2rem;
-    border: 1px solid #e0e0e0;
 }
 
 .address {
@@ -199,21 +401,19 @@ body {
 }
 
 .address i {
-    color: black;
     font-size: 1.5rem;
+    color: black;
 }
 
 .address p {
-    font-weight: 500;
-    line-height: 1.6;
+    margin: 0;
+    line-height: 1.4;
 }
 
-/* Footer */
 footer {
-    background: white;
-    color: black;
+    background: black;
+    color: white;
     padding: 3rem 2rem 1rem;
-    border-top: 1px solid #e0e0e0;
 }
 
 .footer-content {
@@ -228,14 +428,14 @@ footer {
 .footer-section h3 {
     font-family: 'Playfair Display', serif;
     font-size: 1.3rem;
+    font-weight: 700;
     margin-bottom: 1rem;
-    color: black;
+    color: white;
 }
 
 .footer-section p {
-    color: #333;
+    color: #ccc;
     line-height: 1.6;
-    margin-bottom: 0.5rem;
 }
 
 .social-links {
@@ -245,33 +445,30 @@ footer {
 }
 
 .social-links a {
-    color: #333;
-    font-size: 1.5rem;
-    transition: all 0.3s ease;
-    padding: 0.8rem;
-    border-radius: 50%;
-    background: #f5f5f5;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
     text-decoration: none;
-    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
 }
 
 .social-links a:hover {
+    background: white;
     color: black;
-    background: #e8e8e8;
     transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .footer-bottom {
     max-width: 1200px;
     margin: 0 auto;
     padding-top: 2rem;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid #333;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -280,27 +477,26 @@ footer {
 }
 
 .footer-bottom p {
-    color: #666;
-    font-size: 0.9rem;
+    color: #ccc;
+    margin: 0;
 }
 
 .admin-login-button {
-    background: #f5f5f5;
-    color: #333;
-    border: 1px solid #e0e0e0;
+    background: transparent;
+    color: white;
+    border: 2px solid white;
     padding: 0.5rem 1rem;
-    border-radius: 25px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
 .admin-login-button:hover {
-    background: #e8e8e8;
-    transform: translateY(-2px);
+    background: white;
+    color: black;
 }
 
-/* Animations */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -312,7 +508,6 @@ footer {
     }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .navbar {
         padding: 1rem;
@@ -369,6 +564,31 @@ footer {
     .address {
         flex-direction: column;
         text-align: center;
+    }
+    
+    /* Mobile search styles */
+    .search-input-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+    
+    .search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .appointment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .appointment-actions {
+        justify-content: center;
     }
 }
 
@@ -431,19 +651,19 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #888;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: black;
+    background: #555;
 }
 
 /* Admin Modal Styles */
 .admin-modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 2000;
     left: 0;
     top: 0;
     width: 100%;
@@ -456,35 +676,36 @@ html {
     background-color: white;
     margin: 15% auto;
     padding: 0;
-    border: none;
     border-radius: 12px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease-out;
 }
 
 .admin-modal-header {
+    background: black;
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 1.5rem 0 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
 }
 
 .admin-modal-header h2 {
     margin: 0;
-    color: #333;
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
 }
 
 .admin-modal-close {
     background: none;
     border: none;
-    font-size: 1.8rem;
+    color: white;
+    font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
     padding: 0;
     width: 30px;
     height: 30px;
@@ -492,16 +713,15 @@ html {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .admin-modal-close:hover {
-    background-color: #f0f0f0;
-    color: #333;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .admin-modal-body {
-    padding: 1.5rem;
+    padding: 2rem;
 }
 
 .admin-modal-body .form-group {
@@ -511,24 +731,27 @@ html {
 .admin-modal-body label {
     display: block;
     margin-bottom: 0.5rem;
+    font-weight: 600;
     color: #333;
-    font-weight: 500;
     font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .admin-modal-body input[type="password"] {
     width: 100%;
-    padding: 0.8rem;
+    padding: 1rem;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.2s ease;
-    box-sizing: border-box;
+    transition: all 0.3s ease;
+    background: white;
 }
 
 .admin-modal-body input[type="password"]:focus {
     outline: none;
     border-color: black;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .admin-modal-body input[type="password"]::placeholder {
@@ -536,34 +759,398 @@ html {
 }
 
 .form-actions {
-    text-align: right;
+    text-align: center;
 }
 
 .admin-login-submit {
-    background-color: black;
+    background: black;
     color: white;
     border: none;
-    padding: 0.8rem 1.5rem;
+    padding: 1rem 2rem;
     border-radius: 8px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    width: 100%;
 }
 
 .admin-login-submit:hover {
-    background-color: #333;
-    transform: translateY(-1px);
+    background: #333;
+    transform: translateY(-2px);
 }
 
 .admin-login-submit:active {
     transform: translateY(0);
 }
 
+/* Reschedule Modal Styles */
+.reschedule-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    overflow-y: auto;
+}
+
+.reschedule-modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.reschedule-modal-header {
+    background: black;
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reschedule-modal-header h2 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.reschedule-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.reschedule-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.reschedule-modal-body {
+    padding: 2rem;
+}
+
+#reschedule-appointment-info {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #007bff;
+}
+
+#reschedule-appointment-info h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-family: 'Playfair Display', serif;
+}
+
+.appointment-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.appointment-info-item i {
+    color: #666;
+    width: 16px;
+}
+
+.reschedule-calendar-section h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-family: 'Playfair Display', serif;
+}
+
+.reschedule-notice {
+    margin: 0 0 1rem 0;
+    padding: 0.75rem;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    color: #856404;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.reschedule-calendar-container {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.reschedule-calendar-header {
+    background: #f8f9fa;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.reschedule-calendar-header span {
+    font-weight: 600;
+    color: #333;
+}
+
+.reschedule-calendar-grid {
+    padding: 1rem;
+}
+
+.reschedule-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.reschedule-calendar-weekdays div {
+    text-align: center;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+}
+
+.reschedule-calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.reschedule-calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+}
+
+.reschedule-calendar-day:hover {
+    background: #f0f0f0;
+}
+
+.reschedule-calendar-day.selected {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.reschedule-calendar-day.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.reschedule-calendar-day.other-month {
+    color: #ccc;
+}
+
+.reschedule-time-slots {
+    margin-top: 1.5rem;
+}
+
+.reschedule-selection-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.reschedule-selection-summary h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+}
+
+.selection-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.selection-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.selection-item i {
+    color: #007bff;
+    width: 16px;
+}
+
+.selection-item span {
+    font-weight: 500;
+}
+
+.reschedule-time-slots h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-family: 'Playfair Display', serif;
+}
+
+.reschedule-time-slots-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.reschedule-time-slot {
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.reschedule-time-slot:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+}
+
+.reschedule-time-slot.selected {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.reschedule-time-slot.available {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.reschedule-time-slot.available:hover {
+    background: #c3e6cb;
+    border-color: #1e7e34;
+}
+
+.reschedule-time-slot.limited {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.reschedule-time-slot.limited:hover {
+    background: #ffeaa7;
+    border-color: #e0a800;
+}
+
+.reschedule-time-slot.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    background: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.reschedule-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+}
+
+.confirm-reschedule-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.confirm-reschedule-btn:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.confirm-reschedule-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.cancel-reschedule-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cancel-reschedule-btn:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .reschedule-modal-content {
+        margin: 10% auto;
+        width: 95%;
+        max-height: 80vh;
+    }
+    
+    .reschedule-actions {
+        flex-direction: column;
+    }
+    
+    .reschedule-time-slots-container {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+}
+
 @keyframes modalSlideIn {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateY(-50px);
     }
     to {
         opacity: 1;
@@ -571,18 +1158,22 @@ html {
     }
 }
 
-/* Error message styling */
 .admin-error {
-    color: #d32f2f;
-    font-size: 0.9rem;
+    background: #f8d7da;
+    color: #721c24;
+    padding: 0.75rem;
+    border-radius: 6px;
     margin-top: 0.5rem;
+    font-size: 0.9rem;
     display: none;
 }
 
-/* Success message styling */
 .admin-success {
-    color: #2e7d32;
-    font-size: 0.9rem;
+    background: #d4edda;
+    color: #155724;
+    padding: 0.75rem;
+    border-radius: 6px;
     margin-top: 0.5rem;
+    font-size: 0.9rem;
     display: none;
 } 

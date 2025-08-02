@@ -92,4 +92,827 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.borderColor = '#e0e0e0';
         }
     });
-}); 
+});
+
+// Search Appointments Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchBtn = document.getElementById('search-btn');
+    const searchPhone = document.getElementById('search-phone');
+    const searchResults = document.getElementById('search-results');
+    
+    if (searchBtn && searchPhone && searchResults) {
+        // Handle search button click
+        searchBtn.addEventListener('click', function() {
+            searchAppointments();
+        });
+        
+        // Handle Enter key press in search input
+        searchPhone.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchAppointments();
+            }
+        });
+        
+
+        
+        // Function to search appointments
+        async function searchAppointments() {
+            const phoneNumber = searchPhone.value.trim();
+            
+            if (!phoneNumber) {
+                showSearchError('Please enter your phone number');
+                return;
+            }
+            
+            // Show loading state
+            showLoading();
+            
+            try {
+                // Search in Firebase first
+                const firebaseUrl = `https://us-central1-connect-2a17c.cloudfunctions.net/searchBookingsByPhone?phone=${encodeURIComponent(phoneNumber)}`;
+                
+                const response = await fetch(firebaseUrl);
+                
+                let appointments = [];
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    appointments = data.bookings || [];
+                } else {
+                    // Fallback to localStorage
+                    const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
+                    appointments = localBookings.filter(booking => 
+                        booking.phone && booking.phone.includes(phoneNumber.replace(/\D/g, ''))
+                    );
+                }
+                
+                displayAppointments(appointments);
+                
+            } catch (error) {
+                console.error('Error searching appointments:', error);
+                // Fallback to localStorage
+                const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
+                const appointments = localBookings.filter(booking => 
+                    booking.phone && booking.phone.includes(phoneNumber.replace(/\D/g, ''))
+                );
+                displayAppointments(appointments);
+            }
+        }
+        
+        // Function to show loading state
+        function showLoading() {
+            searchResults.style.display = 'block';
+            searchResults.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Searching for your appointments...</p>
+                </div>
+            `;
+        }
+        
+        // Function to display appointments
+        function displayAppointments(appointments) {
+            searchResults.style.display = 'block';
+            
+            if (appointments.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="no-appointments">
+                        <i class="fas fa-calendar-times"></i>
+                        <h3>No appointments found</h3>
+                        <p>No appointments found for this phone number. Please check your phone number and try again.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort appointments by date
+            appointments.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const appointmentsHTML = appointments.map(appointment => {
+                // Handle different date formats
+                let appointmentDate;
+                if (appointment.date) {
+                    // Try different date formats
+                    if (appointment.date.includes('T')) {
+                        // ISO format
+                        appointmentDate = new Date(appointment.date);
+                    } else if (appointment.date.includes('-')) {
+                        // YYYY-MM-DD format
+                        appointmentDate = new Date(appointment.date + 'T00:00:00');
+                    } else {
+                        // Try parsing as is
+                        appointmentDate = new Date(appointment.date);
+                    }
+                } else if (appointment.appointmentDate) {
+                    // Fallback to appointmentDate field
+                    appointmentDate = new Date(appointment.appointmentDate + 'T00:00:00');
+                } else {
+                    // No date available
+                    appointmentDate = new Date();
+                }
+                
+                // Check if date is valid
+                const formattedDate = isNaN(appointmentDate.getTime()) 
+                    ? 'Date not available' 
+                    : appointmentDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                
+                // Handle different time formats
+                let formattedTime = 'TBD';
+                if (appointment.displayTime) {
+                    formattedTime = appointment.displayTime;
+                } else if (appointment.time) {
+                    // Convert 24-hour format to 12-hour format
+                    const timeStr = appointment.time;
+                    if (timeStr.includes(':')) {
+                        const [hours, minutes] = timeStr.split(':');
+                        const hour = parseInt(hours);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                        formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                    } else {
+                        formattedTime = timeStr;
+                    }
+                } else if (appointment.appointmentTime) {
+                    // Handle appointmentTime field
+                    const timeStr = appointment.appointmentTime;
+                    if (timeStr.includes(':')) {
+                        const [hours, minutes] = timeStr.split(':');
+                        const hour = parseInt(hours);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                        formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                    } else {
+                        formattedTime = timeStr;
+                    }
+                }
+                const status = appointment.status || 'confirmed';
+                const statusClass = status === 'confirmed' ? 'confirmed' : 'pending';
+                
+                return `
+                    <div class="appointment-card" data-booking-id="${appointment.bookingId}">
+                        <div class="appointment-header">
+                            <div class="appointment-date">${formattedDate}</div>
+                            <div class="appointment-status ${statusClass}">${status}</div>
+                        </div>
+                        <div class="appointment-details">
+                            <div class="detail-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Time: ${formattedTime}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-cut"></i>
+                                <span>Style: ${appointment.style}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-user"></i>
+                                <span>Name: ${appointment.name}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-phone"></i>
+                                <span>Phone: ${appointment.phone}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>Total: $${appointment.totalPrice}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Deposit: $${appointment.depositAmount} ${appointment.depositPaid ? '(Paid)' : '(Pending)'}</span>
+                            </div>
+                        </div>
+                        <div class="appointment-actions">
+                            <button class="action-btn reschedule" onclick="rescheduleAppointment('${appointment.bookingId}')">
+                                <i class="fas fa-calendar-alt"></i>
+                                Reschedule
+                            </button>
+                            <button class="action-btn cancel" onclick="cancelAppointment('${appointment.bookingId}')">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            searchResults.innerHTML = `
+                <h3>Found ${appointments.length} appointment(s)</h3>
+                ${appointmentsHTML}
+            `;
+        }
+        
+        // Function to show search error
+        function showSearchError(message) {
+            searchResults.style.display = 'block';
+            searchResults.innerHTML = `
+                <div class="no-appointments">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+    }
+});
+
+// Global functions for appointment actions
+let currentRescheduleAppointment = null;
+let selectedRescheduleDate = null;
+let selectedRescheduleTime = null;
+
+function rescheduleAppointment(bookingId) {
+    // Find the appointment data
+    const appointmentCard = document.querySelector(`[data-booking-id="${bookingId}"]`);
+    if (!appointmentCard) {
+        alert('Appointment not found');
+        return;
+    }
+    
+    // Get appointment data from the card
+    const appointmentData = {
+        bookingId: bookingId,
+        name: appointmentCard.querySelector('.detail-item:nth-child(3) span').textContent.replace('Name: ', ''),
+        phone: appointmentCard.querySelector('.detail-item:nth-child(4) span').textContent.replace('Phone: ', ''),
+        style: appointmentCard.querySelector('.detail-item:nth-child(2) span').textContent.replace('Style: ', ''),
+        currentDate: appointmentCard.querySelector('.appointment-date').textContent,
+        currentTime: appointmentCard.querySelector('.detail-item:nth-child(1) span').textContent.replace('Time: ', ''),
+        totalPrice: appointmentCard.querySelector('.detail-item:nth-child(5) span').textContent.replace('Total: $', ''),
+        depositAmount: appointmentCard.querySelector('.detail-item:nth-child(6) span').textContent.replace('Deposit: $', '').split(' ')[0]
+    };
+    
+    currentRescheduleAppointment = appointmentData;
+    showRescheduleModal(appointmentData);
+}
+
+function showRescheduleModal(appointmentData) {
+    const modal = document.getElementById('reschedule-modal');
+    const appointmentInfo = document.getElementById('reschedule-appointment-info');
+    
+    // Display current appointment info
+    appointmentInfo.innerHTML = `
+        <h3>Current Appointment</h3>
+        <div class="appointment-info-item">
+            <i class="fas fa-user"></i>
+            <span>${appointmentData.name}</span>
+        </div>
+        <div class="appointment-info-item">
+            <i class="fas fa-phone"></i>
+            <span>${appointmentData.phone}</span>
+        </div>
+        <div class="appointment-info-item">
+            <i class="fas fa-cut"></i>
+            <span>${appointmentData.style}</span>
+        </div>
+        <div class="appointment-info-item">
+            <i class="fas fa-calendar"></i>
+            <span>${appointmentData.currentDate}</span>
+        </div>
+        <div class="appointment-info-item">
+            <i class="fas fa-clock"></i>
+            <span>${appointmentData.currentTime}</span>
+        </div>
+    `;
+    
+    // Show modal
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    // Initialize reschedule calendar
+    initRescheduleCalendar();
+    
+    // Setup modal event listeners
+    setupRescheduleModalListeners();
+    
+    // Pre-select the current appointment date and time
+    preSelectCurrentAppointment(appointmentData);
+}
+
+function initRescheduleCalendar() {
+    const currentMonth = document.getElementById('reschedule-current-month');
+    const calendarDays = document.getElementById('reschedule-calendar-days');
+    const prevBtn = document.getElementById('reschedule-prev-month');
+    const nextBtn = document.getElementById('reschedule-next-month');
+    
+    let currentDate = new Date();
+    currentDate.setDate(1); // Start with first day of current month
+    
+    function updateRescheduleCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Update header
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        currentMonth.textContent = `${monthNames[month]} ${year}`;
+        
+        // Clear calendar
+        calendarDays.innerHTML = '';
+        
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // Add empty cells for days before first day of month
+        for (let i = 0; i < firstDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'reschedule-calendar-day other-month';
+            calendarDays.appendChild(emptyDay);
+        }
+        
+        // Add days of month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'reschedule-calendar-day';
+            dayElement.textContent = day;
+            
+            const date = new Date(year, month, day);
+            const today = new Date();
+            const minimumBookingDate = new Date();
+            minimumBookingDate.setHours(today.getHours() + 30); // 30 hours from now
+            
+            // Check if date is available for booking
+            const isPast = date < today;
+            const isSunday = date.getDay() === 0;
+            const isTooSoon = date < minimumBookingDate;
+            const isUnavailable = isPast || isSunday || isTooSoon;
+            
+            if (isUnavailable) {
+                dayElement.classList.add('disabled');
+            } else {
+                dayElement.addEventListener('click', () => selectRescheduleDate(date));
+            }
+            
+            calendarDays.appendChild(dayElement);
+        }
+    }
+    
+    // Event listeners for navigation
+    prevBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        updateRescheduleCalendar();
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        updateRescheduleCalendar();
+    });
+    
+    // Initialize calendar
+    updateRescheduleCalendar();
+}
+
+function selectRescheduleDate(date) {
+    // Remove previous selection
+    document.querySelectorAll('.reschedule-calendar-day.selected').forEach(day => {
+        day.classList.remove('selected');
+    });
+    
+    // Add selection to clicked day
+    event.target.classList.add('selected');
+    
+    selectedRescheduleDate = date;
+    generateRescheduleTimeSlots(date);
+    
+    // Update selection summary
+    updateSelectionSummary();
+}
+
+async function generateRescheduleTimeSlots(date) {
+    const timeSlotsContainer = document.getElementById('reschedule-time-slots-container');
+    const timeSlotsSection = document.getElementById('reschedule-time-slots');
+    
+    timeSlotsContainer.innerHTML = '';
+    timeSlotsSection.style.display = 'block';
+    
+    // Business hours
+    const businessHours = { start: 7, end: 18 }; // 7 AM to 6 PM
+    
+    // Fetch existing bookings for this date
+    let existingBookings = [];
+    try {
+        const dateString = date.toISOString().split('T')[0];
+        const response = await fetch(`https://us-central1-connect-2a17c.cloudfunctions.net/getBookingsForDate?date=${dateString}`);
+        if (response.ok) {
+            const data = await response.json();
+            existingBookings = data.bookings || data;
+        } else {
+            // Fallback to localStorage
+            const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
+            existingBookings = localBookings.filter(booking => booking.date === dateString);
+        }
+    } catch (error) {
+        console.log('Error fetching bookings for reschedule, using localStorage');
+        const localBookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
+        existingBookings = localBookings.filter(booking => booking.date === dateString);
+    }
+    
+    // Ensure existingBookings is always an array
+    if (!Array.isArray(existingBookings)) {
+        existingBookings = [];
+    }
+    
+    // Generate time slots
+    for (let hour = businessHours.start; hour < businessHours.end; hour++) {
+        const timeSlot = document.createElement('div');
+        timeSlot.className = 'reschedule-time-slot';
+        
+        // Format time
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const timeString = `${displayHour}:00 ${ampm}`;
+        timeSlot.textContent = timeString;
+        
+        // Check if this time slot is too soon (30-hour rule)
+        const selectedDateTime = new Date(date);
+        selectedDateTime.setHours(hour, 0, 0, 0);
+        const now = new Date();
+        const minimumBookingTime = new Date();
+        minimumBookingTime.setHours(now.getHours() + 30); // 30 hours from now
+        const isTooSoon = selectedDateTime < minimumBookingTime;
+        
+        // Check availability
+        let concurrentBookings = 0;
+        for (const booking of existingBookings) {
+            const bookingTime = booking.appointmentTime || booking.time;
+            const bookingStartHour = parseInt(bookingTime.split(':')[0]);
+            const bookingDuration = parseInt(booking.duration) || 2;
+            
+            // Check if this booking overlaps with the current hour
+            if (hour >= bookingStartHour && hour < bookingStartHour + bookingDuration) {
+                concurrentBookings++;
+            }
+        }
+        
+        // Apply color coding based on availability and timing
+        if (isTooSoon) {
+            timeSlot.classList.add('disabled'); // Disabled - too soon
+        } else if (concurrentBookings === 0) {
+            timeSlot.classList.add('available'); // Green - fully available
+        } else if (concurrentBookings === 1) {
+            timeSlot.classList.add('limited'); // Yellow - limited availability
+        } else {
+            timeSlot.classList.add('disabled'); // Red - fully booked
+        }
+        
+        // Only allow selection if not disabled and not fully booked
+        if (!isTooSoon && concurrentBookings < 2) {
+            timeSlot.addEventListener('click', () => selectRescheduleTime(hour, timeSlot));
+        }
+        
+        timeSlotsContainer.appendChild(timeSlot);
+    }
+}
+
+function selectRescheduleTime(hour, element) {
+    // Remove previous selection
+    document.querySelectorAll('.reschedule-time-slot.selected').forEach(slot => {
+        slot.classList.remove('selected');
+    });
+    
+    // Add selection to clicked slot
+    element.classList.add('selected');
+    
+    selectedRescheduleTime = hour;
+    
+    // Enable confirm button
+    const confirmBtn = document.getElementById('confirm-reschedule-btn');
+    confirmBtn.disabled = false;
+    
+    // Update selection summary
+    updateSelectionSummary();
+}
+
+function setupRescheduleModalListeners() {
+    const modal = document.getElementById('reschedule-modal');
+    const closeBtn = document.querySelector('.reschedule-modal-close');
+    const cancelBtn = document.getElementById('cancel-reschedule-btn');
+    const confirmBtn = document.getElementById('confirm-reschedule-btn');
+    
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        resetRescheduleForm();
+    });
+    
+    // Close when clicking outside
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            resetRescheduleForm();
+        }
+    });
+    
+    // Cancel button
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        resetRescheduleForm();
+    });
+    
+    // Confirm reschedule
+    confirmBtn.addEventListener('click', () => {
+        if (selectedRescheduleDate && selectedRescheduleTime !== null) {
+            confirmReschedule();
+        }
+    });
+}
+
+function preSelectCurrentAppointment(appointmentData) {
+    // Parse the current appointment date
+    const currentDateStr = appointmentData.currentDate;
+    let currentDate;
+    
+    // Try to parse the date from various formats
+    if (currentDateStr.includes(',')) {
+        // Format: "Monday, January 1, 2024"
+        currentDate = new Date(currentDateStr);
+    } else if (currentDateStr.includes('-')) {
+        // Format: "2024-01-01"
+        currentDate = new Date(currentDateStr);
+    } else {
+        // Try to parse as is
+        currentDate = new Date(currentDateStr);
+    }
+    
+    if (isNaN(currentDate.getTime())) {
+        console.log('Could not parse current appointment date');
+        return;
+    }
+    
+    // Parse the current appointment time
+    const currentTimeStr = appointmentData.currentTime;
+    let currentHour;
+    
+    if (currentTimeStr.includes(':')) {
+        const timeParts = currentTimeStr.split(':');
+        let hour = parseInt(timeParts[0]);
+        const ampm = timeParts[1].toLowerCase().includes('pm') ? 'PM' : 'AM';
+        
+        if (ampm === 'PM' && hour !== 12) {
+            hour += 12;
+        } else if (ampm === 'AM' && hour === 12) {
+            hour = 0;
+        }
+        
+        currentHour = hour;
+    } else {
+        // Try to parse as 24-hour format
+        currentHour = parseInt(currentTimeStr);
+    }
+    
+    if (isNaN(currentHour)) {
+        console.log('Could not parse current appointment time');
+        return;
+    }
+    
+    // Set the calendar to the current appointment's month
+    const calendarMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const currentMonthSpan = document.getElementById('reschedule-current-month');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    currentMonthSpan.textContent = `${monthNames[calendarMonth.getMonth()]} ${calendarMonth.getFullYear()}`;
+    
+    // Update the calendar to show the correct month
+    updateRescheduleCalendarForMonth(calendarMonth);
+    
+    // Pre-select the current appointment date
+    setTimeout(() => {
+        const dayElements = document.querySelectorAll('.reschedule-calendar-day');
+        dayElements.forEach(dayElement => {
+            if (dayElement.textContent == currentDate.getDate() && !dayElement.classList.contains('disabled')) {
+                dayElement.classList.add('selected');
+                selectedRescheduleDate = currentDate;
+                
+                // Generate time slots for this date
+                generateRescheduleTimeSlots(currentDate);
+                
+                // Pre-select the current appointment time
+                setTimeout(() => {
+                    const timeSlots = document.querySelectorAll('.reschedule-time-slot');
+                    timeSlots.forEach(slot => {
+                        const slotText = slot.textContent;
+                        if (slotText.includes(`${currentHour > 12 ? currentHour - 12 : currentHour === 0 ? 12 : currentHour}:00`)) {
+                            slot.classList.add('selected');
+                            selectedRescheduleTime = currentHour;
+                            
+                            // Enable confirm button
+                            const confirmBtn = document.getElementById('confirm-reschedule-btn');
+                            confirmBtn.disabled = false;
+                            
+                            // Update selection summary
+                            updateSelectionSummary();
+                        }
+                    });
+                }, 100);
+            }
+        });
+    }, 100);
+}
+
+function updateRescheduleCalendarForMonth(targetDate) {
+    const calendarDays = document.getElementById('reschedule-calendar-days');
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    
+    // Clear calendar
+    calendarDays.innerHTML = '';
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Add empty cells for days before first day of month
+    for (let i = 0; i < firstDay; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'reschedule-calendar-day other-month';
+        calendarDays.appendChild(emptyDay);
+    }
+    
+    // Add days of month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'reschedule-calendar-day';
+        dayElement.textContent = day;
+        
+        const date = new Date(year, month, day);
+        const today = new Date();
+        const minimumBookingDate = new Date();
+        minimumBookingDate.setHours(today.getHours() + 30); // 30 hours from now
+        
+        // Check if date is available for booking
+        const isPast = date < today;
+        const isSunday = date.getDay() === 0;
+        const isTooSoon = date < minimumBookingDate;
+        const isUnavailable = isPast || isSunday || isTooSoon;
+        
+        if (isUnavailable) {
+            dayElement.classList.add('disabled');
+        } else {
+            dayElement.addEventListener('click', () => selectRescheduleDate(date));
+        }
+        
+        calendarDays.appendChild(dayElement);
+    }
+}
+
+function getAppointmentDuration(style) {
+    // Duration mapping based on style
+    const styleDurations = {
+        'cornrows': 1,
+        'boho-box-braids': 4,
+        'knotless-box-braids': 4,
+        'jumbo-box-braids': 4,
+        'lemonade-braids': 4,
+        'fulani-braids': 4,
+        'passion-twists': 3,
+        'senegalese-twists': 3,
+        'marley-twists': 3,
+        'stitch-braids': 4,
+        'tribal-braids': 3,
+        'tree-braids': 3,
+        'micro-braids': 4,
+        'weave': 2,
+        'starter-locs': 2,
+        'locs-retwist': 1,
+        'lock-retwist-2-strands': 1,
+        'two-strand-twists': 1
+    };
+    
+    // Try to match the style name (case insensitive)
+    const styleKey = Object.keys(styleDurations).find(key => 
+        style.toLowerCase().includes(key.toLowerCase())
+    );
+    
+    return styleKey ? styleDurations[styleKey] : 2; // Default 2 hours if not found
+}
+
+function updateSelectionSummary() {
+    const summarySection = document.getElementById('reschedule-selection-summary');
+    const dateDisplay = document.getElementById('selected-date-display');
+    const timeDisplay = document.getElementById('selected-time-display');
+    const endTimeDisplay = document.getElementById('selected-end-time-display');
+    
+    if (selectedRescheduleDate) {
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = selectedRescheduleDate.toLocaleDateString('en-US', dateOptions);
+        dateDisplay.textContent = formattedDate;
+    } else {
+        dateDisplay.textContent = 'No date selected';
+    }
+    
+    if (selectedRescheduleTime !== null) {
+        const ampm = selectedRescheduleTime >= 12 ? 'PM' : 'AM';
+        const displayHour = selectedRescheduleTime === 0 ? 12 : selectedRescheduleTime > 12 ? selectedRescheduleTime - 12 : selectedRescheduleTime;
+        const formattedTime = `${displayHour}:00 ${ampm}`;
+        timeDisplay.textContent = formattedTime;
+        
+        // Calculate end time based on appointment duration
+        if (currentRescheduleAppointment && currentRescheduleAppointment.style) {
+            const duration = getAppointmentDuration(currentRescheduleAppointment.style);
+            const endHour = selectedRescheduleTime + duration;
+            
+            const endAmpm = endHour >= 12 ? 'PM' : 'AM';
+            const endDisplayHour = endHour === 0 ? 12 : endHour > 12 ? endHour - 12 : endHour;
+            const formattedEndTime = `${endDisplayHour}:00 ${endAmpm}`;
+            
+            endTimeDisplay.textContent = `Ends at ${formattedEndTime} (${duration} hour${duration > 1 ? 's' : ''})`;
+        } else {
+            endTimeDisplay.textContent = 'Duration: --';
+        }
+    } else {
+        timeDisplay.textContent = 'No time selected';
+        endTimeDisplay.textContent = 'Duration: --';
+    }
+    
+    // Show summary if we have a date or time selected
+    if (selectedRescheduleDate || selectedRescheduleTime !== null) {
+        summarySection.style.display = 'block';
+    } else {
+        summarySection.style.display = 'none';
+    }
+}
+
+function resetRescheduleForm() {
+    selectedRescheduleDate = null;
+    selectedRescheduleTime = null;
+    currentRescheduleAppointment = null;
+    
+    const confirmBtn = document.getElementById('confirm-reschedule-btn');
+    confirmBtn.disabled = true;
+    
+    document.querySelectorAll('.reschedule-calendar-day.selected').forEach(day => {
+        day.classList.remove('selected');
+    });
+    
+    document.querySelectorAll('.reschedule-time-slot.selected').forEach(slot => {
+        slot.classList.remove('selected');
+    });
+    
+    // Hide selection summary
+    const summarySection = document.getElementById('reschedule-selection-summary');
+    summarySection.style.display = 'none';
+}
+
+async function confirmReschedule() {
+    if (!currentRescheduleAppointment || !selectedRescheduleDate || selectedRescheduleTime === null) {
+        alert('Please select a new date and time');
+        return;
+    }
+    
+    try {
+        // Format the new date and time
+        const newDate = selectedRescheduleDate.toISOString().split('T')[0];
+        const newTime = `${selectedRescheduleTime.toString().padStart(2, '0')}:00`;
+        
+        // Update the appointment in Firebase
+        const updateData = {
+            bookingId: currentRescheduleAppointment.bookingId,
+            newDate: newDate,
+            newTime: newTime,
+            originalDate: currentRescheduleAppointment.currentDate,
+            originalTime: currentRescheduleAppointment.currentTime
+        };
+        
+        const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/updateBooking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (response.ok) {
+            alert('Appointment rescheduled successfully! You will receive a confirmation shortly.');
+            
+            // Close modal and refresh search results
+            document.getElementById('reschedule-modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            resetRescheduleForm();
+            
+            // Refresh the search results
+            const searchBtn = document.getElementById('search-btn');
+            if (searchBtn) {
+                searchBtn.click();
+            }
+        } else {
+            throw new Error('Failed to update appointment');
+        }
+        
+    } catch (error) {
+        console.error('Error rescheduling appointment:', error);
+        alert('Failed to reschedule appointment. Please try again or call us at 860-425-0751.');
+    }
+}
+
+function cancelAppointment(bookingId) {
+    if (confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
+        // In a real implementation, this would call an API to cancel the appointment
+        alert('To cancel your appointment, please call us at 860-425-0751. We\'ll process your cancellation request.');
+    }
+} 

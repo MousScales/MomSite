@@ -24,6 +24,29 @@
         </div>
     </section>
 
+    <!-- Search Appointments Section -->
+    <section class="search-appointments-section">
+        <div class="container">
+            <h2 class="section-title">Find Your Appointment</h2>
+            <p class="section-subtitle">Enter your phone number to search for your existing appointments</p>
+            
+            <div class="search-form">
+                <div class="search-input-group">
+                    <input type="tel" id="search-phone" placeholder="Enter your phone number" class="search-input">
+                    <button id="search-btn" class="search-btn">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                </div>
+
+            </div>
+            
+            <div id="search-results" class="search-results" style="display: none;">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </section>
+
     <!-- Location Section -->
     <section class="location-section">
         <div class="container">
@@ -94,6 +117,87 @@
                         <button type="submit" class="admin-login-submit">Access Admin</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule Modal -->
+    <div id="reschedule-modal" class="reschedule-modal">
+        <div class="reschedule-modal-content">
+            <div class="reschedule-modal-header">
+                <h2>Reschedule Appointment</h2>
+                <button class="reschedule-modal-close">&times;</button>
+            </div>
+            <div class="reschedule-modal-body">
+                <div id="reschedule-appointment-info">
+                    <!-- Current appointment info will be displayed here -->
+                </div>
+                
+                <div class="reschedule-calendar-section">
+                    <h3>Select New Date & Time</h3>
+                    <p class="reschedule-notice">Note: Appointments must be scheduled at least 30 hours in advance. If the time you want isn't available or if you need a last-minute appointment, please call 860-425-0751 and we can see if we can fit you in.</p>
+                    <div class="reschedule-calendar-container">
+                        <div class="reschedule-calendar-header">
+                            <button id="reschedule-prev-month" class="calendar-nav-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span id="reschedule-current-month">January 2024</span>
+                            <button id="reschedule-next-month" class="calendar-nav-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="reschedule-calendar-grid">
+                            <div class="reschedule-calendar-weekdays">
+                                <div>Sun</div>
+                                <div>Mon</div>
+                                <div>Tue</div>
+                                <div>Wed</div>
+                                <div>Thu</div>
+                                <div>Fri</div>
+                                <div>Sat</div>
+                            </div>
+                            <div id="reschedule-calendar-days" class="reschedule-calendar-days">
+                                <!-- Calendar days will be generated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="reschedule-time-slots" class="reschedule-time-slots" style="display: none;">
+                        <h4>Available Times</h4>
+                        <div id="reschedule-time-slots-container">
+                            <!-- Time slots will be generated here -->
+                        </div>
+                    </div>
+                    
+                    <div id="reschedule-selection-summary" class="reschedule-selection-summary" style="display: none;">
+                        <h4>Selected Appointment</h4>
+                        <div class="selection-info">
+                            <div class="selection-item">
+                                <i class="fas fa-calendar"></i>
+                                <span id="selected-date-display">No date selected</span>
+                            </div>
+                            <div class="selection-item">
+                                <i class="fas fa-clock"></i>
+                                <span id="selected-time-display">No time selected</span>
+                            </div>
+                            <div class="selection-item">
+                                <i class="fas fa-hourglass-end"></i>
+                                <span id="selected-end-time-display">Duration: --</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="reschedule-actions">
+                    <button id="confirm-reschedule-btn" class="confirm-reschedule-btn" disabled>
+                        <i class="fas fa-calendar-check"></i>
+                        Confirm Reschedule
+                    </button>
+                    <button id="cancel-reschedule-btn" class="cancel-reschedule-btn">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
             </div>
         </div>
     </div>

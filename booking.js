@@ -1342,7 +1342,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     const value = formData.get(optionKey);
                     if (value) {
                         styleSpecificOptions[optionKey] = value;
-                    } else {
+                } else {
                         if (optionKey === 'wash-service') {
                             styleSpecificOptions[optionKey] = 'no-wash';
                         } else if (optionKey === 'detangle-service') {
@@ -1415,7 +1415,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     
                     if (response.ok) {
                         console.log('Booking saved successfully');
-    } else {
+        } else {
                         console.log('Firebase Functions not available, will save on success page');
                     }
                 } catch (error) {

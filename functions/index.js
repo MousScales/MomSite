@@ -131,6 +131,199 @@ exports.saveBooking = onRequest({
   });
 });
 
+// Search Bookings by Phone Number Function
+exports.searchBookingsByPhone = onRequest({
+  secrets: ["DOMAIN_URL"]
+}, (request, response) => {
+  cors(request, response, async () => {
+    if (request.method !== "GET") {
+      return response.status(405).json({error: "Method not allowed"});
+    }
+
+    try {
+      const { phone } = request.query;
+      
+      if (!phone) {
+        return response.status(400).json({error: "Phone number is required"});
+      }
+
+      // Clean the phone number (remove non-digits)
+      const cleanPhone = phone.replace(/\D/g, '');
+      
+      console.log(`Searching bookings for phone: ${cleanPhone}`);
+
+      const db = admin.firestore();
+      
+      // Query bookings by phone number
+      const bookingsRef = db.collection('bookings');
+      const snapshot = await bookingsRef
+        .where('phone', '>=', cleanPhone)
+        .where('phone', '<=', cleanPhone + '\uf8ff')
+        .get();
+
+      const bookings = [];
+      snapshot.forEach(doc => {
+        const booking = doc.data();
+        booking.bookingId = doc.id;
+        bookings.push(booking);
+      });
+
+      console.log(`Found ${bookings.length} bookings for phone ${cleanPhone}`);
+
+      return response.json({
+        success: true,
+        bookings: bookings,
+        count: bookings.length
+      });
+      
+    } catch (error) {
+      console.error("Error searching bookings by phone:", error);
+      return response.status(500).json({ 
+        error: `An error occurred while searching bookings: ${error.message}` 
+      });
+    }
+  });
+});
+
+// Update Booking Function
+exports.updateBooking = onRequest({
+  secrets: ["DOMAIN_URL"]
+}, (request, response) => {
+  cors(request, response, async () => {
+    if (request.method !== "POST") {
+      return response.status(405).json({error: "Method not allowed"});
+    }
+
+    try {
+      const { bookingId, newDate, newTime, originalDate, originalTime } = request.body;
+      
+      if (!bookingId || !newDate || !newTime) {
+        return response.status(400).json({error: "Missing required fields"});
+      }
+
+      console.log(`Updating booking ${bookingId} from ${originalDate} ${originalTime} to ${newDate} ${newTime}`);
+
+      const db = admin.firestore();
+      
+      // Get the booking document
+      const bookingRef = db.collection('bookings').doc(bookingId);
+      const bookingDoc = await bookingRef.get();
+      
+      if (!bookingDoc.exists) {
+        return response.status(404).json({error: "Booking not found"});
+      }
+      
+      const bookingData = bookingDoc.data();
+      
+      // Update the booking with new date and time
+      const updatedData = {
+        ...bookingData,
+        date: newDate,
+        appointmentDate: newDate,
+        time: newTime,
+        appointmentTime: newTime,
+        displayTime: formatTimeForDisplay(newTime),
+        updatedAt: new Date().toISOString(),
+        rescheduled: true,
+        originalDate: originalDate,
+        originalTime: originalTime
+      };
+      
+      // Update the document
+      await bookingRef.update(updatedData);
+      
+      console.log(`Successfully updated booking ${bookingId}`);
+      
+      // Sync to Google Calendar
+      try {
+        // First, delete the old Google Calendar event
+        await deleteGoogleCalendarEvent(bookingId);
+        console.log(`Successfully deleted old Google Calendar event for booking ${bookingId}`);
+        
+        // Then create the new event
+        await syncToGoogleCalendar(updatedData);
+        console.log(`Successfully synced rescheduled booking ${bookingId} to Google Calendar`);
+      } catch (calendarError) {
+        console.error("Error syncing to Google Calendar:", calendarError);
+        // Don't fail the entire operation if Google Calendar sync fails
+      }
+      
+      return response.json({
+        success: true,
+        message: "Booking updated successfully",
+        bookingId: bookingId,
+        newDate: newDate,
+        newTime: newTime
+      });
+      
+    } catch (error) {
+      console.error("Error updating booking:", error);
+      return response.status(500).json({ 
+        error: `An error occurred while updating booking: ${error.message}` 
+      });
+    }
+  });
+});
+
+// Helper function to format time for display
+function formatTimeForDisplay(timeStr) {
+  if (!timeStr || !timeStr.includes(':')) return timeStr;
+  
+  const [hours, minutes] = timeStr.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+// Helper function to delete Google Calendar event
+async function deleteGoogleCalendarEvent(bookingId) {
+  try {
+    // Get Google Calendar credentials from environment
+    const credentialsJson = process.env.GOOGLE_CALENDAR_CREDENTIALS;
+    const calendarId = process.env.GOOGLE_CALENDAR_ID;
+    
+    if (!credentialsJson || !calendarId) {
+      console.error("Missing Google Calendar configuration");
+      return;
+    }
+    
+    // Parse credentials
+    const credentials = JSON.parse(credentialsJson);
+    
+    // Set up Google Calendar API
+    const auth = new google.auth.GoogleAuth({
+      credentials: credentials,
+      scopes: ['https://www.googleapis.com/auth/calendar']
+    });
+    
+    const calendar = google.calendar({version: 'v3', auth});
+    
+    // Search for events with the specific bookingId
+    const events = await calendar.events.list({
+      calendarId: calendarId,
+      privateExtendedProperty: `bookingId=${bookingId}`,
+      maxResults: 1
+    });
+    
+    // Delete the event if found
+    if (events.data.items && events.data.items.length > 0) {
+      const eventId = events.data.items[0].id;
+      await calendar.events.delete({
+        calendarId: calendarId,
+        eventId: eventId
+      });
+      console.log(`Deleted Google Calendar event ${eventId} for booking ${bookingId}`);
+    } else {
+      console.log(`No Google Calendar event found for booking ${bookingId}`);
+    }
+    
+  } catch (error) {
+    console.error("Error deleting Google Calendar event:", error);
+    // Don't throw error, just log it
+  }
+}
+
 // Get Bookings for Date Function
 exports.getBookingsForDate = onRequest({
   secrets: ["DOMAIN_URL"]
