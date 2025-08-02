@@ -237,7 +237,26 @@ exports.syncToGoogleCalendar = onRequest({
         return response.status(400).json({error: "Missing appointment date or time"});
       }
       
-      const startDateTime = new Date(appointmentDate + ' ' + appointmentTime);
+      // Parse the date and time more robustly
+      let startDateTime;
+      try {
+        // Try parsing as ISO string first
+        if (appointmentTime.includes('T')) {
+          startDateTime = new Date(appointmentDate + 'T' + appointmentTime);
+        } else {
+          // Parse as local date and time
+          startDateTime = new Date(appointmentDate + ' ' + appointmentTime);
+        }
+        
+        // If parsing failed, try alternative format
+        if (isNaN(startDateTime.getTime())) {
+          startDateTime = new Date(appointmentDate + 'T' + appointmentTime + ':00');
+        }
+      } catch (error) {
+        console.error('Error parsing date/time:', error);
+        return response.status(400).json({error: "Invalid date/time format"});
+      }
+      
       const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000));
       
       console.log("Google Calendar sync - Parsed dates:", {
