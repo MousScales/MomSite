@@ -674,7 +674,6 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                 field.addEventListener('change', (e) => {
                     updatePricing();
                     handleConditionalFields(styleConfig, optionKey, e.target.value);
-                    handleReferenceImageRequirement(styleKey, optionKey, e.target.value);
                     
                     // Update duration for cornrows when style choice changes
                     if (styleKey === 'cornrows' && optionKey === 'style-choice') {
@@ -708,25 +707,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         });
     }
 
-    // Function to handle reference image requirement for cornrows
-    function handleReferenceImageRequirement(styleKey, optionKey, selectedValue) {
-        if (styleKey === 'cornrows' && optionKey === 'style-choice') {
-            const styleImageInput = document.getElementById('style-image');
-            const styleImageLabel = document.querySelector('label[for="style-image"]');
-            
-            if (styleImageInput && styleImageLabel) {
-                if (selectedValue === 'with-style') {
-                    // Make reference image required
-                    styleImageInput.setAttribute('required', 'required');
-                    styleImageLabel.innerHTML = 'Style Reference Image * <small>(Required for custom styles)</small>';
-            } else {
-                    // Make reference image optional
-                    styleImageInput.removeAttribute('required');
-                    styleImageLabel.innerHTML = 'Style Reference Image <small>(Optional)</small>';
-                }
-            }
-        }
-    }
+
 
     // Function to filter hair length options based on style
     function updateHairLengthOptions(styleKey) {
@@ -1184,64 +1165,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     // Initialize calendar
     initCalendar();
 
-    // Image upload functionality
-    function setupImageUploads() {
-        const styleUploadArea = document.getElementById('style-upload-area');
-        const hairUploadArea = document.getElementById('hair-upload-area');
-        const styleInput = document.getElementById('style-image');
-        const hairInput = document.getElementById('hair-image');
 
-        // Style image upload
-        styleUploadArea.addEventListener('click', () => styleInput.click());
-        styleInput.addEventListener('change', (e) => handleImageUpload(e, 'style'));
-
-        // Hair image upload
-        hairUploadArea.addEventListener('click', () => hairInput.click());
-        hairInput.addEventListener('change', (e) => handleImageUpload(e, 'hair'));
-    }
-
-    function handleImageUpload(event, type) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file.');
-            return;
-        }
-
-        // Validate file size (5MB limit)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Image size must be less than 5MB.');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const previewImg = document.getElementById(`${type}-preview-img`);
-            const preview = document.getElementById(`${type}-preview`);
-            const placeholder = document.querySelector(`#${type}-upload-area .upload-placeholder`);
-            
-            previewImg.src = e.target.result;
-            preview.style.display = 'flex';
-            placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // Global function for removing images
-    window.removeImage = function(type) {
-        const input = document.getElementById(`${type}-image`);
-        const preview = document.getElementById(`${type}-preview`);
-        const placeholder = document.querySelector(`#${type}-upload-area .upload-placeholder`);
-        
-        input.value = '';
-        preview.style.display = 'none';
-        placeholder.style.display = 'flex';
-    };
-
-    // Initialize image uploads
-    setupImageUploads();
 
     // Form validation
     function validateForm() {
@@ -1277,12 +1201,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             isValid = false;
         }
 
-        // Hair image validation (required)
-        const hairImageInput = document.getElementById('hair-image');
-        if (!hairImageInput.files || hairImageInput.files.length === 0) {
-            alert('Please upload an image of your hair. We need this to get ready for your appointment.');
-            isValid = false;
-        }
+
 
         return isValid;
     }
@@ -1352,8 +1271,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             depositAmount: depositAmount,
             depositPaid: false,
             paymentMethod: 'card',
-            styleImage: document.getElementById('style-preview-img').src || null,
-            hairImage: document.getElementById('hair-preview-img').src || null,
+
             bookingId: Date.now().toString(),
             status: 'pending', // Will be updated to 'confirmed' when payment succeeds
             styleSpecificOptions: styleSpecificOptions // Include style-specific selections
