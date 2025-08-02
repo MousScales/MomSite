@@ -1695,6 +1695,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         };
 
         try {
+            // Apple Pay temporarily disabled
+            /*
             // Check if Apple Pay is being used
             if (applePaySupported && applePayButton) {
                 // Handle Apple Pay payment
@@ -1743,6 +1745,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     return;
                 }
             }
+            */
             
             // Create payment intent on your server for card payment
             console.log('Creating payment intent with amount:', depositAmount * 100, 'cents');
