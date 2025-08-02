@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Management</title>
+    
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="container">
+        <div class="calendar-header">
+            <div class="header-left">
+                <h1>Booking Management</h1>
+            </div>
+            <div class="calendar-controls">
+                <button id="prev-btn" class="control-btn"><i class="fas fa-chevron-left"></i></button>
+                <button id="today-btn" class="control-btn">Today</button>
+                <button id="next-btn" class="control-btn"><i class="fas fa-chevron-right"></i></button>
+                <span id="current-range" class="current-range"></span>
+                <div class="view-buttons">
+                    <button id="month-view" class="view-btn active">Month</button>
+                    <button id="week-view" class="view-btn">Week</button>
+                    <button id="day-view" class="view-btn">Day</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendar" class="calendar-container"></div>
+
+        <!-- Bookings List Section -->
+        <div class="bookings-list-container">
+            <h2>All Bookings</h2>
+            <div class="bookings-filters">
+                <select id="status-filter">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <input type="text" id="search-bookings" placeholder="Search bookings...">
+            </div>
+            <div class="bookings-table-container">
+                <table id="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Client Name</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookings-list">
+                        <!-- Bookings will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Booking Details</h2>
+            <div id="booking-details"></div>
+        </div>
+    </div>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Config -->
+    <script src="config.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="admin.js"></script>
+</body>
+</html> 

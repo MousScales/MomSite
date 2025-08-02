@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+    </nav>
+
+    <div class="booking-container">
+        <div class="booking-header">
+            <h1>Book Your Appointment</h1>
+            <p>Choose your preferred style and schedule your appointment</p>
+        </div>
+
+        <div class="booking-content">
+            <div class="booking-form-container">
+                <form id="booking-form" class="booking-form">
+                    <div class="form-section">
+                        <h2>Personal Information</h2>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Full Name *</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" required>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Service Details</h2>
+                        <div class="form-group">
+                            <label for="style">Hair Style *</label>
+                            <select id="style" name="style" required>
+                                <option value="">Select a style</option>
+                                <option value="cornrows">Cornrows</option>
+                                <option value="box-braids">Box Braids</option>
+                                <option value="boho-braids">Boho Braids</option>
+                                <option value="jumbo-braids">Jumbo Braids</option>
+                                                                <option value="fulani-braids">Fulani Braids</option>
+                                <option value="stitch-braids">Stitch Braids</option>
+                                <option value="tribal-braids">Tribal Braids</option>
+                                <option value="lemonade-braids">Lemonade Braids</option>
+                                <option value="passion-twists">Passion Twists</option>
+                                <option value="senegalese-twists">Senegalese Twists</option>
+                                <option value="marley-twists">Marley Twists</option>
+                                <option value="two-strand-twists">Two Strand Twists</option>
+                                <option value="locs-retwist">Locs Retwist</option>
+                                <option value="loc-retwist-2-strands">Loc Retwist 2 Strands</option>
+                                <option value="barrel-twists">Barrel Twists</option>
+                                <option value="starter-locs">Starter Locs</option>
+                                <option value="weave">Weave</option>
+                            </select>
+                        </div>
+                        <div class="form-row" id="hair-length-section" style="display: none;">
+                            <div class="form-group">
+                                <label for="hair-length">Hair Length</label>
+                                <select id="hair-length" name="hair-length">
+                                    <option value="">Select length</option>
+                                    <option value="short">Short (Above shoulders)</option>
+                                    <option value="medium">Medium (Shoulder length)</option>
+                                    <option value="long">Long (Below shoulders)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Style-Specific Options -->
+                    <div class="form-section" id="style-specific-options" style="display: none;">
+                        <h2 id="style-specific-title">Style Options</h2>
+                        <div id="style-specific-fields">
+                            <!-- Dynamic fields will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Appointment Details</h2>
+                        <div class="calendar-note">
+                            <p style="background: #f8f9fa; padding: 12px; border-left: 4px solid #007bff; margin-bottom: 20px; border-radius: 4px; font-size: 14px;">
+                                <i class="fas fa-phone" style="margin-right: 8px; color: #007bff;"></i>
+                                <strong>Can't find a time that works?</strong> Call us at <a href="tel:8604250751" style="color: #007bff; text-decoration: none; font-weight: bold;">860-425-0751</a> and we'll see if we can fit you in!
+                            </p>
+                        </div>
+                        <div class="calendar-container">
+                            <div class="calendar-header">
+                                <button id="prev-month" class="calendar-nav-btn">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <h3 id="current-month">January 2024</h3>
+                                <button id="next-month" class="calendar-nav-btn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="calendar-grid">
+                                <div class="calendar-weekdays">
+                                    <div>Sun</div>
+                                    <div>Mon</div>
+                                    <div>Tue</div>
+                                    <div>Wed</div>
+                                    <div>Thu</div>
+                                    <div>Fri</div>
+                                    <div>Sat</div>
+                                </div>
+                                <div id="calendar-days" class="calendar-days"></div>
+                            </div>
+                            <div class="selected-date-info">
+                                <p>Selected Date: <span id="selected-date">None</span></p>
+                            </div>
+                        </div>
+                                                <div class="time-slots-container">
+                            <h4>Available Time Slots</h4>
+                            <div class="availability-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color available"></div>
+                                    <span>Available</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color limited"></div>
+                                    <span>Limited</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color fully-booked"></div>
+                                    <span>Fully Booked</span>
+                                </div>
+                            </div>
+                            <div id="time-slots" class="time-slots">
+                                <p class="no-date-selected">Please select a date first</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="duration">Estimated Duration</label>
+                            <div id="duration-display" class="duration-display">
+                                <span>Select hair length to see estimated duration</span>
+                            </div>
+                            <input type="hidden" id="duration" name="duration" value="">
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-section">
+                        <h2>Reference Images</h2>
+                        <div class="image-upload-container">
+                            <div class="image-upload-group">
+                                <label for="style-image">Specific Style Reference (Optional)</label>
+                                <p style="font-size: 12px; color: #666; margin: 5px 0 10px 0; font-style: italic;">
+                                    <i class="fas fa-lightbulb" style="margin-right: 5px;"></i>
+                                    Helpful to have if you want something specific
+                                </p>
+                                <div class="image-upload-area" id="style-upload-area">
+                                    <input type="file" id="style-image" name="style-image" accept="image/*" style="display: none;">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <p>Click to upload style reference image</p>
+                                        <span>JPG, PNG up to 5MB</span>
+                                    </div>
+                                    <div class="image-preview" id="style-preview" style="display: none;">
+                                        <img id="style-preview-img" src="" alt="Style reference">
+                                        <button type="button" class="remove-image" onclick="removeImage('style')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="image-upload-group">
+                                <label for="hair-image">Image of Your Hair (Required) *</label>
+                                <p style="font-size: 12px; color: #666; margin: 5px 0 10px 0; font-style: italic;">
+                                    <i class="fas fa-info-circle" style="margin-right: 5px;"></i>
+                                    We need this to get ready for you and prepare for your appointment
+                                </p>
+                                <div class="image-upload-area" id="hair-upload-area">
+                                    <input type="file" id="hair-image" name="hair-image" accept="image/*" required style="display: none;">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <p>Click to upload image of your hair</p>
+                                        <span>JPG, PNG up to 5MB</span>
+                                    </div>
+                                    <div class="image-preview" id="hair-preview" style="display: none;">
+                                        <img id="hair-preview-img" src="" alt="Hair reference">
+                                        <button type="button" class="remove-image" onclick="removeImage('hair')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Special Requests</h2>
+                        <div class="form-group">
+                            <label for="notes">Additional Notes</label>
+                            <textarea id="notes" name="notes" rows="4" placeholder="Any special requests, allergies, or additional information..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Pricing Estimate</h2>
+                        <div class="pricing-display">
+                            <div class="price-item">
+                                <span>Base Service:</span>
+                                <span id="base-price">$0</span>
+                            </div>
+                            <div class="price-item">
+                                <span>Additional Services:</span>
+                                <span id="additional-price">$0</span>
+                            </div>
+                            <div class="price-item total">
+                                <span>Estimated Total:</span>
+                                <span id="total-price">$0</span>
+                            </div>
+                        </div>
+                        <p class="price-note">* Final price will be confirmed after consultation</p>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Payment Information</h2>
+                        <div class="deposit-info">
+                            <p>A deposit is required to secure your appointment. Please pay the deposit below to confirm your booking.</p>
+                            <div class="deposit-display">
+                                <div class="deposit-item">
+                                    <span>Total Price:</span>
+                                    <span id="deposit-total-price">$0</span>
+                                </div>
+                                <div class="deposit-item">
+                                    <span>Deposit:</span>
+                                    <span id="deposit-amount">$0</span>
+                                </div>
+                                <div class="deposit-item deposit-total">
+                                    <span>Deposit Due:</span>
+                                    <span id="deposit-due">$0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-section">
+                            <h3>Payment Details</h3>
+                            <div id="card-element" class="card-element">
+                                <!-- Stripe Card Element will be inserted here -->
+                            </div>
+                            <div id="card-errors" class="card-errors" role="alert"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Book Appointment</button>
+                        <a href="index.html" class="cancel-btn">Cancel</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="booking-info">
+                <div class="info-card">
+                    <h3><i class="fas fa-clock"></i> Business Hours</h3>
+                    <p>Monday - Saturday: 9:00 AM - 7:00 PM</p>
+                    <p>Sunday: Closed</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+                    <p>116 Ocean Avenue</p>
+                    <p>New London, CT 06320</p>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-phone"></i> Contact</h3>
+                    <p>Call or text for urgent inquiries</p>
+                    <p>Walk-ins welcome (subject to availability)</p>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Important Notes</h3>
+                    <ul>
+                        <li>Please arrive 10 minutes early</li>
+                        <li>Bring reference photos if desired</li>
+                        <li>Payment accepted: Cash, Card</li>
+                        <li>Deposit may be required for long appointments</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services with years of experience</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p><i class="fas fa-phone"></i> <a href="tel:8604250751" style="color: inherit; text-decoration: none;">860-425-0751</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Hours</h3>
+                <p>Monday - Saturday: 7am - 8pm</p>
+                <p>Sunday: Closed</p>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <div class="social-links">
+                    <a href="https://instagram.com/mayadoeshairrr" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tiktok.com/@mayadoeshairr" target="_blank"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Maya African Hair Braiding. All rights reserved.</p>
+            <button id="admin-login-btn" class="admin-login-button">Admin</button>
+        </div>
+    </footer>
+
+    <script src="booking.js"></script>
+</body>
+</html> 

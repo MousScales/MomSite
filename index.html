@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Transform Your Style with Expert African Braiding</h1>
+            <p>Discover handcrafted braids that blend tradition, care, and modern beauty.</p>
+            <div class="cta-buttons">
+                <a href="styles-catalog.html" class="cta-button">View Styles</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location Section -->
+    <section class="location-section">
+        <div class="container">
+            <h2 class="section-title">Where To Find Us</h2>
+            <div class="map-container">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2982.7647494455247!2d-72.10187862346186!3d41.35543769912086!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89e60e4f7a83f95d%3A0x35d99e9c0b86c6d0!2s116%20Ocean%20Ave%2C%20New%20London%2C%20CT%2006320!5e0!3m2!1sen!2sus!4v1709852612227!5m2!1sen!2sus"
+                    width="100%"
+                    height="450"
+                    style="border:0;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+            <div class="location-info">
+                <div class="address">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>116 Ocean Avenue<br>New London, CT 06320</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services with years of experience</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p><i class="fas fa-phone"></i> <a href="tel:8604250751" style="color: inherit; text-decoration: none;">860-425-0751</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Hours</h3>
+                <p>Monday - Saturday: 7am - 8pm</p>
+                <p>Sunday: Closed</p>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <div class="social-links">
+                    <a href="https://instagram.com/mayadoeshairrr" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tiktok.com/@mayadoeshairr" target="_blank"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Maya African Hair Braiding. All rights reserved.</p>
+            <button id="admin-login-btn" class="admin-login-button">Admin</button>
+        </div>
+    </footer>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-modal" class="admin-modal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h2>Admin Access</h2>
+                <button class="admin-modal-close">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="admin-login-form">
+                    <div class="form-group">
+                        <label for="admin-passkey">Enter Passkey</label>
+                        <input type="password" id="admin-passkey" placeholder="Enter passkey" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="admin-login-submit">Access Admin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

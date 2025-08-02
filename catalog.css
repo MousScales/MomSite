@@ -1,0 +1,386 @@
+:root {
+    --primary-color: #2c2c2c;
+    --secondary-color: #f5f5f5;
+    --accent-color: #666666;
+    --text-color: #2c2c2c;
+    --light-bg: #f8f8f8;
+    --white: #ffffff;
+    --light-gray: #e8e8e8;
+    --soft-grey: #888888;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 25px rgba(0,0,0,0.15);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
+
+/* Catalog Main Content */
+.catalog-main {
+    padding: 7rem 5% 5rem;
+    min-height: calc(100vh - 200px);
+}
+
+/* Search Container */
+.search-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.search-bar {
+    position: relative;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 1rem 3rem 1rem 1.5rem;
+    font-size: 1.1rem;
+    border: 2px solid var(--secondary-color);
+    border-radius: var(--radius-lg);
+    background-color: var(--white);
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: var(--shadow-md);
+}
+
+.search-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+/* Section Titles */
+.section-title {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin: 3rem 0;
+    font-weight: 700;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--accent-color);
+    margin: 1rem auto 0;
+    border-radius: 2px;
+}
+
+/* Hairstyles Grid */
+.hairstyles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hairstyle-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.hairstyle-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.hairstyle-image {
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(135deg, var(--light-gray), var(--accent-color));
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hairstyle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.hairstyle-card:hover .hairstyle-image img {
+    transform: scale(1.05);
+}
+
+.hairstyle-title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: var(--white);
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.hairstyle-info {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.price-range {
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.book-now-btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    margin-top: 1rem;
+    background-color: var(--primary-color);
+    color: var(--white);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.book-now-btn:hover {
+    background-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 2rem;
+        margin: 2rem 0;
+    }
+
+    .hairstyles-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        padding: 1rem;
+        gap: 1.5rem;
+    }
+
+    .hairstyle-image {
+        height: 250px;
+    }
+
+    .hairstyle-title {
+        font-size: 1.25rem;
+        padding: 1rem;
+    }
+
+    .price-range {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-input {
+        font-size: 1rem;
+        padding: 0.875rem 2.5rem 0.875rem 1.25rem;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+    }
+
+    .hairstyle-image {
+        height: 200px;
+    }
+
+    .hairstyle-info {
+        padding: 1rem;
+    }
+
+    .book-now-btn {
+        padding: 0.625rem 1.5rem;
+    }
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hairstyle-card {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Style Categories */
+.style-category {
+    margin-bottom: 4rem;
+}
+
+.style-category h2 {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.style-category h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--accent-color);
+    border-radius: 2px;
+}
+
+.style-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 0 1rem;
+}
+
+/* Style Cards */
+.style-card {
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.style-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.style-image {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+}
+
+.style-image .placeholder-image {
+    width: 100%;
+    height: 100%;
+    background: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+.style-info {
+    padding: 1.5rem;
+}
+
+.style-info h3 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+/* Logo Link */
+.logo {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: 600;
+    transition: var(--transition);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.logo:hover {
+    opacity: 0.9;
+}
+
+/* Navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--white);
+    padding: 0.5rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: var(--shadow-md);
+}
+
+/* Call Now Button */
+.book-now-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--white);
+    color: var(--primary-color);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.book-now-button:hover {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.book-now-button::before {
+    content: '\f095';
+    font-family: 'Font Awesome 6 Free';
+    margin-right: 0.5rem;
+    font-weight: 900;
+}
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 1.25rem;
+        padding: 0.75rem;
+    }
+    
+    .navbar {
+        padding: 0.25rem 1rem;
+    }
+
+    .book-now-button {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+} 
