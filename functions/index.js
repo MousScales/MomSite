@@ -248,11 +248,9 @@ exports.syncToGoogleCalendar = onRequest({
         // Create date in local time
         startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
         
-        // Adjust for timezone - since the calendar is set to America/New_York
-        // and we want the time to appear as the local time the user selected
-        // we need to account for the timezone offset
-        const localOffset = startDateTime.getTimezoneOffset() * 60000; // Convert to milliseconds
-        startDateTime = new Date(startDateTime.getTime() + localOffset);
+        // Add 4 hours to convert from UTC to EST
+        // This ensures the time appears correctly in the Google Calendar
+        startDateTime = new Date(startDateTime.getTime() + (4 * 60 * 60 * 1000));
         
       } catch (error) {
         console.error('Error parsing date/time:', error);
