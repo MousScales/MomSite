@@ -254,9 +254,10 @@ exports.syncToGoogleCalendar = onRequest({
           // Skip basic fields that are already displayed elsewhere
           const skipFields = ['name', 'phone', 'style', 'duration', 'appointmentDate', 'appointmentTime', 
                              'date', 'time', 'displayTime', 'totalPrice', 'depositAmount', 'depositPaid', 
-                             'paymentMethod', 'status', 'bookingId', 'notes', 'styleImage', 'hairImage'];
+                             'paymentMethod', 'status', 'bookingId', 'notes', 'styleImage', 'hairImage',
+                             'preWash', 'detangling'];
           
-          if (!skipFields.includes(key) && bookingData[key] && bookingData[key] !== '' && bookingData[key] !== 'no-wash' && bookingData[key] !== 'no-detangle' && bookingData[key] !== 'none' && bookingData[key] !== null) {
+          if (!skipFields.includes(key) && bookingData[key] && bookingData[key] !== '' && bookingData[key] !== 'no-wash' && bookingData[key] !== 'no-detangle' && bookingData[key] !== 'none') {
             // Format the key to be more readable
             const formattedKey = key
               .replace(/-/g, ' ')
@@ -269,9 +270,9 @@ exports.syncToGoogleCalendar = onRequest({
             let formattedValue = bookingData[key];
             
             // Handle specific field formatting
-            if (key.includes('wash-service') && bookingData[key] === 'wash') {
+            if (key.includes('wash') && bookingData[key] === 'wash') {
               formattedValue = 'Wash & Condition (+$30)';
-            } else if (key.includes('detangle-service') && bookingData[key] === 'detangle') {
+            } else if (key.includes('detangle') && bookingData[key] === 'detangle') {
               formattedValue = 'Detangle Hair (+$20)';
             } else if (key.includes('knotless') && bookingData[key] === 'knotless') {
               formattedValue = 'Knotless Style (+$30)';
@@ -279,8 +280,6 @@ exports.syncToGoogleCalendar = onRequest({
               formattedValue = 'Human Hair (+$60)';
             } else if (key === 'hairLength') {
               formattedValue = bookingData[key].charAt(0).toUpperCase() + bookingData[key].slice(1);
-            } else if (key.includes('consultation')) {
-              formattedValue = 'Price varies - will discuss during appointment';
             } else {
               // Convert kebab-case or camelCase values to readable format
               formattedValue = formattedValue
@@ -322,11 +321,8 @@ ${generateStyleOptionsText(bookingData)}
 ${bookingData.notes || 'No special notes'}
 
 📸 REFERENCE IMAGES
-${bookingData.styleImage && bookingData.styleImage !== 'null' && bookingData.styleImage !== '' ? `✅ Style Reference: Provided` : '❌ Style Reference: Not provided'}
-${bookingData.hairImage && bookingData.hairImage !== 'null' && bookingData.hairImage !== '' ? `✅ Hair Image: Provided` : '❌ Hair Image: Not provided'}
-
-${bookingData.styleImage && bookingData.styleImage !== 'null' && bookingData.styleImage !== '' ? `\n📷 Style Reference Image:\n${bookingData.styleImage}` : ''}
-${bookingData.hairImage && bookingData.hairImage !== 'null' && bookingData.hairImage !== '' ? `\n📷 Hair Reference Image:\n${bookingData.hairImage}` : ''}
+${bookingData.styleImage ? `✅ Style Reference: Provided` : '❌ Style Reference: Not provided'}
+${bookingData.hairImage ? `✅ Hair Image: Provided` : '❌ Hair Image: Not provided'}
         `.trim(),
         start: {
           dateTime: startDateTime.toISOString(),
