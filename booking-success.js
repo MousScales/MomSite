@@ -2,17 +2,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get booking data from sessionStorage (fallback to URL parameters for backwards compatibility)
     let bookingData = {};
     
+    console.log('Loading booking data...');
+    
     // Try sessionStorage first
     const sessionData = sessionStorage.getItem('bookingData');
     if (sessionData) {
+        console.log('Found booking data in sessionStorage:', sessionData);
         bookingData = JSON.parse(sessionData);
         // Clear the data after use
         sessionStorage.removeItem('bookingData');
     } else {
         // Fallback to URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        bookingData = JSON.parse(decodeURIComponent(urlParams.get('booking') || '{}'));
+        const urlBookingData = urlParams.get('booking');
+        console.log('Trying URL parameters:', urlBookingData);
+        bookingData = JSON.parse(decodeURIComponent(urlBookingData || '{}'));
     }
+    
+    console.log('Final booking data:', bookingData);
     
     // Populate booking details
     populateBookingDetails(bookingData);
@@ -34,30 +41,51 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function saveBookingToAdmin(bookingData) {
-    // Prepare the booking data for admin storage
+    console.log('Preparing booking data for admin storage:', bookingData);
+    
+    // Prepare the booking data for admin storage - include ALL fields from booking
     const adminBookingData = {
+        // Basic info
         name: bookingData.name,
         phone: bookingData.phone,
         style: bookingData.style,
         hairLength: bookingData.hairLength || '',
-
+        
+        // Date/time
         date: bookingData.date,
-        time: bookingData.time, // Send as 'time' to match what saveBooking expects
-        appointmentTime: bookingData.time, // Also include as appointmentTime for backwards compatibility
+        time: bookingData.time,
+        appointmentTime: bookingData.time,
         duration: bookingData.duration,
-        preWash: bookingData.preWash || 'none',
-        detangling: bookingData.detangling || 'none',
-        notes: bookingData.notes || '',
+        
+        // Payment info
         totalPrice: bookingData.totalPrice,
         depositAmount: bookingData.depositAmount,
         depositPaid: bookingData.depositPaid || false,
         paymentMethod: bookingData.paymentMethod || 'cash',
+        status: bookingData.status || 'confirmed',
+        bookingId: bookingData.bookingId,
+        createdAt: new Date().toISOString(),
+        
+        // Images
         styleImage: bookingData.styleImage || null,
         hairImage: bookingData.hairImage || null,
-        bookingId: bookingData.bookingId,
-        status: bookingData.status || 'confirmed', // Use confirmed status since payment was successful
-        createdAt: new Date().toISOString()
+        
+        // Notes
+        notes: bookingData.notes || '',
+        
+        // Legacy fields for backward compatibility
+        preWash: bookingData.preWash || 'none',
+        detangling: bookingData.detangling || 'none'
     };
+    
+    // Add all style-specific options from booking data
+    Object.keys(bookingData).forEach(key => {
+        if (!adminBookingData.hasOwnProperty(key)) {
+            adminBookingData[key] = bookingData[key];
+        }
+    });
+    
+    console.log('Final admin booking data:', adminBookingData);
 
     // Try to save to Firebase Functions first (if available)
                 fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
@@ -76,7 +104,9 @@ function saveBookingToAdmin(bookingData) {
         }
         
         // Only sync to Google Calendar if there's an uploaded image
-        if (adminBookingData.hairImage || adminBookingData.styleImage) {
+        if ((adminBookingData.hairImage && adminBookingData.hairImage !== 'null' && adminBookingData.hairImage !== '') || 
+            (adminBookingData.styleImage && adminBookingData.styleImage !== 'null' && adminBookingData.styleImage !== '')) {
+            console.log('Images found - syncing to Google Calendar');
             syncToGoogleCalendar(adminBookingData);
         } else {
             console.log('No images uploaded - skipping Google Calendar sync');
@@ -87,7 +117,9 @@ function saveBookingToAdmin(bookingData) {
         saveToLocalStorage(adminBookingData);
         
         // Only sync to Google Calendar if there's an uploaded image
-        if (adminBookingData.hairImage || adminBookingData.styleImage) {
+        if ((adminBookingData.hairImage && adminBookingData.hairImage !== 'null' && adminBookingData.hairImage !== '') || 
+            (adminBookingData.styleImage && adminBookingData.styleImage !== 'null' && adminBookingData.styleImage !== '')) {
+            console.log('Images found - syncing to Google Calendar');
             syncToGoogleCalendar(adminBookingData);
         } else {
             console.log('No images uploaded - skipping Google Calendar sync');
@@ -137,6 +169,13 @@ function syncToGoogleCalendar(bookingData) {
 
 // Function to generate style options display for success page
 function generateStyleOptionsDisplay(booking) {
+    console.log('Generating style options display for:', booking);
+    
+    if (!booking || Object.keys(booking).length === 0) {
+        console.log('No booking data provided to generateStyleOptionsDisplay');
+        return '<div class="detail-item"><span class="detail-label">Additional Options:</span><span class="detail-value">No booking data available</span></div>';
+    }
+    
     let optionsHTML = '';
     
     // Define fields to skip (basic booking info already displayed elsewhere)
