@@ -302,6 +302,97 @@ exports.syncToGoogleCalendar = onRequest({
         
         return optionsText || 'No additional options selected';
       }
+
+      // Function to generate detailed pricing breakdown
+      function generatePricingBreakdown(bookingData) {
+        let breakdown = '';
+        let basePrice = 0;
+        
+        // Get base price from style configurations
+        const styleConfig = {
+          'cornrows': { nostyle: 80 },
+          'box-braids': { shoulder: 230, midback: 250 },
+          'boho-braids': { shoulder: 280, midback: 250 },
+          'jumbo-braids': { midback: 230 },
+          'fulani-braids': { shoulder: 220, midback: 250 },
+          'stitch-braids': { midback: 150 },
+          'tribal-braids': { shoulder: 220, midback: 250 },
+          'lemonade-braids': { short: 130, medium: 160, long: 200 },
+          'passion-twists': { shoulder: 250, midback: 300 },
+          'senegalese-twists': { shoulder: 230, midback: 250 },
+          'marley-twists': { shoulder: 230, midback: 300 },
+          'two-strand-twists': { standard: 130 },
+          'locs-retwist': { standard: 130 },
+          'loc-retwist-2-strands': { standard: 150 },
+          'barrel-twists': { standard: 150 },
+          'starter-locs': { standard: 150 },
+          'weave': { standard: 150 }
+        };
+        
+        // Calculate base price
+        const style = bookingData.style;
+        const hairLength = bookingData.hairLength;
+        
+        if (styleConfig[style]) {
+          if (hairLength && styleConfig[style][hairLength]) {
+            basePrice = styleConfig[style][hairLength];
+            breakdown += `• Base Style (${style} - ${hairLength}): $${basePrice}\n`;
+          } else if (styleConfig[style].standard) {
+            basePrice = styleConfig[style].standard;
+            breakdown += `• Base Style (${style}): $${basePrice}\n`;
+          } else if (styleConfig[style].nostyle) {
+            basePrice = styleConfig[style].nostyle;
+            breakdown += `• Base Style (${style}): $${basePrice}\n`;
+          }
+        }
+        
+        // Add additional services pricing
+        if (bookingData.styleSpecificOptions) {
+          // Wash service
+          if (bookingData.styleSpecificOptions['wash-service'] === 'wash') {
+            breakdown += `• Wash & Condition: +$30\n`;
+          }
+          
+          // Detangle service
+          if (bookingData.styleSpecificOptions['detangle-service'] === 'detangle') {
+            breakdown += `• Detangle Hair: +$20\n`;
+          }
+          
+          // Other style-specific options
+          Object.keys(bookingData.styleSpecificOptions).forEach(key => {
+            if (key !== 'wash-service' && key !== 'detangle-service' && key !== 'hairLength') {
+              const value = bookingData.styleSpecificOptions[key];
+              if (value && value !== 'no-wash' && value !== 'no-detangle' && value !== 'none') {
+                let serviceName = '';
+                let additionalCost = 0;
+                
+                if (key.includes('knotless') && value === 'knotless') {
+                  serviceName = 'Knotless Style';
+                  additionalCost = 30;
+                } else if (key.includes('human') && value.includes('human')) {
+                  serviceName = 'Human Hair Upgrade';
+                  additionalCost = 60;
+                } else if (key.includes('extensions') && value === 'with-extensions') {
+                  serviceName = 'Extensions';
+                  additionalCost = 20;
+                } else if (key.includes('bundle') && value === 'with-bundle') {
+                  serviceName = 'Additional Bundle';
+                  additionalCost = 100;
+                } else if (key.includes('style-choice') && value === 'with-style') {
+                  serviceName = 'Style Pattern';
+                  additionalCost = 40;
+                }
+                
+                if (serviceName && additionalCost > 0) {
+                  breakdown += `• ${serviceName}: +$${additionalCost}\n`;
+                }
+              }
+            }
+          });
+        }
+        
+        return breakdown;
+      }
       
       // Create calendar event
       const event = {
@@ -330,7 +421,9 @@ ${bookingData.hairLength ? `Hair Length: ${bookingData.hairLength}` : ''}
 📋 ADDITIONAL SERVICES
 ${generateStyleOptionsText(bookingData)}
 
-💰 PRICING
+💰 PRICING BREAKDOWN
+${generatePricingBreakdown(bookingData)}
+─────────────────────────
 Total Price: $${bookingData.totalPrice}
 Deposit Required: $${bookingData.depositAmount}
 Remaining Balance: $${bookingData.totalPrice - bookingData.depositAmount}
