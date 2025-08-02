@@ -76,23 +76,15 @@ function saveBookingToAdmin(bookingData) {
             saveToLocalStorage(adminBookingData);
         }
         
-        // Only sync to Google Calendar if there's an uploaded image
-        if (adminBookingData.hairImage || adminBookingData.styleImage) {
-            syncToGoogleCalendar(adminBookingData);
-        } else {
-            console.log('No images uploaded - skipping Google Calendar sync');
-        }
+        // Sync to Google Calendar for all bookings
+        syncToGoogleCalendar(adminBookingData);
     })
     .catch(error => {
         console.log('Error saving to Firebase Functions, using local storage:', error);
         saveToLocalStorage(adminBookingData);
         
-        // Only sync to Google Calendar if there's an uploaded image
-        if (adminBookingData.hairImage || adminBookingData.styleImage) {
-            syncToGoogleCalendar(adminBookingData);
-        } else {
-            console.log('No images uploaded - skipping Google Calendar sync');
-        }
+        // Sync to Google Calendar for all bookings
+        syncToGoogleCalendar(adminBookingData);
     });
 }
 
