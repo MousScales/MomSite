@@ -51,9 +51,13 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     let paymentRequest = null;
 
     // Check if Apple Pay is supported
+    console.log('=== APPLE PAY DEBUG ===');
     console.log('Checking Apple Pay support...');
     console.log('ApplePaySession available:', !!window.ApplePaySession);
     console.log('ApplePaySession.canMakePayments available:', !!(window.ApplePaySession && ApplePaySession.canMakePayments));
+    console.log('User agent:', navigator.userAgent);
+    console.log('Protocol:', window.location.protocol);
+    console.log('Hostname:', window.location.hostname);
     
     if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
         applePaySupported = true;
@@ -82,8 +86,11 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             const applePayButtonContainer = document.getElementById('apple-pay-button');
             const applePayBtn = document.getElementById('apple-pay-btn');
             
+            console.log('=== PAYMENT REQUEST DEBUG ===');
             console.log('Payment request result:', result);
             console.log('Apple Pay available:', result && result.applePay);
+            console.log('Button container found:', !!applePayButtonContainer);
+            console.log('Apple Pay button found:', !!applePayBtn);
             
             if (result && result.applePay) {
                 console.log('Apple Pay is available');
@@ -1437,7 +1444,6 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         console.log('Processing Apple Pay payment:', paymentMethod);
         
         if (!validateForm()) {
-            alert('Please fill in all required fields correctly.');
             return;
         }
 
@@ -1574,12 +1580,10 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
 
         // Check if date and time are selected
         if (!selectedDate) {
-            alert('Please select a date from the calendar.');
             isValid = false;
         }
 
         if (!selectedTime) {
-            alert('Please select a time slot.');
             isValid = false;
         }
 
@@ -1601,9 +1605,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         e.preventDefault();
 
         if (!validateForm()) {
-            alert('Please fill in all required fields correctly.');
-                return;
-            }
+            return;
+        }
 
         // Show loading state
         const submitBtn = document.querySelector('.submit-btn');
