@@ -102,7 +102,7 @@ exports.saveBooking = onRequest({
         status: data.status || 'pending',
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       };
-      
+
       // Validate required fields
       if (!bookingData.appointmentTime) {
         console.error('Missing appointmentTime field in booking data');
@@ -1101,3 +1101,76 @@ exports.syncAllBookingsToGoogleCalendar = onRequest({
     }
   });
 });
+
+// Function to cancel a booking
+exports.cancelBooking = onRequest({
+  secrets: ["DOMAIN_URL", "GOOGLE_CALENDAR_CREDENTIALS", "GOOGLE_CALENDAR_ID"]
+}, (request, response) => {
+  cors(request, response, async () => {
+    if (request.method !== "POST") {
+      return response.status(405).json({error: "Method not allowed"});
+    }
+
+    try {
+      const { bookingId } = request.body;
+      
+      if (!bookingId) {
+        return response.status(400).json({error: "Missing bookingId"});
+      }
+
+      console.log(`Cancelling booking ${bookingId}`);
+
+      const db = admin.firestore();
+      
+      // Get the booking document
+      const bookingRef = db.collection('bookings').doc(bookingId);
+      const bookingDoc = await bookingRef.get();
+      
+      if (!bookingDoc.exists) {
+        return response.status(404).json({error: "Booking not found"});
+      }
+      
+      const bookingData = bookingDoc.data();
+      
+      // Check if appointment is within 48 hours
+      if (bookingData.appointmentDate && bookingData.appointmentTime) {
+        const appointmentDateTime = new Date(bookingData.appointmentDate + ' ' + bookingData.appointmentTime);
+        const now = new Date();
+        const timeDifference = appointmentDateTime.getTime() - now.getTime();
+        const hoursDifference = timeDifference / (1000 * 60 * 60);
+        
+        if (hoursDifference <= 48) {
+          return response.status(400).json({
+            error: "Cancellation is not available within 48 hours of your appointment. Please call 860-425-0751 for urgent cancellation needs."
+          });
+        }
+      }
+      
+      // Delete from Google Calendar first
+      try {
+        console.log(`Deleting Google Calendar events for booking ${bookingId}`);
+        await deleteGoogleCalendarEvent(bookingId);
+        console.log(`Successfully deleted Google Calendar events for booking ${bookingId}`);
+      } catch (calendarError) {
+        console.error("Error deleting from Google Calendar:", calendarError);
+        // Continue with deletion even if Google Calendar fails
+      }
+      
+      // Delete from Firestore
+      await bookingRef.delete();
+      console.log(`Successfully deleted booking ${bookingId} from Firestore`);
+      
+      return response.json({
+        success: true,
+        message: "Booking cancelled successfully",
+        bookingId: bookingId
+      });
+      
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      return response.status(500).json({ 
+        error: `An error occurred while cancelling booking: ${error.message}` 
+      });
+    }
+  });
+}); 

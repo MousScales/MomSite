@@ -1071,9 +1071,64 @@ async function confirmReschedule() {
     }
 }
 
-function cancelAppointment(bookingId) {
-    if (confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
-        // In a real implementation, this would call an API to cancel the appointment
-        alert('To cancel your appointment, please call us at 860-425-0751. We\'ll process your cancellation request.');
+async function cancelAppointment(bookingId) {
+    const warningMessage = `⚠️ IMPORTANT CANCELLATION NOTICE ⚠️
+
+• Your deposit is NON-REFUNDABLE
+• Once cancelled, you must rebook a new appointment
+• Rescheduling is a better option - you keep your deposit
+
+Would you like to:
+1. Cancel (lose deposit, must rebook)
+2. Reschedule instead (keep deposit, change date/time)
+
+
+Click OK to cancel, or Cancel to keep your appointment.`;
+
+    if (confirm(warningMessage)) {
+        // Show final confirmation
+        const finalConfirm = confirm(`Are you absolutely sure you want to cancel?
+
+⚠️ This will:
+• Delete your appointment permanently
+• Your deposit will NOT be refunded
+• You'll need to book a new appointment
+
+This action cannot be undone.`);
+
+        if (finalConfirm) {
+            try {
+                // Call the cancel booking API
+                const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/cancelBooking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bookingId: bookingId
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Appointment cancelled successfully! You will receive a confirmation shortly.\n\nTo book a new appointment, please visit our booking page.');
+                    
+                    // Refresh the search results
+                    const searchBtn = document.getElementById('search-btn');
+                    if (searchBtn) {
+                        searchBtn.click();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    if (errorData.error && errorData.error.includes('48 hours')) {
+                        alert('⚠️ Cancellation Not Available\n\nCancellation is not available within 48 hours of your appointment.\n\nFor urgent cancellation needs, please call us at:\n📞 860-425-0751');
+                    } else {
+                        throw new Error(errorData.error || 'Failed to cancel appointment');
+                    }
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                alert('Failed to cancel appointment. Please try again or call us at 860-425-0751.');
+            }
+        }
     }
 } 
