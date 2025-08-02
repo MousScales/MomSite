@@ -293,6 +293,21 @@ body {
     background: #f9f9f9;
 }
 
+.calendar-day.too-soon {
+    color: #ff9800;
+    background: #fff3e0;
+    position: relative;
+}
+
+.calendar-day.too-soon::after {
+    content: "⏰";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 8px;
+    color: #ff9800;
+}
+
 .calendar-day.today {
     background: #f0f0f0;
     font-weight: 600;

@@ -966,6 +966,12 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
+        // Calculate minimum booking time (30 hours from now)
+        const minimumBookingTime = new Date();
+        minimumBookingTime.setHours(minimumBookingTime.getHours() + 30);
+        const minimumBookingDate = new Date(minimumBookingTime);
+        minimumBookingDate.setHours(0, 0, 0, 0);
+        
         for (let i = 0; i < 42; i++) {
             const date = new Date(startDate);
             date.setDate(startDate.getDate() + i);
@@ -984,13 +990,18 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                 dayElement.classList.add('other-month');
             }
             
-            // Check if date is disabled (past date, Sunday, or unavailable)
+            // Check if date is disabled (past date, Sunday, or too soon for booking)
             const isPast = date < today;
             const isSunday = date.getDay() === 0;
-            const isUnavailable = isPast || isSunday;
+            const isTooSoon = date < minimumBookingDate;
+            const isUnavailable = isPast || isSunday || isTooSoon;
             
             if (isUnavailable) {
                 dayElement.classList.add('disabled');
+                if (isTooSoon && !isPast && !isSunday) {
+                    dayElement.classList.add('too-soon');
+                    dayElement.title = 'Bookings require 30 hours advance notice';
+                }
             } else {
                 dayElement.addEventListener('click', () => selectDate(date));
             }

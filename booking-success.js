@@ -2,24 +2,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get booking data from sessionStorage (fallback to URL parameters for backwards compatibility)
     let bookingData = {};
     
-    console.log('Loading booking data...');
-    
     // Try sessionStorage first
     const sessionData = sessionStorage.getItem('bookingData');
     if (sessionData) {
-        console.log('Found booking data in sessionStorage:', sessionData);
         bookingData = JSON.parse(sessionData);
         // Clear the data after use
         sessionStorage.removeItem('bookingData');
     } else {
         // Fallback to URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        const urlBookingData = urlParams.get('booking');
-        console.log('Trying URL parameters:', urlBookingData);
-        bookingData = JSON.parse(decodeURIComponent(urlBookingData || '{}'));
+        bookingData = JSON.parse(decodeURIComponent(urlParams.get('booking') || '{}'));
     }
-    
-    console.log('Final booking data:', bookingData);
     
     // Populate booking details
     populateBookingDetails(bookingData);
@@ -41,51 +34,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function saveBookingToAdmin(bookingData) {
-    console.log('Preparing booking data for admin storage:', bookingData);
-    
-    // Prepare the booking data for admin storage - include ALL fields from booking
+    // Prepare the booking data for admin storage
     const adminBookingData = {
-        // Basic info
         name: bookingData.name,
         phone: bookingData.phone,
         style: bookingData.style,
         hairLength: bookingData.hairLength || '',
-        
-        // Date/time
+
         date: bookingData.date,
-        time: bookingData.time,
-        appointmentTime: bookingData.time,
+        time: bookingData.time, // Send as 'time' to match what saveBooking expects
+        appointmentTime: bookingData.time, // Also include as appointmentTime for backwards compatibility
         duration: bookingData.duration,
-        
-        // Payment info
+        preWash: bookingData.preWash || 'none',
+        detangling: bookingData.detangling || 'none',
+        notes: bookingData.notes || '',
         totalPrice: bookingData.totalPrice,
         depositAmount: bookingData.depositAmount,
         depositPaid: bookingData.depositPaid || false,
         paymentMethod: bookingData.paymentMethod || 'cash',
-        status: bookingData.status || 'confirmed',
-        bookingId: bookingData.bookingId,
-        createdAt: new Date().toISOString(),
-        
-        // Images
         styleImage: bookingData.styleImage || null,
         hairImage: bookingData.hairImage || null,
-        
-        // Notes
-        notes: bookingData.notes || '',
-        
-        // Legacy fields for backward compatibility
-        preWash: bookingData.preWash || 'none',
-        detangling: bookingData.detangling || 'none'
+        bookingId: bookingData.bookingId,
+        status: bookingData.status || 'confirmed', // Use confirmed status since payment was successful
+        createdAt: new Date().toISOString()
     };
-    
-    // Add all style-specific options from booking data
-    Object.keys(bookingData).forEach(key => {
-        if (!adminBookingData.hasOwnProperty(key)) {
-            adminBookingData[key] = bookingData[key];
-        }
-    });
-    
-    console.log('Final admin booking data:', adminBookingData);
 
     // Try to save to Firebase Functions first (if available)
                 fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
@@ -104,9 +76,7 @@ function saveBookingToAdmin(bookingData) {
         }
         
         // Only sync to Google Calendar if there's an uploaded image
-        if ((adminBookingData.hairImage && adminBookingData.hairImage !== 'null' && adminBookingData.hairImage !== '') || 
-            (adminBookingData.styleImage && adminBookingData.styleImage !== 'null' && adminBookingData.styleImage !== '')) {
-            console.log('Images found - syncing to Google Calendar');
+        if (adminBookingData.hairImage || adminBookingData.styleImage) {
             syncToGoogleCalendar(adminBookingData);
         } else {
             console.log('No images uploaded - skipping Google Calendar sync');
@@ -117,9 +87,7 @@ function saveBookingToAdmin(bookingData) {
         saveToLocalStorage(adminBookingData);
         
         // Only sync to Google Calendar if there's an uploaded image
-        if ((adminBookingData.hairImage && adminBookingData.hairImage !== 'null' && adminBookingData.hairImage !== '') || 
-            (adminBookingData.styleImage && adminBookingData.styleImage !== 'null' && adminBookingData.styleImage !== '')) {
-            console.log('Images found - syncing to Google Calendar');
+        if (adminBookingData.hairImage || adminBookingData.styleImage) {
             syncToGoogleCalendar(adminBookingData);
         } else {
             console.log('No images uploaded - skipping Google Calendar sync');
@@ -165,111 +133,6 @@ function syncToGoogleCalendar(bookingData) {
         console.log('Error syncing to Google Calendar:', error);
         // Don't block the booking process if calendar sync fails
     });
-}
-
-// Function to generate style options display for success page
-function generateStyleOptionsDisplay(booking) {
-    console.log('Generating style options display for:', booking);
-    
-    if (!booking || Object.keys(booking).length === 0) {
-        console.log('No booking data provided to generateStyleOptionsDisplay');
-        return '<div class="detail-item"><span class="detail-label">Additional Options:</span><span class="detail-value">No booking data available</span></div>';
-    }
-    
-    let optionsHTML = '';
-    
-    // Define fields to skip (basic booking info already displayed elsewhere)
-    const skipFields = ['name', 'phone', 'style', 'duration', 'appointmentDate', 'appointmentTime', 
-                       'date', 'time', 'displayTime', 'totalPrice', 'depositAmount', 'depositPaid', 
-                       'paymentMethod', 'status', 'bookingId', 'notes', 'styleImage', 'hairImage', 'hairLength'];
-    
-    // Track if we found any services
-    let hasWashService = false;
-    let hasDetangleService = false;
-    let hasOtherOptions = false;
-    
-    // Process all booking fields to find style-specific options
-    Object.keys(booking).forEach(key => {
-        if (!skipFields.includes(key) && booking[key] && booking[key] !== '' && 
-            booking[key] !== 'no-wash' && booking[key] !== 'no-detangle' && 
-            booking[key] !== 'none' && booking[key] !== null) {
-            
-            // Format the key to be more readable
-            const formattedKey = key
-                .replace(/-/g, ' ')
-                .replace(/([A-Z])/g, ' $1')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-            
-            // Format the value based on the field type
-            let formattedValue = booking[key];
-            let showPrice = false;
-            
-            if (key.includes('wash-service') && booking[key] === 'wash') {
-                formattedValue = 'Wash & Condition';
-                showPrice = true;
-                hasWashService = true;
-            } else if (key.includes('detangle-service') && booking[key] === 'detangle') {
-                formattedValue = 'Detangle Hair';
-                showPrice = true;
-                hasDetangleService = true;
-            } else if (key.includes('knotless') && booking[key] === 'knotless') {
-                formattedValue = 'Knotless Style';
-                showPrice = true;
-                hasOtherOptions = true;
-            } else if (key.includes('human') && booking[key].includes('human')) {
-                formattedValue = 'Human Hair Upgrade';
-                showPrice = true;
-                hasOtherOptions = true;
-            } else if (key.includes('consultation')) {
-                formattedValue = 'Price varies - will discuss during appointment';
-                hasOtherOptions = true;
-            } else {
-                // Convert kebab-case or camelCase values to readable format
-                formattedValue = formattedValue
-                    .replace(/-/g, ' ')
-                    .replace(/([A-Z])/g, ' $1')
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-                hasOtherOptions = true;
-            }
-            
-            // Add the formatted option to display
-            if (showPrice) {
-                const priceMap = {
-                    'wash': '+$30',
-                    'detangle': '+$20',
-                    'knotless': '+$30',
-                    'human': '+$60'
-                };
-                const priceAddition = Object.keys(priceMap).find(p => key.includes(p) || formattedValue.toLowerCase().includes(p));
-                optionsHTML += `
-                <div class="detail-item">
-                    <span class="detail-label">${formattedKey}:</span>
-                    <span class="detail-value">${formattedValue} ${priceAddition ? priceMap[priceAddition] : ''}</span>
-                </div>`;
-            } else {
-                optionsHTML += `
-                <div class="detail-item">
-                    <span class="detail-label">${formattedKey}:</span>
-                    <span class="detail-value">${formattedValue}</span>
-                </div>`;
-            }
-        }
-    });
-    
-    // If no additional options were selected, show a message
-    if (!hasWashService && !hasDetangleService && !hasOtherOptions) {
-        optionsHTML = `
-        <div class="detail-item">
-            <span class="detail-label">Additional Options:</span>
-            <span class="detail-value">None selected</span>
-        </div>`;
-    }
-    
-    return optionsHTML;
 }
 
 function populateBookingDetails(booking) {
@@ -336,10 +199,32 @@ function populateBookingDetails(booking) {
                 ${booking.hairLength ? `
                 <div class="detail-item">
                     <span class="detail-label">Hair Length:</span>
-                    <span class="detail-value">${booking.hairLength.charAt(0).toUpperCase() + booking.hairLength.slice(1)}</span>
+                    <span class="detail-value">${booking.hairLength}</span>
                 </div>
                 ` : ''}
-                ${generateStyleOptionsDisplay(booking)}
+                
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-list"></i> Additional Services</h3>
+                ${booking.preWash && booking.preWash !== 'none' ? `
+                <div class="detail-item">
+                    <span class="detail-label">Pre-Wash:</span>
+                    <span class="detail-value">${booking.preWash}</span>
+                </div>
+                ` : ''}
+                ${booking.detangling && booking.detangling !== 'none' ? `
+                <div class="detail-item">
+                    <span class="detail-label">Detangling:</span>
+                    <span class="detail-value">${booking.detangling}</span>
+                </div>
+                ` : ''}
+                ${!booking.preWash || booking.preWash === 'none' ? !booking.detangling || booking.detangling === 'none' ? `
+                <div class="detail-item">
+                    <span class="detail-label">Additional Services:</span>
+                    <span class="detail-value">None</span>
+                </div>
+                ` : '' : ''}
             </div>
             
             <div class="detail-section pricing-section">
