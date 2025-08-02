@@ -320,6 +320,35 @@ body {
     color: #ccc;
 }
 
+/* Availability indicators */
+.calendar-day {
+    position: relative;
+}
+
+.availability-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    border: 1px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.availability-indicator.available {
+    background-color: #28a745;
+}
+
+.availability-indicator.limited {
+    background-color: #ffc107;
+}
+
+.availability-indicator.booked {
+    background-color: #dc3545;
+}
+
 .selected-date-info {
     margin-top: 1rem;
     padding: 1rem;
