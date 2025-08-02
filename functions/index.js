@@ -33,8 +33,8 @@ exports.createPaymentIntent = onRequest({
       
       console.log(`Payment intent - Original amount: ${amount}, Rounded amount: ${roundedAmount}`);
       
-      // Validate amount (minimum $0.10 for testing)
-      if (roundedAmount < 10) {
+      // Validate amount (minimum $0.50 for Stripe)
+      if (roundedAmount < 50) {
         return response.status(400).json({error: "Deposit amount is too low"});
       }
 

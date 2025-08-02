@@ -47,8 +47,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     });
 
     // Initialize Apple Pay
-    let applePayButton = null;
     let applePaySupported = false;
+    let paymentRequest = null;
 
     // Check if Apple Pay is supported
     console.log('Checking Apple Pay support...');
@@ -59,44 +59,43 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         applePaySupported = true;
         console.log('Apple Pay is supported');
         
-        // Create Apple Pay button
-        const applePayButtonContainer = document.getElementById('apple-pay-button');
-        if (applePayButtonContainer) {
-            // Create payment request for Apple Pay
-            const paymentRequest = stripe.paymentRequest({
-                country: 'US',
-                currency: 'usd',
-                total: {
-                    label: 'Maya African Hair Braiding',
-                    amount: 10, // Start with 10 cents, will be updated
-                },
-                requestPayerName: true,
-                requestPayerEmail: true,
-            });
+        // Create payment request for Apple Pay
+        paymentRequest = stripe.paymentRequest({
+            country: 'US',
+            currency: 'usd',
+            total: {
+                label: 'Maya African Hair Braiding',
+                amount: 50, // Start with 50 cents, will be updated
+            },
+            requestPayerName: true,
+            requestPayerEmail: true,
+        });
+        
+        // Check if the payment request is supported
+        paymentRequest.canMakePayment().then(function(result) {
+            const applePayButtonContainer = document.getElementById('apple-pay-button');
+            const applePayBtn = document.getElementById('apple-pay-btn');
             
-            // Create the payment request button
-            applePayButton = elements.create('paymentRequestButton', {
-                paymentRequest: paymentRequest,
-            });
-            
-            // Check if the payment request is supported
-            paymentRequest.canMakePayment().then(function(result) {
-                if (result && result.applePay) {
-                    console.log('Apple Pay is available');
-                    applePayButton.mount('#apple-pay-button');
-                    applePayButtonContainer.style.display = 'block';
-                    
-                    // Handle payment request events
-                    paymentRequest.on('paymentmethod', function(ev) {
-                        console.log('Apple Pay payment method received:', ev.paymentMethod);
-                        // Handle the payment method here
-                    });
-                } else {
-                    console.log('Apple Pay is not available on this device');
-                    applePayButtonContainer.style.display = 'none';
-                }
-            });
-        }
+            if (result && result.applePay) {
+                console.log('Apple Pay is available');
+                applePayButtonContainer.style.display = 'block';
+                
+                // Handle Apple Pay button click
+                applePayBtn.addEventListener('click', function() {
+                    console.log('Apple Pay button clicked');
+                    paymentRequest.open();
+                });
+                
+                // Handle payment request events
+                paymentRequest.on('paymentmethod', function(ev) {
+                    console.log('Apple Pay payment method received:', ev.paymentMethod);
+                    handleApplePayPayment(ev.paymentMethod);
+                });
+            } else {
+                console.log('Apple Pay is not available on this device');
+                applePayButtonContainer.style.display = 'none';
+            }
+        });
     } else {
         console.log('Apple Pay is not supported on this browser');
     }
@@ -105,7 +104,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     const styleConfigurations = {
         'test': {
             name: 'Test',
-            basePrices: { custom: 1 },
+            basePrices: { custom: 5 },
             duration: { custom: 2 },
             specificOptions: {
                 'custom-duration': {
@@ -946,9 +945,14 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         document.getElementById('deposit-due').textContent = `$${depositAmount}`;
         
         // Update Apple Pay amount if supported
-        if (applePaySupported && applePayButton) {
-            // Note: Apple Pay amount will be updated when payment is initiated
-            console.log('Apple Pay amount would be:', Math.round(depositAmount * 100), 'cents');
+        if (applePaySupported && paymentRequest) {
+            paymentRequest.update({
+                total: {
+                    label: 'Maya African Hair Braiding',
+                    amount: Math.round(depositAmount * 100), // Convert to cents
+                },
+            });
+            console.log('Apple Pay amount updated to:', Math.round(depositAmount * 100), 'cents');
         }
     }
 
@@ -1408,7 +1412,130 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     // Initialize calendar
         initCalendar();
 
+    // Handle Apple Pay payment
+    async function handleApplePayPayment(paymentMethod) {
+        console.log('Processing Apple Pay payment:', paymentMethod);
+        
+        if (!validateForm()) {
+            alert('Please fill in all required fields correctly.');
+            return;
+        }
 
+        // Show loading state
+        const submitBtn = document.querySelector('.submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Processing Apple Pay...';
+        submitBtn.disabled = true;
+
+        try {
+            // Collect form data
+            const formData = new FormData(bookingForm);
+            const totalPrice = parseInt(document.getElementById('total-price').textContent.replace('$', ''));
+            const depositAmount = parseFloat(document.getElementById('deposit-due').textContent.replace('$', ''));
+
+            // Collect style-specific options
+            const styleSpecificOptions = {};
+            const selectedStyle = formData.get('style');
+            const styleConfig = styleConfigurations[selectedStyle];
+            
+            if (styleConfig && styleConfig.specificOptions) {
+                Object.keys(styleConfig.specificOptions).forEach(optionKey => {
+                    const value = formData.get(optionKey);
+                    if (value) {
+                        styleSpecificOptions[optionKey] = value;
+                    } else {
+                        if (optionKey === 'wash-service') {
+                            styleSpecificOptions[optionKey] = 'no-wash';
+                        } else if (optionKey === 'detangle-service') {
+                            styleSpecificOptions[optionKey] = 'no-detangle';
+                        }
+                    }
+                });
+            }
+
+            const bookingData = {
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                style: formData.get('style'),
+                hairLength: formData.get('hair-length'),
+                date: selectedDate.toISOString().split('T')[0],
+                time: `${selectedTime.toString().padStart(2, '0')}:00`,
+                timeFormatted: formatTime(selectedTime),
+                displayTime: formatTime(selectedTime),
+                duration: formData.get('duration'),
+                notes: formData.get('notes'),
+                totalPrice: totalPrice,
+                depositAmount: depositAmount,
+                depositPaid: true,
+                paymentMethod: 'apple_pay',
+                bookingId: Date.now().toString(),
+                status: 'confirmed',
+                styleSpecificOptions: styleSpecificOptions
+            };
+
+            // Create payment intent
+            const paymentResponse = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/createPaymentIntent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: depositAmount * 100,
+                    bookingData: bookingData
+                })
+            });
+
+            if (!paymentResponse.ok) {
+                throw new Error('Failed to create payment intent');
+            }
+
+            const { clientSecret } = await paymentResponse.json();
+
+            // Confirm the payment with the payment method
+            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: paymentMethod.id,
+            });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            if (paymentIntent.status === 'succeeded') {
+                console.log('Apple Pay payment succeeded:', paymentIntent);
+                bookingData.paymentIntentId = paymentIntent.id;
+                
+                // Save booking to database
+                try {
+                    const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(bookingData)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Booking saved successfully');
+                    } else {
+                        console.log('Firebase Functions not available, will save on success page');
+                    }
+                } catch (error) {
+                    console.log('Error saving to Firebase Functions:', error);
+                }
+
+                // Store booking data in sessionStorage
+                sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+                window.location.href = 'booking-success.html';
+            }
+            
+        } catch (error) {
+            console.error('Apple Pay payment error:', error);
+            const errorElement = document.getElementById('card-errors');
+            errorElement.textContent = 'Apple Pay payment failed. Please try again.';
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
 
     // Form validation
     function validateForm() {
