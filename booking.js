@@ -729,9 +729,20 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
                     
                     // Update duration for test style when custom duration changes
                     if (styleKey === 'test' && optionKey === 'custom-duration') {
+                        console.log('Custom duration changed to:', e.target.value);
                         updateDuration();
                     }
                 });
+                
+                // Add input event listener for number fields to update in real-time
+                if (field.type === 'number') {
+                    field.addEventListener('input', (e) => {
+                        if (styleKey === 'test' && optionKey === 'custom-duration') {
+                            console.log('Custom duration input changed to:', e.target.value);
+                            updateDuration();
+                        }
+                    });
+                }
             }
         });
     }
@@ -912,10 +923,16 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
             } else if (selectedStyle === 'test') {
                 // For test style, get duration from custom-duration field
                 const customDurationField = document.querySelector('input[name="custom-duration"]');
-                if (customDurationField && customDurationField.value) {
+                if (customDurationField && customDurationField.value && customDurationField.value !== '') {
                     duration = parseInt(customDurationField.value);
+                    console.log('Test style - Custom duration set to:', duration);
                 } else {
-                    duration = 2; // Default duration for test
+                    // If no custom duration set, use default from config
+                    const durationKeys = Object.keys(styleConfig.duration);
+                    if (durationKeys.length > 0) {
+                        duration = styleConfig.duration[durationKeys[0]];
+                    }
+                    console.log('Test style - Using default duration:', duration);
                 }
             } else {
                 // For styles with single length or no length options
