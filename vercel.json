@@ -14,6 +14,30 @@
     {
       "source": "/.well-known/apple-developer-merchantid-domain-association",
       "destination": "/.well-known/apple-developer-merchantid-domain-association"
+    },
+    {
+      "source": "/booking",
+      "destination": "/booking.html"
+    },
+    {
+      "source": "/booking-success",
+      "destination": "/booking-success.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/catalog",
+      "destination": "/styles-catalog.html"
+    },
+    {
+      "source": "/product",
+      "destination": "/product.html"
+    },
+    {
+      "source": "/",
+      "destination": "/index.html"
     }
   ]
 } 

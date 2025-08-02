@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (enteredPasskey === ADMIN_PASSKEY) {
             // Correct passkey - redirect to admin page
-            window.location.href = 'admin.html';
+            window.location.href = 'admin';
         } else {
             // Incorrect passkey - show error
             showError('Incorrect passkey. Please try again.');

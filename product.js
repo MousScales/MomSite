@@ -686,9 +686,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedStyle = getStyleFromURL();
         const styleTitle = styleDetails[selectedStyle]?.title;
         if (styleTitle) {
-            window.location.href = `booking.html?style=${encodeURIComponent(styleTitle)}`;
+            window.location.href = `booking?style=${encodeURIComponent(styleTitle)}`;
         } else {
-            window.location.href = 'booking.html';
+            window.location.href = 'booking';
         }
     }
 
