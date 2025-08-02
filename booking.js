@@ -146,39 +146,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
 
     // Style-specific configurations with custom options for each style
     const styleConfigurations = {
-        'test': {
-            name: 'Test',
-            basePrices: { custom: 5 },
-            duration: { custom: 2 },
-            specificOptions: {
-                'custom-duration': {
-                    label: 'Custom Duration (hours)',
-                    type: 'number',
-                    required: true,
-                    min: 1,
-                    max: 8,
-                    price: 0
-                },
-                'wash-service': {
-                    label: 'Wash Service',
-                    type: 'select',
-                    required: false,
-                    options: [
-                        { value: 'no-wash', label: 'No wash needed', price: 0 },
-                        { value: 'wash', label: 'Wash & Condition', price: 30 }
-                    ]
-                },
-                'detangle-service': {
-                    label: 'Detangling Service',
-                    type: 'select',
-                    required: false,
-                    options: [
-                        { value: 'no-detangle', label: 'No detangling needed', price: 0 },
-                        { value: 'detangle', label: 'Detangle Hair', price: 20 }
-                    ]
-                }
-            }
-        },
+
         'cornrows': {
             name: 'Cornrows',
             basePrices: { nostyle: 80 },
@@ -825,20 +793,13 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                         updateDuration();
                     }
                     
-                    // Update duration for test style when custom duration changes
-                    if (styleKey === 'test' && optionKey === 'custom-duration') {
-                        console.log('Custom duration changed to:', e.target.value);
-                        updateDuration();
-                    }
+
                 });
                 
                 // Add input event listener for number fields to update in real-time
                 if (field.type === 'number') {
                     field.addEventListener('input', (e) => {
-                        if (styleKey === 'test' && optionKey === 'custom-duration') {
-                            console.log('Custom duration input changed to:', e.target.value);
-                            updateDuration();
-                        }
+                        // Real-time updates for number fields can be added here if needed
                     });
                 }
             }
@@ -1032,20 +993,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             // Special handling for cornrows (duration is always 1 hour)
             if (selectedStyle === 'cornrows') {
                 duration = 1; // Cornrows - always 1 hour regardless of style choice
-            } else if (selectedStyle === 'test') {
-                // For test style, get duration from custom-duration field
-                const customDurationField = document.querySelector('input[name="custom-duration"]');
-                if (customDurationField && customDurationField.value && customDurationField.value !== '') {
-                    duration = parseInt(customDurationField.value);
-                    console.log('Test style - Custom duration set to:', duration);
-                } else {
-                    // If no custom duration set, use default from config
-                    const durationKeys = Object.keys(styleConfig.duration);
-                    if (durationKeys.length > 0) {
-                        duration = styleConfig.duration[durationKeys[0]];
-                    }
-                    console.log('Test style - Using default duration:', duration);
-                }
+
             } else {
                 // For styles with single length or no length options
                 if (!styleConfig.hairLengthOptions || styleConfig.hairLengthOptions.length <= 1) {
