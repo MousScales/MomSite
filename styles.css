@@ -315,6 +315,66 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Appointment Sections */
+.appointments-section {
+    margin-bottom: 2rem;
+}
+
+.appointments-section h3 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.appointments-section h3 i {
+    color: #28a745;
+}
+
+.appointments-section:last-child h3 i {
+    color: #6c757d;
+}
+
+/* Future vs Past Appointment Cards */
+.appointment-card.future {
+    border-left: 4px solid #28a745;
+}
+
+.appointment-card.past {
+    border-left: 4px solid #6c757d;
+    opacity: 0.8;
+}
+
+.appointment-card.past .appointment-header {
+    background: #f8f9fa;
+}
+
+.appointment-card.past .appointment-status {
+    background: #6c757d;
+}
+
+/* Past Appointment Note */
+.past-appointment-note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+}
+
+.past-appointment-note i {
+    color: #6c757d;
+}
+
 .loading-spinner {
     text-align: center;
     padding: 2rem;

@@ -185,123 +185,253 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Sort appointments by date
-            appointments.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Separate future and past appointments
+            const now = new Date();
+            const futureAppointments = [];
+            const pastAppointments = [];
             
-            const appointmentsHTML = appointments.map(appointment => {
+            appointments.forEach(appointment => {
                 // Handle different date formats
                 let appointmentDate;
                 if (appointment.date) {
-                    // Try different date formats
                     if (appointment.date.includes('T')) {
-                        // ISO format
                         appointmentDate = new Date(appointment.date);
                     } else if (appointment.date.includes('-')) {
-                        // YYYY-MM-DD format
                         appointmentDate = new Date(appointment.date + 'T00:00:00');
                     } else {
-                        // Try parsing as is
                         appointmentDate = new Date(appointment.date);
                     }
                 } else if (appointment.appointmentDate) {
-                    // Fallback to appointmentDate field
                     appointmentDate = new Date(appointment.appointmentDate + 'T00:00:00');
                 } else {
-                    // No date available
                     appointmentDate = new Date();
                 }
                 
-                // Check if date is valid
-                const formattedDate = isNaN(appointmentDate.getTime()) 
-                    ? 'Date not available' 
-                    : appointmentDate.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                
-                // Handle different time formats
-                let formattedTime = 'TBD';
-                if (appointment.displayTime) {
-                    formattedTime = appointment.displayTime;
-                } else if (appointment.time) {
-                    // Convert 24-hour format to 12-hour format
+                // Add time to the date for accurate comparison
+                let appointmentDateTime;
+                if (appointment.time) {
                     const timeStr = appointment.time;
                     if (timeStr.includes(':')) {
                         const [hours, minutes] = timeStr.split(':');
-                        const hour = parseInt(hours);
-                        const ampm = hour >= 12 ? 'PM' : 'AM';
-                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                        formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                        appointmentDateTime = new Date(appointmentDate);
+                        appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
                     } else {
-                        formattedTime = timeStr;
+                        appointmentDateTime = appointmentDate;
                     }
                 } else if (appointment.appointmentTime) {
-                    // Handle appointmentTime field
                     const timeStr = appointment.appointmentTime;
                     if (timeStr.includes(':')) {
                         const [hours, minutes] = timeStr.split(':');
-                        const hour = parseInt(hours);
-                        const ampm = hour >= 12 ? 'PM' : 'AM';
-                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                        formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                        appointmentDateTime = new Date(appointmentDate);
+                        appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
                     } else {
-                        formattedTime = timeStr;
+                        appointmentDateTime = appointmentDate;
                     }
+                } else {
+                    appointmentDateTime = appointmentDate;
                 }
-                const status = appointment.status || 'confirmed';
-                const statusClass = status === 'confirmed' ? 'confirmed' : 'pending';
                 
-                return `
-                    <div class="appointment-card" data-booking-id="${appointment.bookingId}">
-                        <div class="appointment-header">
-                            <div class="appointment-date">${formattedDate}</div>
-                            <div class="appointment-status ${statusClass}">${status}</div>
-                        </div>
-                        <div class="appointment-details">
-                            <div class="detail-item">
-                                <i class="fas fa-clock"></i>
-                                <span>Time: ${formattedTime}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-cut"></i>
-                                <span>Style: ${appointment.style}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-user"></i>
-                                <span>Name: ${appointment.name}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-phone"></i>
-                                <span>Phone: ${appointment.phone}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-dollar-sign"></i>
-                                <span>Total: $${appointment.totalPrice}</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Deposit: $${appointment.depositAmount} ${appointment.depositPaid ? '(Paid)' : '(Pending)'}</span>
-                            </div>
-                        </div>
-                        <div class="appointment-actions">
-                            <button class="action-btn reschedule" onclick="rescheduleAppointment('${appointment.bookingId}')">
-                                <i class="fas fa-calendar-alt"></i>
-                                Reschedule
-                            </button>
-                            <button class="action-btn cancel" onclick="cancelAppointment('${appointment.bookingId}')">
-                                <i class="fas fa-times"></i>
-                                Cancel
-                            </button>
-                        </div>
+                if (appointmentDateTime > now) {
+                    futureAppointments.push(appointment);
+                } else {
+                    pastAppointments.push(appointment);
+                }
+            });
+            
+            // Sort future appointments by date (earliest first)
+            futureAppointments.sort((a, b) => {
+                const dateA = new Date(a.date || a.appointmentDate);
+                const dateB = new Date(b.date || b.appointmentDate);
+                return dateA - dateB;
+            });
+            
+            // Sort past appointments by date (most recent first)
+            pastAppointments.sort((a, b) => {
+                const dateA = new Date(a.date || a.appointmentDate);
+                const dateB = new Date(b.date || b.appointmentDate);
+                return dateB - dateA;
+            });
+            
+            let html = '';
+            
+            // Display future appointments
+            if (futureAppointments.length > 0) {
+                html += `
+                    <div class="appointments-section">
+                        <h3><i class="fas fa-calendar-check"></i> Upcoming Appointments (${futureAppointments.length})</h3>
+                        ${futureAppointments.map(appointment => createAppointmentCard(appointment, true)).join('')}
                     </div>
                 `;
-            }).join('');
+            }
             
-            searchResults.innerHTML = `
-                <h3>Found ${appointments.length} appointment(s)</h3>
-                ${appointmentsHTML}
+            // Display past appointments
+            if (pastAppointments.length > 0) {
+                html += `
+                    <div class="appointments-section">
+                        <h3><i class="fas fa-history"></i> Past Appointments (${pastAppointments.length})</h3>
+                        ${pastAppointments.map(appointment => createAppointmentCard(appointment, false)).join('')}
+                    </div>
+                `;
+            }
+            
+            searchResults.innerHTML = html;
+        }
+        
+        function createAppointmentCard(appointment, isFuture) {
+            // Handle different date formats
+            let appointmentDate;
+            if (appointment.date) {
+                if (appointment.date.includes('T')) {
+                    appointmentDate = new Date(appointment.date);
+                } else if (appointment.date.includes('-')) {
+                    appointmentDate = new Date(appointment.date + 'T00:00:00');
+                } else {
+                    appointmentDate = new Date(appointment.date);
+                }
+            } else if (appointment.appointmentDate) {
+                appointmentDate = new Date(appointment.appointmentDate + 'T00:00:00');
+            } else {
+                appointmentDate = new Date();
+            }
+            
+            // Check if date is valid
+            const formattedDate = isNaN(appointmentDate.getTime()) 
+                ? 'Date not available' 
+                : appointmentDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            
+            // Handle different time formats
+            let formattedTime = 'TBD';
+            if (appointment.displayTime) {
+                formattedTime = appointment.displayTime;
+            } else if (appointment.time) {
+                const timeStr = appointment.time;
+                if (timeStr.includes(':')) {
+                    const [hours, minutes] = timeStr.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                    formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                } else {
+                    formattedTime = timeStr;
+                }
+            } else if (appointment.appointmentTime) {
+                const timeStr = appointment.appointmentTime;
+                if (timeStr.includes(':')) {
+                    const [hours, minutes] = timeStr.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                    formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                } else {
+                    formattedTime = timeStr;
+                }
+            }
+            
+            const status = appointment.status || 'confirmed';
+            const statusClass = status === 'confirmed' ? 'confirmed' : 'pending';
+            
+            // Create comprehensive appointment details
+            const additionalServices = [];
+            if (appointment.styleSpecificOptions) {
+                if (appointment.styleSpecificOptions['wash-service'] === 'wash') {
+                    additionalServices.push('Wash & Condition (+$30)');
+                }
+                if (appointment.styleSpecificOptions['detangle-service'] === 'detangle') {
+                    additionalServices.push('Detangle Hair (+$20)');
+                }
+            }
+            
+            const remainingBalance = appointment.totalPrice - appointment.depositAmount;
+            
+            return `
+                <div class="appointment-card ${isFuture ? 'future' : 'past'}" data-booking-id="${appointment.bookingId}">
+                    <div class="appointment-header">
+                        <div class="appointment-date">${formattedDate}</div>
+                        <div class="appointment-status ${statusClass}">${status}</div>
+                    </div>
+                    <div class="appointment-details">
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Time: ${formattedTime}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-cut"></i>
+                            <span>Style: ${appointment.style}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <span>Name: ${appointment.name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-phone"></i>
+                            <span>Phone: ${appointment.phone}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>Duration: ${appointment.duration} hours</span>
+                        </div>
+                        ${appointment.hairLength ? `
+                        <div class="detail-item">
+                            <i class="fas fa-ruler"></i>
+                            <span>Hair Length: ${appointment.hairLength}</span>
+                        </div>
+                        ` : ''}
+                        ${additionalServices.length > 0 ? `
+                        <div class="detail-item">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Additional Services: ${additionalServices.join(', ')}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>Total Price: $${appointment.totalPrice}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Deposit: $${appointment.depositAmount} ${appointment.depositPaid ? '(Paid)' : '(Pending)'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-balance-scale"></i>
+                            <span>Remaining Balance: $${remainingBalance}</span>
+                        </div>
+                        ${appointment.notes ? `
+                        <div class="detail-item">
+                            <i class="fas fa-sticky-note"></i>
+                            <span>Notes: ${appointment.notes}</span>
+                        </div>
+                        ` : ''}
+                        ${(appointment.styleImage && appointment.styleImage !== 'null' && appointment.styleImage !== '') || (appointment.hairImage && appointment.hairImage !== 'null' && appointment.hairImage !== '') ? `
+                        <div class="detail-item">
+                            <i class="fas fa-images"></i>
+                            <span>Reference Images: Provided</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ${isFuture ? `
+                    <div class="appointment-actions">
+                        <button class="action-btn reschedule" onclick="rescheduleAppointment('${appointment.bookingId}')">
+                            <i class="fas fa-calendar-alt"></i>
+                            Reschedule
+                        </button>
+                        <button class="action-btn cancel" onclick="cancelAppointment('${appointment.bookingId}')">
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                    </div>
+                    ` : `
+                    <div class="appointment-actions">
+                        <span class="past-appointment-note">
+                            <i class="fas fa-info-circle"></i>
+                            This appointment has already passed
+                        </span>
+                    </div>
+                    `}
+                </div>
             `;
         }
         
@@ -343,6 +473,17 @@ function rescheduleAppointment(bookingId) {
         totalPrice: appointmentCard.querySelector('.detail-item:nth-child(5) span').textContent.replace('Total: $', ''),
         depositAmount: appointmentCard.querySelector('.detail-item:nth-child(6) span').textContent.replace('Deposit: $', '').split(' ')[0]
     };
+    
+    // Check if appointment is within 48 hours
+    const appointmentDateTime = new Date(appointmentData.currentDate + ' ' + appointmentData.currentTime);
+    const now = new Date();
+    const timeDifference = appointmentDateTime.getTime() - now.getTime();
+    const hoursDifference = timeDifference / (1000 * 60 * 60);
+    
+    if (hoursDifference <= 48) {
+        alert(`⚠️ Rescheduling Not Available\n\nYour appointment is scheduled for ${appointmentData.currentDate} at ${appointmentData.currentTime}.\n\nRescheduling is not available within 48 hours of your appointment.\n\nFor urgent rescheduling needs, please call us at:\n📞 860-425-0751\n\nWe'll do our best to accommodate your request!`);
+        return;
+    }
     
     currentRescheduleAppointment = appointmentData;
     showRescheduleModal(appointmentData);
@@ -912,7 +1053,12 @@ async function confirmReschedule() {
                 searchBtn.click();
             }
         } else {
-            throw new Error('Failed to update appointment');
+            const errorData = await response.json();
+            if (errorData.error && errorData.error.includes('48 hours')) {
+                alert('⚠️ Rescheduling Not Available\n\nRescheduling is not available within 48 hours of your appointment.\n\nFor urgent rescheduling needs, please call us at:\n📞 860-425-0751\n\nWe\'ll do our best to accommodate your request!');
+            } else {
+                throw new Error(errorData.error || 'Failed to update appointment');
+            }
         }
         
     } catch (error) {

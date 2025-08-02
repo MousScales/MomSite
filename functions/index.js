@@ -111,14 +111,14 @@ exports.saveBooking = onRequest({
         });
       }
 
-      // Save to Firestore
-      const docRef = await admin.firestore().collection('bookings').add(bookingData);
+      // Save to Firestore using the provided bookingId as document ID
+      const docRef = await admin.firestore().collection('bookings').doc(data.bookingId).set(bookingData);
       
-      console.log(`Booking saved successfully. Document ID: ${docRef.id}`);
+      console.log(`Booking saved successfully. Document ID: ${data.bookingId}`);
       
       return response.json({
         success: true,
-        bookingId: docRef.id,
+        bookingId: data.bookingId,
         message: 'Booking saved successfully'
       });
 
@@ -215,9 +215,24 @@ exports.updateBooking = onRequest({
       
       const bookingData = bookingDoc.data();
       
+      // Check if original appointment is within 48 hours
+      if (originalDate && originalTime) {
+        const originalDateTime = new Date(originalDate + ' ' + originalTime);
+        const now = new Date();
+        const timeDifference = originalDateTime.getTime() - now.getTime();
+        const hoursDifference = timeDifference / (1000 * 60 * 60);
+        
+        if (hoursDifference <= 48) {
+          return response.status(400).json({
+            error: "Rescheduling is not available within 48 hours of your appointment. Please call 860-425-0751 for urgent rescheduling needs."
+          });
+        }
+      }
+      
       // Update the booking with new date and time
       const updatedData = {
         ...bookingData,
+        bookingId: bookingId, // Add the bookingId
         date: newDate,
         appointmentDate: newDate,
         time: newTime,
@@ -242,8 +257,8 @@ exports.updateBooking = onRequest({
         await deleteGoogleCalendarEvent(bookingId);
         console.log(`Successfully cleaned up old Google Calendar events for booking ${bookingId}`);
         
-        // Wait a moment to ensure deletion is processed
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait longer to ensure deletion is processed and prevent race conditions
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Then create exactly ONE new event
         await createGoogleCalendarEvent(updatedData);
@@ -304,9 +319,23 @@ async function deleteGoogleCalendarEvent(bookingId) {
     });
     
     const calendar = google.calendar({version: 'v3', auth});
+    const db = admin.firestore();
+    
+    // First, let's list ALL events to see what's in the calendar
+    const allEvents = await calendar.events.list({
+      calendarId: calendarId,
+      maxResults: 50
+    });
+    
+    console.log(`Total events in calendar: ${allEvents.data.items ? allEvents.data.items.length : 0}`);
+    if (allEvents.data.items) {
+      allEvents.data.items.forEach((event, index) => {
+        console.log(`Event ${index + 1}: ID=${event.id}, Summary="${event.summary}", Description length=${event.description ? event.description.length : 0}`);
+      });
+    }
     
     // Search for events with the specific bookingId
-    const events = await calendar.events.list({
+    let events = await calendar.events.list({
       calendarId: calendarId,
       privateExtendedProperty: `bookingId=${bookingId}`,
       maxResults: 10
@@ -314,18 +343,122 @@ async function deleteGoogleCalendarEvent(bookingId) {
     
     console.log(`Found ${events.data.items ? events.data.items.length : 0} events for booking ${bookingId}`);
     
-    // Delete all events found for this booking
-    if (events.data.items && events.data.items.length > 0) {
-      for (const event of events.data.items) {
-        await calendar.events.delete({
+    // If no events found by bookingId, try to find by client name and phone
+    if (!events.data.items || events.data.items.length === 0) {
+      // Get the booking data to search by name and phone
+      const bookingRef = db.collection('bookings').doc(bookingId);
+      const bookingDoc = await bookingRef.get();
+      
+      if (bookingDoc.exists) {
+        const bookingData = bookingDoc.data();
+        const clientName = bookingData.name;
+        const clientPhone = bookingData.phone;
+        
+        console.log(`Searching for events with name: "${clientName}" and phone: "${clientPhone}"`);
+        
+        // Search for events with the client name in the summary
+        const nameEvents = await calendar.events.list({
           calendarId: calendarId,
-          eventId: event.id
+          q: clientName, // Search in event summary
+          maxResults: 10
         });
-        console.log(`Deleted Google Calendar event ${event.id} for booking ${bookingId}`);
+        
+        console.log(`Found ${nameEvents.data.items ? nameEvents.data.items.length : 0} events by name search`);
+        
+        // Filter events that match both name and phone
+        if (nameEvents.data.items) {
+          events.data.items = nameEvents.data.items.filter(event => {
+            const description = event.description || '';
+            const matchesPhone = description.includes(clientPhone);
+            console.log(`Event "${event.summary}" - Phone match: ${matchesPhone}`);
+            return matchesPhone;
+          });
+        }
+        
+        console.log(`Found ${events.data.items ? events.data.items.length : 0} events by name/phone search for booking ${bookingId}`);
       }
-    } else {
-      console.log(`No Google Calendar event found for booking ${bookingId}`);
     }
+    
+    // First try to find events by bookingId
+    const eventsByBookingId = await calendar.events.list({
+      calendarId: calendarId,
+      privateExtendedProperty: `bookingId=${bookingId}`,
+      maxResults: 10
+    });
+    
+    console.log(`Found ${eventsByBookingId.data.items ? eventsByBookingId.data.items.length : 0} events with bookingId ${bookingId}`);
+    
+    // Delete events found by bookingId
+    if (eventsByBookingId.data.items && eventsByBookingId.data.items.length > 0) {
+      for (const event of eventsByBookingId.data.items) {
+        try {
+          await calendar.events.delete({
+            calendarId: calendarId,
+            eventId: event.id
+          });
+          console.log(`Deleted Google Calendar event ${event.id} (found by bookingId)`);
+          await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+        } catch (deleteError) {
+          if (deleteError.code === 410) {
+            console.log(`Event ${event.id} already deleted`);
+          } else {
+            console.error(`Failed to delete event ${event.id}:`, deleteError);
+          }
+        }
+      }
+    }
+    
+    // If no events found by bookingId, try to find by name and phone (fallback)
+    if (!eventsByBookingId.data.items || eventsByBookingId.data.items.length === 0) {
+      console.log(`No events found by bookingId, trying fallback search...`);
+      
+      // Get the booking data to search by name and phone
+      const bookingDoc = await db.collection('bookings').doc(bookingId).get();
+      if (bookingDoc.exists) {
+        const bookingData = bookingDoc.data();
+        const customerName = bookingData.name;
+        const customerPhone = bookingData.phone;
+        
+        console.log(`Searching for events with name: ${customerName} and phone: ${customerPhone}`);
+        
+        // Search for events by name in description
+        const allEvents = await calendar.events.list({
+          calendarId: calendarId,
+          maxResults: 50
+        });
+        
+        if (allEvents.data.items) {
+          for (const event of allEvents.data.items) {
+            const eventDescription = event.description || '';
+            const eventSummary = event.summary || '';
+            
+            // Check if this event matches the booking
+            if (eventDescription.includes(customerName) || 
+                eventDescription.includes(customerPhone) ||
+                eventSummary.includes(customerName) ||
+                eventSummary.includes(customerPhone)) {
+              
+              try {
+                await calendar.events.delete({
+                  calendarId: calendarId,
+                  eventId: event.id
+                });
+                console.log(`Deleted Google Calendar event ${event.id} (found by name/phone)`);
+                await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+              } catch (deleteError) {
+                if (deleteError.code === 410) {
+                  console.log(`Event ${event.id} already deleted`);
+                } else {
+                  console.error(`Failed to delete event ${event.id}:`, deleteError);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`Finished cleaning up Google Calendar events for booking ${bookingId}`);
     
   } catch (error) {
     console.error("Error deleting Google Calendar event:", error);
@@ -509,6 +642,26 @@ ${bookingData.notes || 'None'}
     if (existingEvents.data.items && existingEvents.data.items.length > 0) {
       console.log(`Event already exists for booking ${bookingData.bookingId}, skipping creation`);
       return;
+    }
+    
+    // Also check for events with same date/time and customer name (additional safety)
+    const startDate = new Date(startDateTime);
+    const endDate = new Date(endDateTime);
+    
+    const timeRangeEvents = await calendar.events.list({
+      calendarId: calendarId,
+      timeMin: startDate.toISOString(),
+      timeMax: endDate.toISOString(),
+      maxResults: 10
+    });
+    
+    if (timeRangeEvents.data.items) {
+      for (const event of timeRangeEvents.data.items) {
+        if (event.summary && event.summary.includes(bookingData.name)) {
+          console.log(`Found existing event for ${bookingData.name} at same time, skipping creation`);
+          return;
+        }
+      }
     }
     
     // Insert event into calendar
@@ -886,3 +1039,65 @@ ${bookingData.notes || 'None'}
     }
   });
 }); 
+
+// Function to sync all bookings to Google Calendar
+exports.syncAllBookingsToGoogleCalendar = onRequest({
+  secrets: ["DOMAIN_URL", "GOOGLE_CALENDAR_CREDENTIALS", "GOOGLE_CALENDAR_ID"]
+}, (request, response) => {
+  cors(request, response, async () => {
+    try {
+      const db = admin.firestore();
+      
+      // Get all bookings from Firestore
+      const snapshot = await db.collection('bookings').get();
+      const bookings = snapshot.docs.map(doc => ({
+        bookingId: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log(`Found ${bookings.length} bookings to sync`);
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Process each booking
+      for (const booking of bookings) {
+        try {
+          // Skip bookings without valid date/time
+          if (!booking.appointmentDate || !booking.appointmentTime) {
+            console.log(`Skipping booking ${booking.bookingId} - missing date/time`);
+            continue;
+          }
+          
+          await createGoogleCalendarEvent(booking);
+          successCount++;
+          
+          // Add delay to avoid rate limits
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (error) {
+          console.error(`Error syncing booking ${booking.bookingId}:`, error);
+          errorCount++;
+        }
+      }
+      
+      console.log(`Sync complete: ${successCount} successful, ${errorCount} errors`);
+      
+      return response.json({
+        success: true,
+        message: `Successfully synced ${successCount} bookings to Google Calendar`,
+        totalBookings: bookings.length,
+        successCount: successCount,
+        errorCount: errorCount
+      });
+      
+    } catch (error) {
+      console.error("Error syncing all bookings:", error);
+      return response.status(500).json({
+        success: false,
+        message: "Failed to sync bookings",
+        error: error.message
+      });
+    }
+  });
+});
