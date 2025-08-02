@@ -69,6 +69,12 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             },
             requestPayerName: true,
             requestPayerEmail: true,
+            requestPayerPhone: true,
+            // Apple Pay configuration
+            paymentRequestButton: {
+                type: 'plain',
+                theme: 'dark',
+            },
         });
         
         // Check if the payment request is supported
@@ -76,20 +82,34 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             const applePayButtonContainer = document.getElementById('apple-pay-button');
             const applePayBtn = document.getElementById('apple-pay-btn');
             
+            console.log('Payment request result:', result);
+            console.log('Apple Pay available:', result && result.applePay);
+            
             if (result && result.applePay) {
                 console.log('Apple Pay is available');
                 applePayButtonContainer.style.display = 'block';
                 
-                // Handle Apple Pay button click
-                applePayBtn.addEventListener('click', function() {
-                    console.log('Apple Pay button clicked');
-                    paymentRequest.open();
-                });
+                            // Handle Apple Pay button click
+            applePayBtn.addEventListener('click', function() {
+                console.log('Apple Pay button clicked');
+                console.log('Payment request:', paymentRequest);
+                paymentRequest.open();
+            });
                 
                 // Handle payment request events
                 paymentRequest.on('paymentmethod', function(ev) {
                     console.log('Apple Pay payment method received:', ev.paymentMethod);
                     handleApplePayPayment(ev.paymentMethod);
+                });
+                
+                paymentRequest.on('cancel', function() {
+                    console.log('Apple Pay payment cancelled');
+                });
+                
+                paymentRequest.on('error', function(ev) {
+                    console.error('Apple Pay error:', ev.error);
+                    const errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = 'Apple Pay error: ' + ev.error.message;
                 });
             } else {
                 console.log('Apple Pay is not available on this device');
