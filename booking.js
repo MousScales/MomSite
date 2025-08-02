@@ -935,7 +935,7 @@ const stripe = Stripe('pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3R
     // Business hours
     const businessHours = {
         start: 7, // 7 AM
-        end: 20,  // 8 PM
+        end: 18,  // 6 PM
         closedDays: [0] // Sunday (0 = Sunday)
     };
 
