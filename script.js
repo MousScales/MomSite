@@ -1,5 +1,9 @@
 // Global functions for appointment actions
+console.log('Loading cancelAppointment function...');
+
 async function cancelAppointment(bookingId) {
+    console.log('cancelAppointment called with bookingId:', bookingId);
+    
     const warningMessage = `⚠️ IMPORTANT CANCELLATION NOTICE ⚠️
 
 • Your deposit is NON-REFUNDABLE
@@ -13,7 +17,9 @@ Would you like to:
 
 Click OK to cancel, or Cancel to keep your appointment.`;
 
+    console.log('Showing warning message...');
     if (confirm(warningMessage)) {
+        console.log('User confirmed warning, showing final confirmation...');
         // Show final confirmation
         const finalConfirm = confirm(`Are you absolutely sure you want to cancel?
 
@@ -25,6 +31,7 @@ Click OK to cancel, or Cancel to keep your appointment.`;
 This action cannot be undone.`);
 
         if (finalConfirm) {
+            console.log('User confirmed final confirmation, calling API...');
             try {
                 // Call the cancel booking API
                 const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/cancelBooking', {
@@ -37,7 +44,10 @@ This action cannot be undone.`);
                     })
                 });
                 
+                console.log('API response status:', response.status);
+                
                 if (response.ok) {
+                    console.log('Cancellation successful');
                     alert('Appointment cancelled successfully! You will receive a confirmation shortly.\n\nTo book a new appointment, please visit our booking page.');
                     
                     // Refresh the search results
@@ -47,6 +57,7 @@ This action cannot be undone.`);
                     }
                 } else {
                     const errorData = await response.json();
+                    console.log('API error:', errorData);
                     if (errorData.error && errorData.error.includes('48 hours')) {
                         alert('⚠️ Cancellation Not Available\n\nCancellation is not available within 48 hours of your appointment.\n\nFor urgent cancellation needs, please call us at:\n📞 860-425-0751');
                     } else {
@@ -57,7 +68,11 @@ This action cannot be undone.`);
                 console.error('Error cancelling appointment:', error);
                 alert('Failed to cancel appointment. Please try again or call us at 860-425-0751.');
             }
+        } else {
+            console.log('User cancelled final confirmation');
         }
+    } else {
+        console.log('User cancelled warning message');
     }
 }
 
