@@ -147,6 +147,25 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
     // Style-specific configurations with custom options for each style
     const styleConfigurations = {
 
+        'test': {
+            name: 'Test',
+            basePrices: { standard: 0 },
+            duration: { standard: 2 },
+            hairLengthOptions: ['standard'],
+            specificOptions: {
+                'custom-duration': {
+                    label: 'Custom Duration (hours)',
+                    type: 'number',
+                    required: true,
+                    min: 0.5,
+                    max: 8,
+                    step: 0.5,
+                    default: 2,
+                    price: 0
+                }
+            }
+        },
+
         'cornrows': {
             name: 'Cornrows',
             basePrices: { nostyle: 80 },
@@ -793,13 +812,21 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                         updateDuration();
                     }
                     
+                    // Update duration for test style when custom duration changes
+                    if (styleKey === 'test' && optionKey === 'custom-duration') {
+                        updateDuration();
+                    }
+                    
 
                 });
                 
                 // Add input event listener for number fields to update in real-time
                 if (field.type === 'number') {
                     field.addEventListener('input', (e) => {
-                        // Real-time updates for number fields can be added here if needed
+                        // Update duration in real-time for test style
+                        if (styleKey === 'test' && optionKey === 'custom-duration') {
+                            updateDuration();
+                        }
                     });
                 }
             }
@@ -994,6 +1021,15 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             if (selectedStyle === 'cornrows') {
                 duration = 1; // Cornrows - always 1 hour regardless of style choice
 
+            } else if (selectedStyle === 'test') {
+                // For Test style, check if custom duration is set
+                const customDurationField = document.querySelector('input[name="custom-duration"]');
+                if (customDurationField && customDurationField.value) {
+                    duration = parseFloat(customDurationField.value);
+                } else {
+                    // Default to 2 hours for Test style
+                    duration = 2;
+                }
             } else {
                 // For styles with single length or no length options
                 if (!styleConfig.hairLengthOptions || styleConfig.hairLengthOptions.length <= 1) {
