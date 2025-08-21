@@ -771,16 +771,10 @@ async function generateRescheduleTimeSlots(date) {
         // Apply color coding based on availability and timing
         if (isTooSoon) {
             timeSlot.classList.add('disabled'); // Disabled - too soon
-        } else if (concurrentBookings === 0) {
-            timeSlot.classList.add('available'); // Green - fully available
-        } else if (concurrentBookings === 1) {
-            timeSlot.classList.add('limited'); // Yellow - limited availability
+        } else if (concurrentBookings >= 2) {
+            timeSlot.classList.add('disabled'); // Red - fully booked (2+ overlaps)
         } else {
-            timeSlot.classList.add('disabled'); // Red - fully booked
-        }
-        
-        // Only allow selection if not disabled and not fully booked
-        if (!isTooSoon && concurrentBookings < 2) {
+            timeSlot.classList.add('available'); // Green - available (0 or 1 overlap)
             timeSlot.addEventListener('click', () => selectRescheduleTime(hour, timeSlot));
         }
         
