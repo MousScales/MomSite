@@ -1286,22 +1286,16 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             // Set availability status and styling
             console.log(`Time ${hour}:00 - ${concurrentBookings} concurrent bookings`);
             if (concurrentBookings >= 2) {
-                // Fully booked - red
+                // Fully booked - red (only if 2 or more bookings overlap)
                 timeSlot.classList.add('disabled', 'fully-booked');
                 timeSlot.textContent = formatTime(hour);
-                console.log(`Time ${hour}:00 - Fully booked (red)`);
-            } else if (concurrentBookings === 1) {
-                // Limited availability - orange
-                timeSlot.classList.add('limited-availability');
-                timeSlot.textContent = formatTime(hour);
-                timeSlot.addEventListener('click', () => selectTimeSlot(hour, timeSlot));
-                console.log(`Time ${hour}:00 - Limited availability (orange)`);
-                } else {
-                // Available - green
+                console.log(`Time ${hour}:00 - Fully booked (red) - ${concurrentBookings} overlapping bookings`);
+            } else {
+                // Available - green (if 0 or 1 booking overlaps)
                 timeSlot.classList.add('available');
                 timeSlot.textContent = formatTime(hour);
                 timeSlot.addEventListener('click', () => selectTimeSlot(hour, timeSlot));
-                console.log(`Time ${hour}:00 - Available (green)`);
+                console.log(`Time ${hour}:00 - Available (green) - ${concurrentBookings} overlapping bookings`);
             }
             
             timeSlotsContainer.appendChild(timeSlot);
