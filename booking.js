@@ -158,7 +158,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     type: 'number',
                     required: true,
                     min: 0.5,
-                    max: 8,
+                    max: 10,
                     step: 0.5,
                     default: 2,
                     price: 0
@@ -1276,9 +1276,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 console.log(`Booking: ${bookingStartHour}:00 - ${bookingEndHour}:00, New: ${hour}:00 - ${endHour}:00`);
                 
                 // Check if the new appointment overlaps with existing booking
-                if ((hour >= bookingStartHour && hour < bookingEndHour) ||
-                    (endHour > bookingStartHour && endHour <= bookingEndHour) ||
-                    (hour <= bookingStartHour && endHour >= bookingEndHour)) {
+                // Only count as overlap if there's actual time overlap (not just touching)
+                if ((hour < bookingEndHour && endHour > bookingStartHour)) {
                     concurrentBookings++;
                     console.log(`Overlap detected! Concurrent bookings for ${hour}:00: ${concurrentBookings}`);
                 }
