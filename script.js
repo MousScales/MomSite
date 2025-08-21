@@ -773,8 +773,11 @@ async function generateRescheduleTimeSlots(date) {
             timeSlot.classList.add('disabled'); // Disabled - too soon
         } else if (concurrentBookings >= 2) {
             timeSlot.classList.add('disabled'); // Red - fully booked (2+ overlaps)
+        } else if (concurrentBookings === 1) {
+            timeSlot.classList.add('limited'); // Orange - limited availability (1 overlap)
+            timeSlot.addEventListener('click', () => selectRescheduleTime(hour, timeSlot));
         } else {
-            timeSlot.classList.add('available'); // Green - available (0 or 1 overlap)
+            timeSlot.classList.add('available'); // Green - available (no overlaps)
             timeSlot.addEventListener('click', () => selectRescheduleTime(hour, timeSlot));
         }
         

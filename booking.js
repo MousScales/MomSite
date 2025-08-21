@@ -1218,6 +1218,14 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         const currentHour = new Date().getHours();
         const selectedDuration = parseInt(durationInput.value) || 2;
         
+        // Check if this time slot is too soon (32-hour rule)
+        const selectedDateTime = new Date(date);
+        selectedDateTime.setHours(hour, 0, 0, 0);
+        const now = new Date();
+        const minimumBookingTime = new Date();
+        minimumBookingTime.setHours(now.getHours() + 32); // 32 hours from now
+        const isTooSoon = selectedDateTime < minimumBookingTime;
+        
         // Fetch existing bookings for this date
         let existingBookings = [];
         try {
@@ -1265,9 +1273,9 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 continue;
             }
             
-            // Disable past times for today
-            if (isToday && hour <= currentHour) {
-                timeSlot.classList.add('disabled');
+            // Disable past times for today and times too soon (32-hour rule)
+            if ((isToday && hour <= currentHour) || isTooSoon) {
+                timeSlot.classList.add('disabled', 'too-soon');
                 timeSlot.textContent = formatTime(hour);
                 timeSlotsContainer.appendChild(timeSlot);
                 continue;
@@ -1296,12 +1304,18 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             // Set availability status and styling
             console.log(`Time ${hour}:00 - ${concurrentBookings} concurrent bookings`);
             if (concurrentBookings >= 2) {
-                // Fully booked - red (only if 2 or more bookings overlap)
+                // Fully booked - red (2 or more bookings overlap)
                 timeSlot.classList.add('disabled', 'fully-booked');
                 timeSlot.textContent = formatTime(hour);
                 console.log(`Time ${hour}:00 - Fully booked (red) - ${concurrentBookings} overlapping bookings`);
+            } else if (concurrentBookings === 1) {
+                // Limited availability - orange/yellow (1 booking overlaps)
+                timeSlot.classList.add('limited-availability');
+                timeSlot.textContent = formatTime(hour);
+                timeSlot.addEventListener('click', () => selectTimeSlot(hour, timeSlot));
+                console.log(`Time ${hour}:00 - Limited availability (orange) - ${concurrentBookings} overlapping bookings`);
             } else {
-                // Available - green (if 0 or 1 booking overlaps)
+                // Available - green (no bookings overlap)
                 timeSlot.classList.add('available');
                 timeSlot.textContent = formatTime(hour);
                 timeSlot.addEventListener('click', () => selectTimeSlot(hour, timeSlot));
