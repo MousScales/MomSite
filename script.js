@@ -747,12 +747,12 @@ async function generateRescheduleTimeSlots(date) {
         const timeString = `${displayHour}:00 ${ampm}`;
         timeSlot.textContent = timeString;
         
-        // Check if this time slot is too soon (30-hour rule)
+        // Check if this time slot is too soon (24-hour rule)
         const selectedDateTime = new Date(date);
         selectedDateTime.setHours(hour, 0, 0, 0);
         const now = new Date();
         const minimumBookingTime = new Date();
-        minimumBookingTime.setHours(now.getHours() + 30); // 30 hours from now
+        minimumBookingTime.setHours(now.getHours() + 24); // 24 hours from now
         const isTooSoon = selectedDateTime < minimumBookingTime;
         
         // Check availability

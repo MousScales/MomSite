@@ -1218,14 +1218,6 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         const currentHour = new Date().getHours();
         const selectedDuration = parseInt(durationInput.value) || 2;
         
-        // Check if this time slot is too soon (32-hour rule)
-        const selectedDateTime = new Date(date);
-        selectedDateTime.setHours(hour, 0, 0, 0);
-        const now = new Date();
-        const minimumBookingTime = new Date();
-        minimumBookingTime.setHours(now.getHours() + 32); // 32 hours from now
-        const isTooSoon = selectedDateTime < minimumBookingTime;
-        
         // Fetch existing bookings for this date
         let existingBookings = [];
         try {
@@ -1272,6 +1264,14 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 timeSlotsContainer.appendChild(timeSlot);
                 continue;
             }
+            
+            // Check if this time slot is too soon (32-hour rule)
+            const selectedDateTime = new Date(date);
+            selectedDateTime.setHours(hour, 0, 0, 0);
+            const now = new Date();
+            const minimumBookingTime = new Date();
+            minimumBookingTime.setHours(now.getHours() + 24); // 24 hours from now
+            const isTooSoon = selectedDateTime < minimumBookingTime;
             
             // Disable past times for today and times too soon (32-hour rule)
             if ((isToday && hour <= currentHour) || isTooSoon) {
