@@ -956,9 +956,18 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             Object.keys(styleConfig.specificOptions).forEach(optionKey => {
                 const field = document.getElementById(optionKey);
                 if (field && field.value) {
-                    const selectedOption = field.options[field.selectedIndex];
-                    const priceAddition = parseInt(selectedOption.getAttribute('data-price')) || 0;
-                    styleSpecificPrice += priceAddition;
+                    // Handle different field types
+                    if (field.tagName === 'SELECT') {
+                        const selectedOption = field.options[field.selectedIndex];
+                        const priceAddition = parseInt(selectedOption.getAttribute('data-price')) || 0;
+                        styleSpecificPrice += priceAddition;
+                    } else if (field.tagName === 'INPUT') {
+                        // For input fields (like number inputs), use the price from the configuration
+                        const optionConfig = styleConfig.specificOptions[optionKey];
+                        if (optionConfig && optionConfig.price) {
+                            styleSpecificPrice += optionConfig.price;
+                        }
+                    }
                 }
             });
         }
@@ -1271,7 +1280,8 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 console.log('Processing booking:', booking, 'bookingTime:', bookingTime);
                 const bookingStartHour = parseInt(bookingTime.split(':')[0]);
                 const bookingDuration = parseInt(booking.duration);
-                const bookingEndHour = bookingStartHour + bookingDuration;
+                // Convert minutes to hours for end time calculation
+                const bookingEndHour = bookingStartHour + (bookingDuration / 60);
                 
                 console.log(`Booking: ${bookingStartHour}:00 - ${bookingEndHour}:00, New: ${hour}:00 - ${endHour}:00`);
                 
