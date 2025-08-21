@@ -554,6 +554,13 @@ body {
     border-color: #e0e0e0;
 }
 
+.time-slot.too-soon {
+    background: #6c757d;
+    color: #fff;
+    cursor: not-allowed;
+    border-color: #545b62;
+}
+
 /* Availability Status Styles */
 .time-slot.available {
     background: #d4edda;
