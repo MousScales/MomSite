@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Database</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; }
+        .danger { background: #dc3545; color: white; border: none; border-radius: 5px; }
+        .danger:hover { background: #c82333; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>⚠️ Clear Database</h1>
+    <p style="color: #dc3545; font-weight: bold;">WARNING: This will permanently delete ALL bookings from the database!</p>
+    
+    <button id="clearBtn" class="danger" onclick="clearDatabase()">🗑️ Clear All Bookings</button>
+    <button onclick="checkBookings()">📊 Check Current Bookings</button>
+    
+    <div id="status"></div>
+    <div id="bookingsList"></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Config -->
+    <script src="config.js"></script>
+
+    <script>
+        let db = null;
+
+        // Initialize Firebase
+        window.addEventListener('load', function() {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                addStatus('✅ Firebase initialized successfully', 'success');
+            } catch (error) {
+                addStatus(`❌ Firebase initialization error: ${error.message}`, 'error');
+            }
+        });
+
+        function addStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            statusDiv.appendChild(div);
+        }
+
+        async function checkBookings() {
+            if (!db) {
+                addStatus('❌ Firebase not initialized', 'error');
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('bookings').get();
+                const bookings = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                const container = document.getElementById('bookingsList');
+                
+                if (bookings.length === 0) {
+                    container.innerHTML = '<div class="status success">✅ Database is empty - no bookings found.</div>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <h3>Current Bookings (${bookings.length} total):</h3>
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+                        ${bookings.map(booking => `
+                            <div style="border-bottom: 1px solid #eee; padding: 5px 0;">
+                                <strong>${booking.name || 'No name'}</strong> - 
+                                ${booking.appointmentDate || booking.date || 'No date'} 
+                                ${booking.appointmentTime || booking.time || 'No time'} 
+                                (ID: ${booking.id})
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                addStatus(`❌ Error checking bookings: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearDatabase() {
+            if (!db) {
+                addStatus('❌ Firebase not initialized', 'error');
+                return;
+            }
+
+            // Double confirmation
+            const confirmMessage = '⚠️ ARE YOU ABSOLUTELY SURE?\n\nThis will permanently delete ALL bookings from the database. This action cannot be undone.\n\nType "DELETE ALL" to confirm:';
+            const userInput = prompt(confirmMessage);
+            
+            if (userInput !== 'DELETE ALL') {
+                addStatus('❌ Operation cancelled', 'warning');
+                return;
+            }
+
+            const button = document.getElementById('clearBtn');
+            button.disabled = true;
+            button.textContent = '🗑️ Clearing...';
+
+            try {
+                addStatus('🔄 Starting database clear...', 'warning');
+                
+                // Get all bookings
+                const snapshot = await db.collection('bookings').get();
+                const bookings = snapshot.docs;
+                
+                if (bookings.length === 0) {
+                    addStatus('✅ Database is already empty', 'success');
+                    button.disabled = false;
+                    button.textContent = '🗑️ Clear All Bookings';
+                    return;
+                }
+
+                addStatus(`📊 Found ${bookings.length} bookings to delete...`, 'warning');
+
+                // Delete all bookings in batches
+                const batchSize = 500; // Firestore batch limit
+                let deletedCount = 0;
+
+                for (let i = 0; i < bookings.length; i += batchSize) {
+                    const batch = db.batch();
+                    const batchDocs = bookings.slice(i, i + batchSize);
+                    
+                    batchDocs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    await batch.commit();
+                    deletedCount += batchDocs.length;
+                    
+                    addStatus(`✅ Deleted batch ${Math.floor(i/batchSize) + 1}: ${batchDocs.length} bookings`, 'success');
+                    
+                    // Small delay to avoid overwhelming the database
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                addStatus(`🎉 SUCCESS! Deleted ${deletedCount} bookings from database`, 'success');
+                
+                // Clear the bookings list
+                document.getElementById('bookingsList').innerHTML = '<div class="status success">✅ Database cleared successfully!</div>';
+
+            } catch (error) {
+                addStatus(`❌ Error clearing database: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = '🗑️ Clear All Bookings';
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -518,7 +518,7 @@ async function createGoogleCalendarEvent(bookingData) {
       return;
     }
     
-    const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000));
+    const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 1000));
     
     // Function to generate style options text
     function generateStyleOptionsText(bookingData) {
@@ -804,7 +804,7 @@ exports.syncToGoogleCalendar = onRequest({
         return response.status(400).json({error: "Invalid date/time format"});
       }
       
-      const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000));
+      const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 1000));
       
       console.log("Google Calendar sync - Parsed dates:", {
         startDateTime: startDateTime.toISOString(),

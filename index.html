@@ -8,9 +8,128 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script defer src="/_vercel/insights/script.js"></script>
-
+    <style>
+        .maintenance-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .maintenance-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .maintenance-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        
+        .maintenance-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .maintenance-message {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .maintenance-phone {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        
+        .maintenance-phone a {
+            color: #ffd700;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .maintenance-phone a:hover {
+            color: #fff;
+        }
+        
+        .maintenance-hours {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .maintenance-note {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .maintenance-content {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .maintenance-title {
+                font-size: 2rem;
+            }
+            
+            .maintenance-message {
+                font-size: 1rem;
+            }
+            
+            .maintenance-phone {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Maintenance Overlay -->
+    <!-- <div class="maintenance-overlay">
+        <div class="maintenance-content">
+            <div class="maintenance-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <h1 class="maintenance-title">Site Currently Down</h1>
+            <p class="maintenance-message">
+                We're currently experiencing technical difficulties with our online booking system. 
+                Please call us directly to schedule your appointment.
+            </p>
+            <div class="maintenance-phone">
+                <i class="fas fa-phone"></i>
+                <a href="tel:8604250751">860-425-0751</a>
+            </div>
+            <div class="maintenance-hours">
+                <strong>Hours:</strong> Monday - Saturday: 7am - 6pm<br>
+                Sunday: Closed
+            </div>
+            <p class="maintenance-note">
+                We apologize for the inconvenience and appreciate your patience while we resolve this issue.
+            </p>
+        </div>
+    </div> -->
+
     <nav class="navbar">
         <a href="/" class="logo">Maya African Hair Braiding</a>
     </nav>

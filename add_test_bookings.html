@@ -14,7 +14,7 @@
     </style>
 </head>
 <body>
-    <h1>Add ALL Test Bookings (Aug 25-30)</h1>
+    <h1>Add Test Bookings for August 30th</h1>
     <button onclick="addAllBookings()">Add All Test Bookings</button>
     <div id="status"></div>
 
@@ -61,125 +61,24 @@
                 return;
             }
 
-            addStatus('Starting to add ALL test bookings for August 25-30...');
+            addStatus('Starting to add test bookings for August 30th...');
             
-            // ALL bookings across August 25-30, 2024
+            // August 30th, 2025 bookings only
             const bookings = [
-                // August 25th
+                // August 30th
                 {
-                    date: '2024-08-25',
+                    date: '2025-08-30',
                     time: '07:00',
-                    duration: 180, // 3 hours (7am-10am)
+                    duration: 180, // 3 hours (7am-10am) = 180 minutes
                     name: 'Test Customer 1',
                     phone: '555-0001'
                 },
                 {
-                    date: '2024-08-25',
+                    date: '2025-08-30',
                     time: '10:00',
-                    duration: 180, // 3 hours (10am-1pm)
+                    duration: 120, // 2 hours (10am-12pm) = 120 minutes
                     name: 'Test Customer 2',
                     phone: '555-0002'
-                },
-                {
-                    date: '2024-08-25',
-                    time: '13:00',
-                    duration: 150, // 2.5 hours (1pm-3:30pm)
-                    name: 'Test Customer 3',
-                    phone: '555-0003'
-                },
-                {
-                    date: '2024-08-25',
-                    time: '15:30',
-                    duration: 150, // 2.5 hours (3:30pm-6pm)
-                    name: 'Test Customer 4',
-                    phone: '555-0004'
-                },
-                
-                // August 26th
-                {
-                    date: '2024-08-26',
-                    time: '07:00',
-                    duration: 180, // 3 hours (7am-10am)
-                    name: 'Test Customer 5',
-                    phone: '555-0005'
-                },
-                {
-                    date: '2024-08-26',
-                    time: '15:00',
-                    duration: 120, // 2 hours (3pm-5pm)
-                    name: 'Test Customer 6',
-                    phone: '555-0006'
-                },
-                
-                // August 27th
-                {
-                    date: '2024-08-27',
-                    time: '07:00',
-                    duration: 240, // 4 hours (7am-11am)
-                    name: 'Test Customer 7',
-                    phone: '555-0007'
-                },
-                {
-                    date: '2024-08-27',
-                    time: '11:00',
-                    duration: 60, // 1 hour (11am-12pm)
-                    name: 'Test Customer 8',
-                    phone: '555-0008'
-                },
-                
-                // August 28th
-                {
-                    date: '2024-08-28',
-                    time: '07:00',
-                    duration: 180, // 3 hours (7am-10am)
-                    name: 'Test Customer 9',
-                    phone: '555-0009'
-                },
-                {
-                    date: '2024-08-28',
-                    time: '09:00',
-                    duration: 180, // 3 hours (9am-12pm)
-                    name: 'Test Customer 10',
-                    phone: '555-0010'
-                },
-                {
-                    date: '2024-08-28',
-                    time: '12:00',
-                    duration: 60, // 1 hour (12pm-1pm)
-                    name: 'Test Customer 11',
-                    phone: '555-0011'
-                },
-                
-                // August 29th
-                {
-                    date: '2024-08-29',
-                    time: '10:00',
-                    duration: 120, // 2 hours (10am-12pm)
-                    name: 'Test Customer 12',
-                    phone: '555-0012'
-                },
-                {
-                    date: '2024-08-29',
-                    time: '14:00',
-                    duration: 120, // 2 hours (2pm-4pm)
-                    name: 'Test Customer 13',
-                    phone: '555-0013'
-                },
-                
-                // August 30th
-                {
-                    date: '2024-08-30',
-                    time: '07:00',
-                    duration: 180, // 3 hours (7am-10am)
-                    name: 'Test Customer 14',
-                    phone: '555-0014'
-                },
-                {
-                    date: '2024-08-30',
-                    time: '10:00',
-                    duration: 120, // 2 hours (10am-12pm)
-                    name: 'Test Customer 15',
-                    phone: '555-0015'
                 }
             ];
             

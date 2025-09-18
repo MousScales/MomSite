@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                         const duration = parseInt(booking.duration) || 2; // Default to 2 hours
-                        const endDate = new Date(startDate.getTime() + (duration * 60 * 60 * 1000));
+                        const endDate = new Date(startDate.getTime() + (duration * 60 * 1000));
                         
                         return {
                             id: booking.id || booking.bookingId,
