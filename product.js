@@ -586,6 +586,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 'images/weave-2.jpg',
                 'images/weave-3.jpg'
             ]
+        },
+        'test-style': {
+            title: 'Test Style',
+            description: 'This is a test style for development and testing purposes. It has a minimal deposit requirement and is perfect for testing the booking system functionality.',
+            price: {
+                range: '$1 deposit',
+                note: 'Test style with minimal deposit for development purposes'
+            },
+            features: [
+                'Perfect for testing',
+                'Minimal deposit required',
+                'Quick service',
+                'Development friendly',
+                'Easy to book'
+            ],
+            maintenance: [
+                'No special maintenance required',
+                'Perfect for testing purposes',
+                'Quick turnaround time'
+            ],
+            images: [
+                'images/test-style-1.jpg'
+            ]
         }
     };
 

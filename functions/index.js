@@ -906,7 +906,8 @@ exports.syncToGoogleCalendar = onRequest({
           'loc-retwist-2-strands': { standard: 150 },
           'barrel-twists': { standard: 150 },
           'starter-locs': { standard: 150 },
-          'weave': { standard: 150 }
+          'weave': { standard: 150 },
+          'test-style': { standard: 1 }
         };
         
         // Calculate base price

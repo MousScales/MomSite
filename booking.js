@@ -698,6 +698,23 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     ]
                 }
             }
+        },
+        'test-style': {
+            name: 'Test Style',
+            basePrices: { standard: 1 },
+            duration: { standard: 0.5 },
+            deposit: 1,
+            specificOptions: {
+                'test-option': {
+                    label: 'Test Option',
+                    type: 'select',
+                    required: false,
+                    options: [
+                        { value: 'basic', label: 'Basic Test', price: 0 },
+                        { value: 'premium', label: 'Premium Test', price: 0 }
+                    ]
+                }
+            }
         }
         // More styles will be added as you specify them
     };
