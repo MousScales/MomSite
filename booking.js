@@ -1210,7 +1210,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
         try {
             const dateString = date.toISOString().split('T')[0];
             console.log('Fetching bookings for date:', dateString);
-            const response = await fetch(`https://us-central1-connect-2a17c.cloudfunctions.net/getBookingsForDate?date=${dateString}`);
+            const response = await fetch(`https://getbookingsfordate-2znamu4p5q-uc.a.run.app?date=${dateString}`);
             if (response.ok) {
                 const data = await response.json();
                 existingBookings = data.bookings || data; // Extract bookings array from response
@@ -1413,7 +1413,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             };
 
             // Create payment intent
-            const paymentResponse = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/createPaymentIntent', {
+            const paymentResponse = await fetch('https://createpaymentintent-2znamu4p5q-uc.a.run.app', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1445,7 +1445,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                 
                 // Save booking to database
                 try {
-                    const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
+                    const response = await fetch('https://savebooking-2znamu4p5q-uc.a.run.app', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1613,7 +1613,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     
                     // Save booking to database
                     try {
-                        const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
+                        const response = await fetch('https://savebooking-2znamu4p5q-uc.a.run.app', {
                 method: 'POST',
                 headers: {
                                 'Content-Type': 'application/json',
@@ -1640,7 +1640,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
             
             // Create payment intent on your server for card payment
             console.log('Creating payment intent with amount:', depositAmount * 100, 'cents');
-            const paymentResponse = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/createPaymentIntent', {
+            const paymentResponse = await fetch('https://createpaymentintent-2znamu4p5q-uc.a.run.app', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1701,7 +1701,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
 
                 // Save booking to database
                 try {
-                    const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/saveBooking', {
+                    const response = await fetch('https://savebooking-2znamu4p5q-uc.a.run.app', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
