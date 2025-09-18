@@ -715,7 +715,7 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
                     ]
                 }
             }
-        }
+        },
         // More styles will be added as you specify them
     };
 
@@ -969,6 +969,14 @@ const stripe = Stripe('pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1T
 
         const totalPrice = basePrice + styleSpecificPrice;
         const depositAmount = Math.round(totalPrice * 0.10 * 100) / 100; // 10% deposit
+
+        // Debug logging
+        console.log('updatePricing - Selected style:', selectedStyle);
+        console.log('updatePricing - Style config:', styleConfig);
+        console.log('updatePricing - Base price:', basePrice);
+        console.log('updatePricing - Style specific price:', styleSpecificPrice);
+        console.log('updatePricing - Total price:', totalPrice);
+        console.log('updatePricing - Deposit amount:', depositAmount);
 
         // Update display
         document.getElementById('base-price').textContent = `$${basePrice}`;
