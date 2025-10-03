@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Appointment - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <main class="booking-container">
+        <div class="page-header">
+            <h1>Book Your Appointment</h1>
+        </div>
+        
+        <form id="booking-form" class="booking-form">
+            <div class="form-section">
+                <h2>Contact Information</h2>
+                <div class="form-group">
+                    <label for="name">Full Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Service Details</h2>
+                <div class="form-group">
+                    <label for="selected-style">Selected Style <span class="required">*</span></label>
+                    <input type="text" id="selected-style" name="selected-style" readonly>
+                </div>
+
+                <div class="form-group" id="box-braids-variation-group" style="display: none;">
+                    <label for="box-braids-variation">Box Braids Type <span class="required">*</span></label>
+                    <select id="box-braids-variation" name="box-braids-variation">
+                        <option value="regular">Regular Box Braids</option>
+                        <option value="knotless">Knotless Box Braids</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="cornrows-variation-group" style="display: none;">
+                    <label for="cornrows-variation">Cornrows Style <span class="required">*</span></label>
+                    <select id="cornrows-variation" name="cornrows-variation" required>
+                        <option value="straight-back">Straight Back Cornrows ($60)</option>
+                        <option value="styled">Styled/Designed Cornrows ($80)</option>
+                    </select>
+                    <p class="service-note">Choose between traditional straight back cornrows or custom styled/designed patterns</p>
+                </div>
+
+                <div class="form-group" id="two-strand-twists-variation-group" style="display: none;">
+                    <label for="two-strand-twists-variation">Two Strand Twists Style <span class="required">*</span></label>
+                    <select id="two-strand-twists-variation" name="two-strand-twists-variation">
+                        <option value="regular">Regular</option>
+                        <option value="braided-roots">With Braided Roots</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="hair-length-group" style="display: none;">
+                    <label for="hair-length">Hair Length <span class="required">*</span></label>
+                    <select id="hair-length" name="hair-length">
+                        <option value="">Select hair length</option>
+                        <option value="medium">Medium (Mid-Back)</option>
+                        <option value="long">Long (Lower Back)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="hair-option-group" style="display: none;">
+                    <label for="hair-option">Hair Option <span class="required">*</span></label>
+                    <select id="hair-option" name="hair-option">
+                        <option value="">Select hair option</option>
+                        <option value="synthetic">Synthetic Hair (Included)</option>
+                        <option value="human-hair">Human Hair (+$50)</option>
+                    </select>
+                    <p class="service-note">Basic synthetic hair is included in the price. Human hair is available for an additional $50.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="pre-wash-option">Pre-Wash Service <span class="required">*</span></label>
+                    <select id="pre-wash-option" name="pre-wash-option" required>
+                        <option value="no-wash">No Pre-Wash</option>
+                        <option value="wash">Professional Wash ($20)</option>
+                    </select>
+                    <p class="service-note">Professional wash and condition before styling (recommended for clean, healthy results)</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="current-hair-image">Current Hair Photo <span class="required">*</span></label>
+                    <input type="file" id="current-hair-image" name="current-hair-image" accept="image/*" required>
+                    <p class="service-note">Please provide a clear, recent photo of your current hair to help us better prepare for your service.</p>
+                    <div id="current-hair-preview" class="image-preview" style="display: none;">
+                        <img id="current-hair-preview-img" src="#" alt="Current hair preview">
+                        <button type="button" id="remove-current-hair-image" class="remove-image">Remove</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reference-image">Reference Image (Optional)</label>
+                    <input type="file" id="reference-image" name="reference-image" accept="image/*">
+                    <div id="image-preview" class="image-preview" style="display: none;">
+                        <img id="preview-img" src="#" alt="Style reference preview">
+                        <button type="button" id="remove-image" class="remove-image">Remove</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Additional Notes (Optional)</label>
+                    <textarea id="notes" name="notes" rows="4"></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Appointment Date</h2>
+                <div class="form-group">
+                    <label for="appointment-datetime">Select Date and Time <span class="required">*</span></label>
+                    <div class="booking-datetime-container">
+                        <div class="calendar-container">
+                            <div id="calendar">
+                                <!-- Calendar will be dynamically inserted here -->
+                            </div>
+                            <input type="hidden" id="appointment-datetime" name="appointment-datetime" required>
+                        </div>
+                        <div id="time-slots-container" class="time-slots-container hidden">
+                            <h3>Select Time</h3>
+                            <!-- Time slots will be dynamically inserted here -->
+                        </div>
+                    </div>
+                    <div class="help-text-container">
+                        <p class="help-text">Please note that appointment times are subject to availability. We will confirm your preferred time or suggest alternative slots.</p>
+                        <p class="help-text availability-note"><i class="fas fa-phone-alt"></i> Can't find a suitable time? Give us a call at <a href="tel:+18604250751">(860) 425-0751</a> and we'll try our best to accommodate your schedule.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Pricing</h2>
+                <div class="price-info">
+                    <p>Estimated Duration: <span id="estimated-duration">TBD</span></p>
+                    <p>Total Price: <span id="total-price">$0</span></p>
+                    <p id="pricing-note" style="display: none;" class="service-note"></p>
+                    <p>Required Deposit: <span id="deposit-amount">$0</span></p>
+                    <p class="deposit-note">A deposit is required to secure your appointment. The remaining balance will be due at the time of service.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="promo-code">Promo Code (Optional)</label>
+                    <input type="text" id="promo-code" name="promo-code">
+                    <div id="promo-feedback"></div>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="submit-button">Book Appointment</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Maya African Hair Braiding. All rights reserved.</p>
+    </footer>
+
+    <!-- Config -->
+    <script src="config.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="booking.js"></script>
+</body>
+</html>
