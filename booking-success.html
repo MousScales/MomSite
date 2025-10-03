@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="booking-success.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/html2canvas@latest/dist/html2canvas.min.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">Maya African Hair Braiding</a>
+    </nav>
+
+    <div class="success-container">
+        <!-- Hero Section -->
+        <div class="success-hero">
+            <div class="hero-content">
+                <div class="success-icon-wrapper">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="confetti-container">
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                    </div>
+                </div>
+                <h1>Booking Confirmed!</h1>
+                <p class="hero-subtitle">Your appointment has been successfully scheduled</p>
+                <div class="booking-id" id="booking-id">
+                    <!-- Booking ID will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Booking Summary Card -->
+            <div class="summary-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-calendar-check"></i> Appointment Summary</h2>
+                    <div class="status-badge">
+                        <i class="fas fa-clock"></i>
+                        Confirmed
+                    </div>
+                </div>
+                <div class="booking-details" id="booking-details">
+                    <!-- Booking details will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Screenshot Reminder -->
+            <div class="screenshot-notice" id="screenshot-reminder">
+                <div class="notice-icon">📱</div>
+                <div class="notice-content">
+                    <h3>Save Your Booking Confirmation</h3>
+                    <p>Take a screenshot of this page to save your booking details for your records. You can share this screenshot or print it for your appointment.</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button onclick="window.location.href='/'" class="home-btn">
+                    <i class="fas fa-home"></i>
+                    <span>Return Home</span>
+                </button>
+            </div>
+
+            <!-- Information Cards -->
+            <div class="info-grid">
+                <div class="info-card important-notes">
+                    <div class="card-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h3>Important Information</h3>
+                    <ul>
+                        <li><i class="fas fa-clock"></i> Arrive 10 minutes before your appointment</li>
+                        <li><i class="fas fa-images"></i> Bring reference photos if desired</li>
+                        <li><i class="fas fa-credit-card"></i> Payment collected at the salon</li>
+                        <li><i class="fas fa-phone"></i> Contact us 24h in advance for changes</li>
+                        <li><i class="fas fa-money-bill-wave"></i> Cash and card accepted</li>
+                    </ul>
+                </div>
+
+                <div class="info-card contact-info">
+                    <div class="card-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h3>Salon Location</h3>
+                    <div class="location-details">
+                        <p class="address">116 Ocean Avenue<br>New London, CT 06320</p>
+                        <div class="hours">
+                            <h4><i class="fas fa-clock"></i> Business Hours</h4>
+                            <p>Monday - Saturday: 7:00 AM - 8:00 PM</p>
+                            <p>Sunday: Closed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card preparation-tips">
+                    <div class="card-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Preparation Tips</h3>
+                    <ul>
+                        <li><i class="fas fa-shampoo"></i> Come with clean, dry hair</li>
+                        <li><i class="fas fa-comments"></i> Be ready to discuss your style</li>
+                        <li><i class="fas fa-mobile-alt"></i> Have your phone charged</li>
+                        <li><i class="fas fa-utensils"></i> Bring snacks for long appointments</li>
+                        <li><i class="fas fa-smile"></i> Relax and enjoy the experience!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services with years of experience</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p><i class="fas fa-phone"></i> <a href="tel:8604250751" style="color: inherit; text-decoration: none;">860-425-0751</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Hours</h3>
+                                        <p>Monday - Saturday: 7am - 6pm</p>
+                <p>Sunday: Closed</p>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <div class="social-links">
+                    <a href="https://instagram.com/mayadoeshairrr" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tiktok.com/@mayadoeshairr" target="_blank"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Maya African Hair Braiding. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="booking-success.js"></script>
+</body>
+</html> 

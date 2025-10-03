@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Bookings to Google Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .sync-button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: background 0.3s;
+        }
+        .sync-button:hover {
+            background: #45a049;
+        }
+        .sync-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .bookings-list {
+            margin-top: 30px;
+        }
+        .booking-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .booking-item h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .booking-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sync Bookings to Google Calendar</h1>
+        
+        <div id="status" class="status info">
+            Click the button below to sync all current bookings to your Google Calendar.
+        </div>
+        
+        <button id="syncButton" class="sync-button" onclick="syncBookings()">
+            <i class="fas fa-sync"></i> Sync All Bookings to Google Calendar
+        </button>
+        
+        <div id="bookingsList" class="bookings-list">
+            <h2>Current Bookings</h2>
+            <div id="bookingsContainer">
+                <div class="loading">Loading bookings...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Config -->
+    <script src="config.js"></script>
+    
+    <script>
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        // Load and display current bookings
+        async function loadBookings() {
+            try {
+                const snapshot = await db.collection('bookings').get();
+                const bookings = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                const container = document.getElementById('bookingsContainer');
+                
+                if (bookings.length === 0) {
+                    container.innerHTML = '<div class="status info">No bookings found.</div>';
+                    return;
+                }
+
+                // Sort bookings by date
+                bookings.sort((a, b) => {
+                    const dateA = new Date(a.appointmentDate + ' ' + a.appointmentTime);
+                    const dateB = new Date(b.appointmentDate + ' ' + b.appointmentTime);
+                    return dateA - dateB;
+                });
+
+                let html = '';
+                bookings.forEach(booking => {
+                    const dateTime = new Date(booking.appointmentDate + ' ' + booking.appointmentTime);
+                    html += `
+                        <div class="booking-item">
+                            <h3>${booking.name} - ${booking.style}</h3>
+                            <p><strong>Date & Time:</strong> ${dateTime.toLocaleString()}</p>
+                            <p><strong>Phone:</strong> ${booking.phone}</p>
+                            <p><strong>Duration:</strong> ${booking.duration} hours</p>
+                            <p><strong>Total Price:</strong> $${booking.totalPrice}</p>
+                            <p><strong>Status:</strong> ${booking.status || 'Pending'}</p>
+                            <p><strong>Booking ID:</strong> ${booking.id}</p>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                document.getElementById('bookingsContainer').innerHTML = 
+                    '<div class="status error">Error loading bookings: ' + error.message + '</div>';
+            }
+        }
+
+        // Sync bookings to Google Calendar
+        async function syncBookings() {
+            const button = document.getElementById('syncButton');
+            const status = document.getElementById('status');
+            
+            // Disable button and show loading
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div> Syncing...';
+            status.className = 'status info';
+            status.innerHTML = 'Syncing bookings to Google Calendar...';
+            
+            try {
+                const response = await fetch('https://us-central1-connect-2a17c.cloudfunctions.net/syncAllBookingsToGoogleCalendar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.className = 'status success';
+                    status.innerHTML = `
+                        <h3>✅ Sync Complete!</h3>
+                        <p><strong>${result.successCount}</strong> bookings successfully synced to Google Calendar</p>
+                        <p><strong>${result.errorCount}</strong> bookings had errors</p>
+                        <p><strong>${result.totalBookings}</strong> total bookings processed</p>
+                    `;
+                } else {
+                    status.className = 'status error';
+                    status.innerHTML = `
+                        <h3>❌ Sync Failed</h3>
+                        <p>${result.message}</p>
+                        <p>Error: ${result.error}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error syncing bookings:', error);
+                status.className = 'status error';
+                status.innerHTML = `
+                    <h3>❌ Sync Failed</h3>
+                    <p>Network error: ${error.message}</p>
+                `;
+            } finally {
+                // Re-enable button
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-sync"></i> Sync All Bookings to Google Calendar';
+            }
+        }
+
+        // Load bookings when page loads
+        document.addEventListener('DOMContentLoaded', loadBookings);
+    </script>
+</body>
+</html> 
