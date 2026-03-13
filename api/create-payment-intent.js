@@ -51,9 +51,9 @@ module.exports = async (req, res) => {
     }
 
     const totalPrice = parseFloat(data.totalPrice || data.total_price || 0);
-    const depositAmount = Math.round(totalPrice * 0.10 * 100);
-    if (depositAmount < 50) {
-      return res.status(400).json({ error: 'Deposit amount is too low.' });
+    const depositAmount = Math.max(50, Math.round(totalPrice * 0.10 * 100)); // Stripe min is 50 cents
+    if (totalPrice <= 0) {
+      return res.status(400).json({ error: 'Invalid total price.' });
     }
 
     const bookingId = require('crypto').randomUUID();

@@ -14,8 +14,8 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL && typeof SUPABASE_ANON_
     console.warn('Supabase not configured. Please add your Supabase credentials to config.js');
 }
 
-// Initialize Stripe with the public key from config
-const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+// Stripe instance - initialized when loading payment form (uses key from API or config.js)
+let stripeInstance = null;
 
 // Initialize Firebase (will be initialized when Firebase scripts are loaded) - commented out
 // let db;
@@ -1082,9 +1082,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const paymentContainer = document.getElementById('payment-element-container');
         isLoadingPayment = true;
-        if (paymentContainer) paymentContainer.innerHTML = '<p class="payment-loading"><i class="fas fa-spinner fa-spin"></i> Uploading photos...</p>';
+        if (paymentContainer) paymentContainer.innerHTML = '<p class="payment-loading"><i class="fas fa-spinner fa-spin"></i> Loading payment...</p>';
 
         try {
+            // Get Stripe publishable key from API (Vercel env) or fallback to config.js
+            if (!stripeInstance) {
+                try {
+                    const configRes = await fetch('/api/stripe-config');
+                    if (configRes.ok) {
+                        const configData = await configRes.json();
+                        if (configData.publishableKey) {
+                            stripeInstance = Stripe(configData.publishableKey);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Stripe config API failed, using config.js:', e);
+                }
+                if (!stripeInstance && typeof STRIPE_PUBLISHABLE_KEY !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
+                    stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+                }
+                if (!stripeInstance) {
+                    throw new Error('Stripe not configured. Add STRIPE_PUBLISHABLE_KEY to Vercel env or config.js.');
+                }
+            }
+
+            if (paymentContainer) paymentContainer.innerHTML = '<p class="payment-loading"><i class="fas fa-spinner fa-spin"></i> Uploading photos...</p>';
             const formData = new FormData(bookingForm);
             const currentHairImage = document.getElementById('current-hair-image').files[0];
             const referenceImage = document.getElementById('reference-image').files[0];
@@ -1142,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!paymentIntentClientSecret) throw new Error('No payment client secret returned');
 
             const appearance = { theme: 'stripe', variables: { colorPrimary: '#c8914e' } };
-            elements = stripe.elements({ clientSecret: paymentIntentClientSecret, appearance });
+            elements = stripeInstance.elements({ clientSecret: paymentIntentClientSecret, appearance });
             const paymentElement = elements.create('payment', {
                 layout: 'tabs',
                 paymentMethodOrder: ['card']
@@ -1193,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const returnUrl = (typeof location !== 'undefined' && location.origin) ? location.origin + '/api/handle-payment-success' : 'http://localhost:5500/api/handle-payment-success';
         const email = document.getElementById('email')?.value || '';
 
-        const { error } = await stripe.confirmPayment({
+        const { error } = await stripeInstance.confirmPayment({
             elements,
             confirmParams: {
                 return_url: returnUrl,
