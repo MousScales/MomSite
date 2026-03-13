@@ -23,13 +23,16 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '').trim();
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbmJkcWtxbHhrZmdoamNidndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNzQxNjMsImV4cCI6MjA4ODc1MDE2M30.r8jDPCV7C7kTrnHIwGvs4vBq-sf8rvyFxe1Q6_rR2Tg';
 
   if (!stripeSecretKey) {
     return res.status(500).json({ error: 'Payment not configured. Add STRIPE_SECRET_KEY in Vercel → Settings → Environment Variables.' });
+  }
+  if (!stripeSecretKey.startsWith('sk_')) {
+    return res.status(500).json({ error: 'Invalid Stripe key format. Use your secret key (sk_live_... or sk_test_...). Check Vercel env vars for extra spaces.' });
   }
   if (!supabaseKey) {
     return res.status(500).json({ error: 'Database not configured. Add SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY in Vercel.' });
@@ -51,9 +54,9 @@ module.exports = async (req, res) => {
     }
 
     const totalPrice = parseFloat(data.totalPrice || data.total_price || 0);
-    const depositAmount = Math.max(50, Math.round(totalPrice * 0.10 * 100)); // Stripe min is 50 cents
-    if (totalPrice <= 0) {
-      return res.status(400).json({ error: 'Invalid total price.' });
+    const depositAmount = Math.round(totalPrice * 0.10 * 100);
+    if (depositAmount < 50) {
+      return res.status(400).json({ error: 'Deposit amount is too low.' });
     }
 
     const bookingId = require('crypto').randomUUID();
@@ -108,8 +111,10 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error('Error creating payment intent:', err);
-    return res.status(500).json({
-      error: err.message || 'An error occurred'
-    });
+    let msg = err.message || 'An error occurred';
+    if (msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('invalid key')) {
+      msg = 'Stripe key invalid. In Vercel: Settings → Environment Variables, set STRIPE_SECRET_KEY to your sk_live_... key (no quotes, no extra spaces). Redeploy after saving.';
+    }
+    return res.status(500).json({ error: msg });
   }
 };
