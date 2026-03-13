@@ -1145,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             elements = stripe.elements({ clientSecret: paymentIntentClientSecret, appearance });
             const paymentElement = elements.create('payment', {
                 layout: 'tabs',
-                paymentMethodOrder: ['card', 'link', 'apple_pay', 'google_pay']
+                paymentMethodOrder: ['card']
             });
             paymentContainer.innerHTML = '';
             paymentElement.mount('#payment-element-container');
