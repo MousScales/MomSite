@@ -1,3 +1,5 @@
+const { getStripeSecretKey } = require('./_stripe-env');
+
 /**
  * Diagnostic endpoint - verify Stripe key is set in Vercel.
  * Visit: your-site.com/api/stripe-check
@@ -5,7 +7,7 @@
  */
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  const key = (process.env.STRIPE_SECRET_KEY || '').trim();
+  const key = getStripeSecretKey();
   let status = 'missing';
   let hint = 'Add STRIPE_SECRET_KEY in Vercel → Settings → Environment Variables';
   if (key) {

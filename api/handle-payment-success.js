@@ -1,5 +1,23 @@
 const { createClient } = require('@supabase/supabase-js');
-const Stripe = require('stripe');
+const { getStripeSecretKey } = require('./_stripe-env');
+
+async function stripeRequest(method, path) {
+  const key = getStripeSecretKey();
+  if (!key || !key.startsWith('sk_')) {
+    throw new Error('STRIPE_SECRET_KEY not configured');
+  }
+  const res = await fetch(`https://api.stripe.com/v1${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  const data = await res.json();
+  if (data.error) {
+    const err = new Error(data.error.message || 'Stripe error');
+    err.code = data.error.code;
+    throw err;
+  }
+  return data;
+}
 
 function getQuery(req) {
   if (req.query && typeof req.query === 'object') return req.query;
@@ -11,7 +29,7 @@ function getQuery(req) {
 
 module.exports = async (req, res) => {
   const q = getQuery(req);
-  const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '').trim().replace(/[\r\n\s]/g, '');
+  const stripeKey = getStripeSecretKey();
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbmJkcWtxbHhrZmdoamNidndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNzQxNjMsImV4cCI6MjA4ODc1MDE2M30.r8jDPCV7C7kTrnHIwGvs4vBq-sf8rvyFxe1Q6_rR2Tg';
@@ -19,12 +37,12 @@ module.exports = async (req, res) => {
     ? `https://${process.env.VERCEL_URL}`
     : (req.headers.origin || req.headers.referer || 'https://mom-site-steel.vercel.app').replace(/\/$/, '');
 
-  const redirect = (path, status = 302) => {
-    res.writeHead(status, { Location: path });
+  const redirect = (path) => {
+    res.writeHead(302, { Location: path });
     res.end();
   };
 
-  if (!supabaseKey || !stripeSecretKey) {
+  if (!supabaseKey || !stripeKey) {
     return redirect(`${baseUrl}/booking-error.html?error=Server not configured`);
   }
 
@@ -41,8 +59,7 @@ module.exports = async (req, res) => {
       return redirect(`${baseUrl}/booking-error.html?error=Payment not completed`);
     }
     try {
-      const stripe = new Stripe(stripeSecretKey);
-      const pi = await stripe.paymentIntents.retrieve(payment_intent_id);
+      const pi = await stripeRequest('GET', `/payment_intents/${payment_intent_id}`);
       if (pi.status !== 'succeeded') {
         return redirect(`${baseUrl}/booking-error.html?error=Payment not completed`);
       }
@@ -57,8 +74,7 @@ module.exports = async (req, res) => {
     }
   } else if (session_id && booking_id) {
     try {
-      const stripe = new Stripe(stripeSecretKey);
-      const session = await stripe.checkout.sessions.retrieve(session_id);
+      const session = await stripeRequest('GET', `/checkout/sessions/${session_id}`);
       if (session.payment_status !== 'paid') {
         return redirect(`${baseUrl}/booking-error.html?error=Payment not completed`);
       }
@@ -111,7 +127,7 @@ module.exports = async (req, res) => {
       deposit_amount: amount_paid,
       payment_session_id: payment_intent_id || session_id,
       stripe_session_id: payment_intent_id || session_id,
-      booking_reference: temp.booking_reference
+      booking_reference: temp.booking_reference,
     };
 
     const { error: insertError } = await supabase.from('bookings').insert(bookingData);

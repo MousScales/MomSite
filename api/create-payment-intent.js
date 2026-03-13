@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const Stripe = require('stripe');
+const { getStripeSecretKey } = require('./_stripe-env');
 
 function generateBookingReference() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -8,6 +8,32 @@ function generateBookingReference() {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return `MAYA-${code}`;
+}
+
+async function stripeRequest(method, path, body = null) {
+  const key = getStripeSecretKey();
+  if (!key || !key.startsWith('sk_')) {
+    throw new Error('STRIPE_SECRET_KEY not set or invalid in Vercel env');
+  }
+  const url = `https://api.stripe.com/v1${path}`;
+  const opts = {
+    method,
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  };
+  if (body) {
+    opts.body = new URLSearchParams(body).toString();
+  }
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (data.error) {
+    const err = new Error(data.error.message || 'Stripe error');
+    err.code = data.error.code;
+    throw err;
+  }
+  return data;
 }
 
 module.exports = async (req, res) => {
@@ -23,19 +49,23 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '').trim().replace(/[\r\n\s]/g, '');
+  const stripeKey = getStripeSecretKey();
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbmJkcWtxbHhrZmdoamNidndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNzQxNjMsImV4cCI6MjA4ODc1MDE2M30.r8jDPCV7C7kTrnHIwGvs4vBq-sf8rvyFxe1Q6_rR2Tg';
 
-  if (!stripeSecretKey) {
-    return res.status(500).json({ error: 'Payment not configured. Add STRIPE_SECRET_KEY in Vercel → Settings → Environment Variables.' });
+  if (!stripeKey) {
+    return res.status(500).json({
+      error: 'STRIPE_SECRET_KEY missing. Vercel → Settings → Environment Variables → Add STRIPE_SECRET_KEY (value: your sk_live_... key)',
+    });
   }
-  if (!stripeSecretKey.startsWith('sk_')) {
-    return res.status(500).json({ error: 'Invalid Stripe key format. Use your secret key (sk_live_... or sk_test_...). Check Vercel env vars for extra spaces.' });
+  if (!stripeKey.startsWith('sk_')) {
+    return res.status(500).json({
+      error: 'STRIPE_SECRET_KEY must start with sk_live_ or sk_test_. Check for extra characters.',
+    });
   }
   if (!supabaseKey) {
-    return res.status(500).json({ error: 'Database not configured. Add SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY in Vercel.' });
+    return res.status(500).json({ error: 'Database not configured.' });
   }
 
   try {
@@ -48,7 +78,7 @@ module.exports = async (req, res) => {
       const minBookable = new Date(nowUtc.getTime() + 48 * 60 * 60 * 1000);
       if (appointmentDt < minBookable) {
         return res.status(400).json({
-          error: 'Appointments must be booked at least 48 hours in advance.'
+          error: 'Appointments must be booked at least 48 hours in advance.',
         });
       }
     }
@@ -85,7 +115,7 @@ module.exports = async (req, res) => {
       status: 'pending_payment',
       deposit_amount: depositAmount,
       booking_id: bookingId,
-      booking_reference: bookingReference
+      booking_reference: bookingReference,
     };
 
     const { error: insertError } = await supabase
@@ -97,32 +127,22 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: insertError.message });
     }
 
-    const stripe = new Stripe(stripeSecretKey);
-    // Verify key works before creating PaymentIntent
-    try {
-      await stripe.balance.retrieve();
-    } catch (authErr) {
-      console.error('Stripe auth failed:', authErr.message, authErr.code);
-      return res.status(500).json({
-        error: 'Stripe key rejected. Regenerate at dashboard.stripe.com/apikeys: Developers → API keys → Roll key. Use the NEW secret key in Vercel.'
-      });
-    }
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: depositAmount,
+    const pi = await stripeRequest('POST', '/payment_intents', {
+      amount: String(depositAmount),
       currency: 'usd',
-      payment_method_types: ['card'],
-      metadata: { bookingId }
+      'payment_method_types[]': 'card',
+      'metadata[bookingId]': bookingId
     });
 
     return res.status(200).json({
-      clientSecret: paymentIntent.client_secret,
-      bookingId
+      clientSecret: pi.client_secret,
+      bookingId,
     });
   } catch (err) {
-    console.error('Error creating payment intent:', err);
+    console.error('Create payment intent error:', err);
     let msg = err.message || 'An error occurred';
-    if (msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('invalid key')) {
-      msg = 'Stripe key invalid. In Vercel: Settings → Environment Variables, set STRIPE_SECRET_KEY to your sk_live_... key (no quotes, no extra spaces). Redeploy after saving.';
+    if (msg.toLowerCase().includes('invalid') && msg.toLowerCase().includes('key')) {
+      msg = 'Stripe key invalid. In Vercel: add STRIPE_SECRET_KEY with ONLY the key (sk_live_...). No "STRIPE_SECRET_KEY=" prefix, no quotes. Redeploy.';
     }
     return res.status(500).json({ error: msg });
   }
