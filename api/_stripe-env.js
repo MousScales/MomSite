@@ -8,8 +8,10 @@ function getStripeSecretKey() {
     process.env.STRIPE_API_KEY,
     process.env.stripe_secret_key,
   ].filter(Boolean);
-  const raw = candidates[0] || '';
-  return String(raw).replace(/[^a-zA-Z0-9_]/g, '');
+  const raw = (candidates[0] || '').trim();
+  // Strip only whitespace/quotes/newlines; keep sk_ and key body (letters, numbers, underscores)
+  const cleaned = String(raw).replace(/^["']|["']$/g, '').trim();
+  return cleaned.replace(/[^a-zA-Z0-9_]/g, '');
 }
 
 module.exports = { getStripeSecretKey };

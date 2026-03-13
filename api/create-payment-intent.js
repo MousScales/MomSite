@@ -56,12 +56,12 @@ module.exports = async (req, res) => {
 
   if (!stripeKey) {
     return res.status(500).json({
-      error: 'STRIPE_SECRET_KEY missing. Vercel → Settings → Environment Variables → Add STRIPE_SECRET_KEY (value: your sk_live_... key)',
+      error: 'STRIPE_SECRET_KEY not set or empty. In Vercel: Settings → Environment Variables → set Name to STRIPE_SECRET_KEY and Value to ONLY your key (sk_live_... or sk_test_...). Save, then redeploy the project.',
     });
   }
   if (!stripeKey.startsWith('sk_')) {
     return res.status(500).json({
-      error: 'STRIPE_SECRET_KEY must start with sk_live_ or sk_test_. Check for extra characters.',
+      error: 'STRIPE_SECRET_KEY must start with sk_live_ or sk_test_. Check the Value has no extra text (e.g. no "STRIPE_SECRET_KEY=" in the value). Redeploy after fixing.',
     });
   }
   if (!supabaseKey) {
@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
     console.error('Create payment intent error:', err);
     let msg = err.message || 'An error occurred';
     if (msg.toLowerCase().includes('invalid') && msg.toLowerCase().includes('key')) {
-      msg = 'Stripe key invalid. In Vercel: add STRIPE_SECRET_KEY with ONLY the key (sk_live_...). No "STRIPE_SECRET_KEY=" prefix, no quotes. Redeploy.';
+      msg = 'Invalid Stripe API key. In Vercel: Project → Settings → Environment Variables → set STRIPE_SECRET_KEY to your secret key from Stripe Dashboard (Developers → API keys). Use the same mode (test or live) as your publishable key. Then redeploy.';
     }
     return res.status(500).json({ error: msg });
   }

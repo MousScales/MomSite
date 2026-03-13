@@ -499,11 +499,26 @@ def create_payment_intent():
             'bookingId': booking_id,
             'bookingReference': booking_reference
         })
+    except stripe.error.AuthenticationError as e:
+        print(f"Stripe authentication failed (invalid API key): {e}")
+        msg = (
+            "Invalid Stripe API key. On your server, set STRIPE_SECRET_KEY to a valid secret key from "
+            "Stripe Dashboard → Developers → API keys. Use the same mode (test or live) as your publishable key."
+        )
+        response = jsonify(error={"message": msg})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
     except Exception as e:
         print(f"Error creating payment intent: {e}")
         import traceback
         traceback.print_exc()
-        response = jsonify(error={"message": str(e)})
+        err_msg = str(e)
+        if "Invalid API key" in err_msg or "api_key" in err_msg.lower():
+            err_msg = (
+                "Invalid Stripe API key. On your server, set STRIPE_SECRET_KEY to a valid secret key from "
+                "Stripe Dashboard → Developers → API keys. Use the same mode (test or live) as your publishable key."
+            )
+        response = jsonify(error={"message": err_msg})
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response, 500
 
