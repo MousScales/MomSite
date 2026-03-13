@@ -9,7 +9,7 @@ function getStripeSecretKey() {
     process.env.stripe_secret_key,
   ].filter(Boolean);
   const raw = candidates[0] || '';
-  return String(raw).trim().replace(/[\r\n\t\s]/g, '');
+  return String(raw).replace(/[^a-zA-Z0-9_]/g, '');
 }
 
 module.exports = { getStripeSecretKey };
