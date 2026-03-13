@@ -94,17 +94,12 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: insertError.message });
     }
 
-    const origin = req.headers.origin || req.headers.referer || 'https://mom-site-steel.vercel.app';
-    const baseUrl = (typeof origin === 'string' ? origin : '').replace(/\/$/, '') || 'https://mom-site-steel.vercel.app';
-    const returnUrl = `${baseUrl}/api/handle-payment-success`;
-
     const stripe = new Stripe(stripeSecretKey);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: depositAmount,
       currency: 'usd',
       automatic_payment_methods: { enabled: true },
-      metadata: { bookingId },
-      return_url: returnUrl
+      metadata: { bookingId }
     });
 
     return res.status(200).json({
