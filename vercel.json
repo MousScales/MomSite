@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Permissions-Policy",
-          "value": "clipboard-write=(self \"https://js.stripe.com\")"
+          "value": "clipboard-write=*"
         }
       ]
     }
