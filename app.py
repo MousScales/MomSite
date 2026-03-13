@@ -4,6 +4,8 @@ import datetime
 import random
 import string
 import re
+import json
+import hashlib
 from urllib.parse import quote
 from flask import Flask, request, jsonify, redirect, send_file
 from flask_cors import CORS
@@ -75,6 +77,108 @@ def ensure_booking_reference_unique(booking_ref):
         # If exists, generate new one
         booking_ref = generate_booking_reference()
     return booking_ref  # Return last attempt if all fail (very unlikely)
+
+
+def normalize_phone_number(phone_value):
+    return ''.join(ch for ch in str(phone_value or '') if ch.isdigit())
+
+
+def normalize_booking_text(value, lowercase=False):
+    text = str(value or '').strip()
+    return text.lower() if lowercase else text
+
+
+def get_booking_signature_payload(source):
+    return {
+        'name': normalize_booking_text(source.get('name')),
+        'phone': normalize_phone_number(source.get('phone')),
+        'email': normalize_booking_text(source.get('email'), lowercase=True),
+        'appointment_datetime': normalize_booking_text(
+            source.get('appointment-datetime') or source.get('appointmentDateTime') or source.get('appointment_datetime')
+        ),
+        'selected_style': normalize_booking_text(source.get('selected_style') or source.get('selectedStyle')),
+        'hair_length': normalize_booking_text(source.get('hair_length') or source.get('hairLength')),
+        'hair_option': normalize_booking_text(source.get('hair_option') or source.get('hairOption')),
+        'pre_wash_option': normalize_booking_text(source.get('pre_wash_option') or source.get('preWashOption')),
+        'detangling_option': normalize_booking_text(source.get('detangling_option') or source.get('detanglingOption')),
+        'notes': normalize_booking_text(source.get('notes')),
+        'total_price': round(float(source.get('total_price') or source.get('totalPrice') or 0), 2),
+        'duration': int(source.get('duration') or 0),
+        'box_braids_variation': normalize_booking_text(source.get('box_braids_variation') or source.get('boxBraidsVariation')),
+        'cornrows_variation': normalize_booking_text(source.get('cornrows_variation') or source.get('cornrowsVariation')),
+        'two_strand_twists_variation': normalize_booking_text(
+            source.get('two_strand_twists_variation') or source.get('twoStrandTwistsVariation')
+        ),
+    }
+
+
+def get_booking_signature_hash(source):
+    payload = get_booking_signature_payload(source)
+    payload_json = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
+
+
+def find_matching_confirmed_booking(signature_hash, appointment_datetime):
+    appointment_datetime = normalize_booking_text(appointment_datetime)
+    if not appointment_datetime:
+        return None
+
+    result = (
+        supabase.table('bookings')
+        .select('*')
+        .eq('appointment-datetime', appointment_datetime)
+        .neq('status', 'cancelled')
+        .execute()
+    )
+    for booking in result.data or []:
+        if get_booking_signature_hash(booking) == signature_hash:
+            return booking
+    return None
+
+
+def find_matching_pending_temp_booking(signature_hash, appointment_datetime):
+    appointment_datetime = normalize_booking_text(appointment_datetime)
+    if not appointment_datetime:
+        return None
+
+    result = (
+        supabase.table('temp_bookings')
+        .select('*')
+        .eq('appointment-datetime', appointment_datetime)
+        .eq('status', 'pending_payment')
+        .execute()
+    )
+    for booking in result.data or []:
+        if get_booking_signature_hash(booking) == signature_hash:
+            return booking
+    return None
+
+
+def get_or_create_stripe_customer(name, email, phone=None):
+    customer_email = normalize_booking_text(email, lowercase=True)
+    customer_name = normalize_booking_text(name)
+    customer_phone = normalize_phone_number(phone)
+
+    if not customer_email:
+        return None
+
+    existing_customers = stripe.Customer.list(email=customer_email, limit=1)
+    if existing_customers.data:
+        customer = existing_customers.data[0]
+        updates = {}
+        if customer_name and customer.get('name') != customer_name:
+            updates['name'] = customer_name
+        if customer_phone and customer.get('phone') != customer_phone:
+            updates['phone'] = customer_phone
+        if updates:
+            customer = stripe.Customer.modify(customer.id, **updates)
+        return customer
+
+    return stripe.Customer.create(
+        email=customer_email,
+        name=customer_name or None,
+        phone=customer_phone or None,
+    )
 
 # --- Firebase Initialization (commented out - using Supabase instead) ---
 # try:
@@ -297,6 +401,7 @@ def create_payment_intent():
     try:
         data = request.get_json() or {}
         appointment_str = data.get('appointment-datetime') or data.get('appointmentDateTime')
+        booking_signature_hash = get_booking_signature_hash(data)
         if appointment_str:
             try:
                 appointment_dt = datetime.datetime.fromisoformat(
@@ -319,8 +424,22 @@ def create_payment_intent():
         if deposit_amount < 50:
             return jsonify(error="Deposit amount is too low to process."), 400
 
-        booking_id = str(uuid.uuid4())
-        booking_reference = ensure_booking_reference_unique(generate_booking_reference())
+        existing_confirmed_booking = find_matching_confirmed_booking(booking_signature_hash, appointment_str)
+        if existing_confirmed_booking:
+            return jsonify(
+                error="A deposit has already been paid for this appointment.",
+                bookingReference=existing_confirmed_booking.get('booking_reference'),
+            ), 409
+
+        existing_pending_booking = find_matching_pending_temp_booking(booking_signature_hash, appointment_str)
+        if existing_pending_booking:
+            booking_id = existing_pending_booking.get('id')
+            booking_reference = existing_pending_booking.get('booking_reference') or ensure_booking_reference_unique(
+                generate_booking_reference()
+            )
+        else:
+            booking_id = str(uuid.uuid4())
+            booking_reference = ensure_booking_reference_unique(generate_booking_reference())
 
         temp_booking_data = {
             'id': booking_id,
@@ -347,19 +466,32 @@ def create_payment_intent():
             'booking_reference': booking_reference
         }
 
-        supabase.table('temp_bookings').insert(temp_booking_data).execute()
+        if existing_pending_booking:
+            supabase.table('temp_bookings').update(temp_booking_data).eq('id', booking_id).execute()
+        else:
+            supabase.table('temp_bookings').insert(temp_booking_data).execute()
+
+        stripe_customer = get_or_create_stripe_customer(
+            temp_booking_data.get('name'),
+            temp_booking_data.get('email'),
+            temp_booking_data.get('phone'),
+        )
 
         payment_intent = stripe.PaymentIntent.create(
             amount=deposit_amount,
             currency='usd',
             automatic_payment_methods={'enabled': True},
+            customer=stripe_customer.id if stripe_customer else None,
+            receipt_email=temp_booking_data.get('email') or None,
             metadata={
                 'bookingId': booking_id,
                 'bookingReference': booking_reference,
                 'selectedStyle': temp_booking_data.get('selected_style') or '',
-                'customerEmail': temp_booking_data.get('email') or ''
+                'customerEmail': temp_booking_data.get('email') or '',
+                'bookingSignature': booking_signature_hash,
             },
-            description=f"Appointment deposit for {temp_booking_data.get('selected_style') or 'a hairstyle'}"
+            description=f"Appointment deposit for {temp_booking_data.get('selected_style') or 'a hairstyle'}",
+            idempotency_key=f"booking:{booking_signature_hash}"
         )
 
         return jsonify({
@@ -392,6 +524,18 @@ def finalize_temp_booking_payment(booking_id, payment_reference, amount_paid_cen
         raise Exception("Temporary booking not found")
 
     temp_booking = temp_booking_result.data[0]
+    duplicate_booking = find_matching_confirmed_booking(
+        get_booking_signature_hash(temp_booking),
+        temp_booking.get('appointment-datetime') or temp_booking.get('appointment_datetime')
+    )
+    if duplicate_booking and duplicate_booking.get('id') != booking_id:
+        supabase.table('temp_bookings').delete().eq('id', booking_id).execute()
+        existing_payment_reference = (
+            duplicate_booking.get('stripe_session_id') or
+            duplicate_booking.get('payment_session_id') or
+            payment_reference
+        )
+        return redirect(f"{site_url}/booking-success.html?session_id={quote(existing_payment_reference)}")
 
     calendar_event_id = None
     try:

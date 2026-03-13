@@ -228,6 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const timeSlotsContainer = document.getElementById('time-slots-container');
     const appointmentDateTimeInput = document.getElementById('appointment-datetime');
     const selectedDateDisplayEl = document.getElementById('selected-date-display');
+    const paymentContactNameInput = document.getElementById('payment-contact-name');
+    const paymentContactEmailInput = document.getElementById('payment-contact-email');
 
     // Populate style dropdown from styleInfo
     if (selectedStyleInput && Object.keys(styleInfo).length) {
@@ -1007,11 +1009,17 @@ document.addEventListener('DOMContentLoaded', function() {
             progressDetails.style.display = 'none';
         }
         
-        if (type === 'error') {
+        if (type === 'loading') {
             progressModalFooter.style.display = 'flex';
+            progressModalCancel.textContent = 'Cancel';
+            progressModalRetry.style.display = 'none';
+        } else if (type === 'error') {
+            progressModalFooter.style.display = 'flex';
+            progressModalCancel.textContent = 'Close';
             progressModalRetry.style.display = 'inline-block';
         } else if (type === 'success') {
             progressModalFooter.style.display = 'flex';
+            progressModalCancel.textContent = 'Close';
             progressModalRetry.style.display = 'none';
         } else {
             progressModalFooter.style.display = 'none';
@@ -1052,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let embeddedPaymentReady = false;
     let isLoadingPayment = false;
     let currentPaymentSignature = null;
+    let isSubmittingPayment = false;
 
     function setPaymentMessage(message, type) {
         const messageEl = document.getElementById('payment-message');
@@ -1065,6 +1074,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!paymentContainer) return;
         const cssClass = loading ? 'payment-loading' : 'payment-placeholder';
         paymentContainer.innerHTML = `<p class="${cssClass}">${message}</p>`;
+    }
+
+    function updatePaymentContactSummary() {
+        if (paymentContactNameInput) {
+            paymentContactNameInput.value = document.getElementById('name')?.value?.trim() || '';
+        }
+        if (paymentContactEmailInput) {
+            paymentContactEmailInput.value = document.getElementById('email')?.value?.trim() || '';
+        }
     }
 
     function isVisible(el) {
@@ -1264,13 +1282,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     colorPrimary: '#c8914e'
                 }
             };
+            const billingName = document.getElementById('name')?.value?.trim() || undefined;
+            const billingEmail = document.getElementById('email')?.value?.trim() || undefined;
             elements = stripeInstance.elements({
                 clientSecret: paymentIntentClientSecret,
                 appearance
             });
             paymentElement = elements.create('payment', {
                 layout: 'tabs',
-                paymentMethodOrder: ['card']
+                paymentMethodOrder: ['card'],
+                defaultValues: {
+                    billingDetails: {
+                        name: billingName,
+                        email: billingEmail
+                    }
+                }
             });
 
             const paymentContainer = document.getElementById('payment-element-container');
@@ -1316,7 +1342,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     ['name', 'phone', 'email'].forEach((id) => {
         const field = document.getElementById(id);
-        if (field) field.addEventListener('input', checkAndLoadPayment);
+        if (field) {
+            field.addEventListener('input', () => {
+                updatePaymentContactSummary();
+                checkAndLoadPayment();
+            });
+        }
     });
 
     if (currentHairImageInput) currentHairImageInput.addEventListener('change', checkAndLoadPayment);
@@ -1330,6 +1361,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (preWashSelect) preWashSelect.addEventListener('change', checkAndLoadPayment);
     if (appointmentDateTimeInput) appointmentDateTimeInput.addEventListener('change', checkAndLoadPayment);
 
+    updatePaymentContactSummary();
     resetEmbeddedPaymentState();
 
     // Handle form submission - embedded payment confirms in place
@@ -1337,6 +1369,9 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
 
         const submitBtn = document.getElementById('submit-btn');
+        if (isSubmittingPayment) {
+            return;
+        }
         if (!embeddedPaymentReady || !elements || !stripeInstance) {
             setPaymentMessage('Complete the required booking details and wait for the secure payment form to load.', 'error');
             showProgressModal(
@@ -1348,6 +1383,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        isSubmittingPayment = true;
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';
         setPaymentMessage('');
@@ -1372,6 +1408,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Error confirming embedded payment:', error);
+            isSubmittingPayment = false;
             setPaymentMessage(error.message || 'Payment failed. Please review your card details and try again.', 'error');
             showProgressModal(
                 'Payment Error',

@@ -394,17 +394,23 @@
                         <input type="text" id="promo-code" name="promo-code">
                         <div id="promo-feedback"></div>
                     </div>
-
-                    <div class="form-group payment-section">
-                        <h3><i class="fas fa-credit-card"></i> Payment</h3>
-                        <div id="payment-element-container" class="payment-element-container"></div>
-                        <div id="payment-message" class="payment-message" role="alert"></div>
-                    </div>
                 </div>
 
                 <div class="form-section payment-section">
                     <h2><i class="fas fa-credit-card"></i> Payment</h2>
                     <p class="service-note payment-section-note">The secure payment form will only load after all required booking details above are filled out.</p>
+                    <div class="payment-customer-summary">
+                        <div class="form-row">
+                            <div class="form-group payment-summary-field">
+                                <label for="payment-contact-name">Name</label>
+                                <input type="text" id="payment-contact-name" readonly aria-readonly="true" placeholder="Complete your full name above">
+                            </div>
+                            <div class="form-group payment-summary-field">
+                                <label for="payment-contact-email">Email</label>
+                                <input type="email" id="payment-contact-email" readonly aria-readonly="true" placeholder="Complete your email above">
+                            </div>
+                        </div>
+                    </div>
                     <div id="payment-element-container" class="payment-element-container">
                         <p class="payment-placeholder">Complete the required booking details above to load the secure payment form.</p>
                     </div>
