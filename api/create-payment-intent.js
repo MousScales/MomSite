@@ -98,6 +98,15 @@ module.exports = async (req, res) => {
     }
 
     const stripe = new Stripe(stripeSecretKey);
+    // Verify key works before creating PaymentIntent
+    try {
+      await stripe.balance.retrieve();
+    } catch (authErr) {
+      console.error('Stripe auth failed:', authErr.message, authErr.code);
+      return res.status(500).json({
+        error: 'Stripe key rejected. Regenerate at dashboard.stripe.com/apikeys: Developers → API keys → Roll key. Use the NEW secret key in Vercel.'
+      });
+    }
     const paymentIntent = await stripe.paymentIntents.create({
       amount: depositAmount,
       currency: 'usd',
