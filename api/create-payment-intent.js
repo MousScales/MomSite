@@ -141,8 +141,9 @@ module.exports = async (req, res) => {
   } catch (err) {
     console.error('Create payment intent error:', err);
     let msg = err.message || 'An error occurred';
-    if (msg.toLowerCase().includes('invalid') && msg.toLowerCase().includes('key')) {
-      msg = 'Invalid Stripe API key. In Vercel: Project → Settings → Environment Variables → set STRIPE_SECRET_KEY to your secret key from Stripe Dashboard (Developers → API keys). Use the same mode (test or live) as your publishable key. Then redeploy.';
+    const lower = msg.toLowerCase();
+    if ((lower.includes('invalid') && lower.includes('key')) || err.code === 'invalid_api_key') {
+      msg = 'Stripe rejected the API key. Check: (1) In Stripe Dashboard use a current secret key (not revoked). (2) Secret key must be from the same Stripe account as your publishable key. (3) If using a restricted key, enable Payments and Customers (read+write). Then update STRIPE_SECRET_KEY in Vercel and redeploy.';
     }
     return res.status(500).json({ error: msg });
   }
