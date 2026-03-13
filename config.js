@@ -43,7 +43,7 @@ var ENDPOINTS = {
 //     measurementId: "G-FTPRM08308"
 // };
 
-// Supabase Configuration
+// Supabase Configuration. Must match Vercel env (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY).
 var SUPABASE_URL = 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbmJkcWtxbHhrZmdoamNidndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNzQxNjMsImV4cCI6MjA4ODc1MDE2M30.r8jDPCV7C7kTrnHIwGvs4vBq-sf8rvyFxe1Q6_rR2Tg';
 var SUPABASE_STORAGE_BUCKET = 'booking-images'; // Name of your storage bucket 
