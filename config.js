@@ -1,7 +1,7 @@
 // Stripe publishable key (Test Mode)
 // Configured with client's Stripe test key
 // For production, replace with live key (pk_live_...) from Stripe Dashboard
-var STRIPE_PUBLISHABLE_KEY = 'pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3RtZnoiUF2Qvzru3I9fzKmxXUgF22tzJBoYZS3XqYf00QA6fSLqs';
+var STRIPE_PUBLISHABLE_KEY = 'pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6TRK4Z1TppknBz0lU8jmb48a1epPphqTY558sMO5rBzG5z62007VHMn2IL';
 
 // Firebase Functions API endpoint (legacy)
 const API_BASE_URL = 'https://us-central1-connect-2a17c.cloudfunctions.net/api';
