@@ -36,11 +36,23 @@ async function stripeRequest(method, path, body = null) {
   return data;
 }
 
+function parseBody(req) {
+  const raw = req.body;
+  if (raw === undefined || raw === null) return {};
+  if (typeof raw === 'object' && !Buffer.isBuffer(raw)) return raw;
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : JSON.parse(String(raw));
+  } catch (e) {
+    return {};
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
 
+  try {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -69,7 +81,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const data = req.body || {};
+    const data = parseBody(req);
 
     const appointmentStr = data['appointment-datetime'] || data.appointmentDateTime;
     if (appointmentStr) {
@@ -141,10 +153,19 @@ module.exports = async (req, res) => {
   } catch (err) {
     console.error('Create payment intent error:', err);
     let msg = err.message || 'An error occurred';
-    const lower = msg.toLowerCase();
+    const lower = String(msg).toLowerCase();
     if ((lower.includes('invalid') && lower.includes('key')) || err.code === 'invalid_api_key') {
       msg = 'Stripe rejected the API key. Check: (1) In Stripe Dashboard use a current secret key (not revoked). (2) Secret key must be from the same Stripe account as your publishable key. (3) If using a restricted key, enable Payments and Customers (read+write). Then update STRIPE_SECRET_KEY in Vercel and redeploy.';
     }
+    if (lower.includes('supabase') || lower.includes('invalid api key')) {
+      msg = 'Supabase error: Check SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (and SUPABASE_ANON_KEY) in Vercel → Settings → Environment Variables. Use keys from the same project (ecnbdqkqlxkfghjcbvwj). Redeploy after saving.';
+    }
     return res.status(500).json({ error: msg });
+  }
+  } catch (outerErr) {
+    console.error('Create payment intent outer error:', outerErr);
+    return res.status(500).json({
+      error: outerErr.message || 'Server error. Check Vercel logs (Deployments → Logs) for details.',
+    });
   }
 };
