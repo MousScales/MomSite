@@ -4,6 +4,7 @@ import datetime
 import random
 import string
 import re
+from urllib.parse import quote
 from flask import Flask, request, jsonify, redirect, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -90,10 +91,33 @@ db = None  # Using Supabase for storage, Firebase commented out
 
 # --- Stripe Configuration ---
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-YOUR_DOMAIN = 'http://127.0.0.1:5500'
+SITE_URL = (os.getenv('SITE_URL') or os.getenv('DOMAIN_URL') or '').rstrip('/')
 
 if not stripe.api_key:
     print("CRITICAL: STRIPE_SECRET_KEY environment variable not set.")
+
+
+def get_site_url():
+    """
+    Resolve the canonical site URL for redirects.
+    Prefer the current request host so custom-domain traffic stays on the same domain.
+    """
+    forwarded_proto = request.headers.get('x-forwarded-proto')
+    forwarded_host = request.headers.get('x-forwarded-host')
+    if forwarded_proto and forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+
+    origin = request.headers.get('origin')
+    if origin:
+        return origin.rstrip('/')
+
+    if request.url_root:
+        return request.url_root.rstrip('/')
+
+    if SITE_URL:
+        return SITE_URL
+
+    return 'http://127.0.0.1:5500'
 
 # --- API Routes ---
 # Note: API routes must be defined before static file routes to prevent Flask from serving them as static files
@@ -201,8 +225,10 @@ def create_checkout_session():
             print(f"Error saving to Supabase: {db_error}")
             return jsonify(error=f"Failed to save booking: {str(db_error)}"), 500
 
+        site_url = get_site_url()
+
         # Create success URL with session ID and booking ID
-        success_url = f"{YOUR_DOMAIN}/api/handle-payment-success?session_id={{CHECKOUT_SESSION_ID}}&booking_id={booking_id}"
+        success_url = f"{site_url}/api/handle-payment-success?session_id={{CHECKOUT_SESSION_ID}}&booking_id={booking_id}"
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -219,7 +245,7 @@ def create_checkout_session():
             }],
             mode='payment',
             success_url=success_url,
-            cancel_url=f"{YOUR_DOMAIN}/booking.html",
+            cancel_url=f"{site_url}/booking.html",
             metadata={
                 'bookingId': booking_id,
             }
@@ -238,12 +264,22 @@ def create_checkout_session():
         return response, 500
 
 
+@app.route('/api/stripe-config', methods=['GET'])
+def stripe_config():
+    """
+    Returns the publishable Stripe key for the embedded payment form.
+    """
+    publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
+    if not publishable_key:
+        return jsonify(error="Stripe publishable key is not configured."), 500
+    return jsonify({'publishableKey': publishable_key})
+
+
 @app.route('/api/create-payment-intent', methods=['POST', 'OPTIONS'])
 def create_payment_intent():
     """
-    Creates a Stripe PaymentIntent for embedded payment.
-    Saves booking data to Supabase temp_bookings.
-    Returns client_secret for Stripe Payment Element.
+    Creates a PaymentIntent for the embedded Stripe Payment Element flow.
+    Saves booking data to Supabase temp_bookings before payment confirmation.
     """
     if request.method == 'OPTIONS':
         response = jsonify({})
@@ -252,13 +288,14 @@ def create_payment_intent():
         response.headers.add('Access-Control-Allow-Methods', 'POST')
         return response
 
-    if not stripe.api_key or not supabase:
-        return jsonify(error="Server not configured."), 500
+    if not stripe.api_key:
+        return jsonify(error="Stripe is not configured on the server."), 500
+
+    if not supabase:
+        return jsonify(error="Database is not configured on the server."), 500
 
     try:
-        data = request.get_json()
-
-        # Validate appointment is at least 48 hours in advance
+        data = request.get_json() or {}
         appointment_str = data.get('appointment-datetime') or data.get('appointmentDateTime')
         if appointment_str:
             try:
@@ -277,13 +314,13 @@ def create_payment_intent():
                 pass
 
         total_price = float(data.get('totalPrice') or data.get('total_price') or 0)
-        deposit_amount = int(total_price * 0.10 * 100)
+        deposit_amount = int(round(total_price * 0.10 * 100))
+
         if deposit_amount < 50:
-            return jsonify(error="Deposit amount is too low."), 400
+            return jsonify(error="Deposit amount is too low to process."), 400
 
         booking_id = str(uuid.uuid4())
-        booking_reference = generate_booking_reference()
-        booking_reference = ensure_booking_reference_unique(booking_reference)
+        booking_reference = ensure_booking_reference_unique(generate_booking_reference())
 
         temp_booking_data = {
             'id': booking_id,
@@ -312,175 +349,152 @@ def create_payment_intent():
 
         supabase.table('temp_bookings').insert(temp_booking_data).execute()
 
-        return_url = f"{YOUR_DOMAIN}/api/handle-payment-success"
         payment_intent = stripe.PaymentIntent.create(
             amount=deposit_amount,
             currency='usd',
             automatic_payment_methods={'enabled': True},
-            metadata={'bookingId': booking_id},
-            return_url=return_url
+            metadata={
+                'bookingId': booking_id,
+                'bookingReference': booking_reference,
+                'selectedStyle': temp_booking_data.get('selected_style') or '',
+                'customerEmail': temp_booking_data.get('email') or ''
+            },
+            description=f"Appointment deposit for {temp_booking_data.get('selected_style') or 'a hairstyle'}"
         )
 
         return jsonify({
             'clientSecret': payment_intent.client_secret,
-            'bookingId': booking_id
+            'bookingId': booking_id,
+            'bookingReference': booking_reference
         })
-
     except Exception as e:
         print(f"Error creating payment intent: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify(error={"message": str(e)}), 500
+        response = jsonify(error={"message": str(e)})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
+
+
+def finalize_temp_booking_payment(booking_id, payment_reference, amount_paid_cents):
+    """
+    Moves a booking from temp_bookings to bookings after Stripe confirms payment.
+    Returns the booking reference used for the success page redirect.
+    """
+    site_url = get_site_url()
+
+    existing_booking = supabase.table('bookings').select('id').eq('id', booking_id).execute()
+    if existing_booking.data and len(existing_booking.data) > 0:
+        return redirect(f"{site_url}/booking-success.html?session_id={quote(payment_reference)}")
+
+    temp_booking_result = supabase.table('temp_bookings').select('*').eq('id', booking_id).execute()
+    if not temp_booking_result.data or len(temp_booking_result.data) == 0:
+        raise Exception("Temporary booking not found")
+
+    temp_booking = temp_booking_result.data[0]
+
+    calendar_event_id = None
+    try:
+        print("Attempting to create Google Calendar event...")
+        calendar_event_id = create_calendar_event(temp_booking)
+        if calendar_event_id:
+            print(f"✅ Google Calendar event created successfully: {calendar_event_id}")
+        else:
+            print("⚠️  Google Calendar event creation returned None")
+    except Exception as calendar_error:
+        print(f"❌ Calendar event creation failed: {calendar_error}")
+        import traceback
+        traceback.print_exc()
+
+    appointment_datetime_value = (
+        temp_booking.get('appointment-datetime') or
+        temp_booking.get('appointment_datetime') or
+        temp_booking.get('appointmentDateTime')
+    )
+    booking_data = {
+        'id': booking_id,
+        'name': temp_booking.get('name'),
+        'phone': temp_booking.get('phone'),
+        'email': temp_booking.get('email'),
+        'appointment-datetime': appointment_datetime_value,
+        'selected_style': temp_booking.get('selected_style') or temp_booking.get('selectedStyle'),
+        'hair_length': temp_booking.get('hair_length') or temp_booking.get('hairLength'),
+        'hair_option': temp_booking.get('hair_option') or temp_booking.get('hairOption'),
+        'pre_wash_option': temp_booking.get('pre_wash_option') or temp_booking.get('preWashOption'),
+        'detangling_option': temp_booking.get('detangling_option') or temp_booking.get('detanglingOption'),
+        'notes': temp_booking.get('notes') or '',
+        'total_price': float(temp_booking.get('total_price', 0)),
+        'duration': temp_booking.get('duration'),
+        'current_hair_image_url': temp_booking.get('current_hair_image_url') or temp_booking.get('currentHairImageURL'),
+        'reference_image_url': temp_booking.get('reference_image_url') or temp_booking.get('referenceImageURL'),
+        'box_braids_variation': temp_booking.get('box_braids_variation') or temp_booking.get('boxBraidsVariation'),
+        'cornrows_variation': temp_booking.get('cornrows_variation') or temp_booking.get('cornrowsVariation'),
+        'two_strand_twists_variation': temp_booking.get('two_strand_twists_variation') or temp_booking.get('twoStrandTwistsVariation'),
+        'status': 'confirmed',
+        'deposit_paid': amount_paid_cents / 100.0,
+        'deposit_amount': amount_paid_cents,
+        'payment_session_id': payment_reference,
+        'stripe_session_id': payment_reference,
+        'booking_reference': temp_booking.get('booking_reference'),
+    }
+    if calendar_event_id:
+        booking_data['calendar_event_id'] = calendar_event_id
+
+    supabase.table('bookings').insert(booking_data).execute()
+    supabase.table('temp_bookings').delete().eq('id', booking_id).execute()
+
+    return redirect(f"{site_url}/booking-success.html?session_id={quote(payment_reference)}")
 
 
 @app.route('/api/handle-payment-success', methods=['GET'])
 def handle_payment_success():
     """
-    Handles the successful payment callback from Stripe.
-    Supports both Checkout Session (redirect) and PaymentIntent (embedded) flows.
+    Handles successful Stripe returns for both Checkout Sessions and Payment Intents.
     """
     print("\n--- /api/handle-payment-success endpoint hit ---")
+    site_url = get_site_url()
 
     if not supabase:
-        return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Database not configured")
-
-    payment_intent_id = request.args.get('payment_intent')
-    redirect_status = request.args.get('redirect_status')
-    session_id = request.args.get('session_id')
-    booking_id = request.args.get('booking_id')
-
-    # PaymentIntent flow (embedded payment)
-    if payment_intent_id:
-        if redirect_status != 'succeeded':
-            return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Payment not completed")
-        try:
-            pi = stripe.PaymentIntent.retrieve(payment_intent_id)
-            if pi.status != 'succeeded':
-                return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Payment not completed")
-            booking_id = pi.metadata.get('bookingId')
-            if not booking_id:
-                return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Invalid payment")
-            amount_paid = pi.amount_received
-        except Exception as e:
-            print(f"PaymentIntent error: {e}")
-            return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Payment verification failed")
-    # Checkout Session flow (redirect to Stripe)
-    elif session_id and booking_id:
-        try:
-            session = stripe.checkout.Session.retrieve(session_id)
-            if session.payment_status != 'paid':
-                return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Payment not completed")
-            amount_paid = session.amount_total
-        except Exception as e:
-            print(f"Session error: {e}")
-            return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Payment verification failed")
-    else:
-        return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Missing payment information")
-
-    print(f"Processing booking_id: {booking_id}")
+        print("Error: Supabase is not configured on the server.")
+        return redirect(f"{site_url}/booking-error.html?error=Database%20not%20configured")
 
     try:
-        # Get the temporary booking from Supabase
-        try:
-            temp_booking_result = supabase.table('temp_bookings').select('*').eq('id', booking_id).execute()
-            if not temp_booking_result.data or len(temp_booking_result.data) == 0:
-                raise Exception("Temporary booking not found")
-            temp_booking = temp_booking_result.data[0]
-            print(f"Retrieved temporary booking: {booking_id}")
-            print(f"Temp booking data keys: {list(temp_booking.keys())}")
-            # Access fields with hyphens using bracket notation
-            appointment_datetime = temp_booking.get('appointment-datetime') or temp_booking.get('appointment_datetime')
-            print(f"Temp booking appointment-datetime: {appointment_datetime}")
-            print(f"Temp booking selected_style: {temp_booking.get('selected_style')}")
-            print(f"Temp booking pre_wash_option: {temp_booking.get('pre_wash_option')}")
-            print(f"Temp booking full data: {temp_booking}")
-        except Exception as e:
-            print(f"Error retrieving temporary booking: {e}")
-            return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Booking not found")
+        session_id = request.args.get('session_id')
+        booking_id = request.args.get('booking_id')
+        payment_intent_id = request.args.get('payment_intent')
 
-        # Create Google Calendar event if configured
-        calendar_event_id = None
-        try:
-            print("Attempting to create Google Calendar event...")
-            calendar_event_id = create_calendar_event(temp_booking)
-            if calendar_event_id:
-                print(f"✅ Google Calendar event created successfully: {calendar_event_id}")
-            else:
-                print("⚠️  Google Calendar event creation returned None (OAuth may need authorization)")
-                print("   This is normal on first booking - OAuth flow will trigger automatically")
-        except Exception as e:
-            print(f"❌ Calendar event creation failed: {e}")
-            print("   This might be due to missing OAuth authorization")
-            print("   The OAuth flow should trigger automatically on the next booking")
-            import traceback
-            traceback.print_exc()
+        if session_id:
+            print(f"Received Checkout session_id: {session_id}, booking_id: {booking_id}")
+            if not booking_id:
+                raise Exception("Missing booking ID for Checkout session confirmation")
 
-        # Create the actual booking in Supabase
-        # Handle both hyphenated and underscore field names from temp_booking
-        # Access hyphenated fields using bracket notation
-        appointment_datetime_value = temp_booking.get('appointment-datetime') or temp_booking.get('appointment_datetime') or temp_booking.get('appointmentDateTime')
-        
-        booking_data = {
-            'id': booking_id,
-            'name': temp_booking.get('name'),
-            'phone': temp_booking.get('phone'),
-            'email': temp_booking.get('email'),
-            'appointment-datetime': appointment_datetime_value,
-            'selected_style': temp_booking.get('selected_style') or temp_booking.get('selectedStyle'),
-            'hair_length': temp_booking.get('hair_length') or temp_booking.get('hairLength'),
-            'hair_option': temp_booking.get('hair_option') or temp_booking.get('hairOption'),
-            'pre_wash_option': temp_booking.get('pre_wash_option') or temp_booking.get('preWashOption'),
-            'detangling_option': temp_booking.get('detangling_option') or temp_booking.get('detanglingOption'),
-            'notes': temp_booking.get('notes') or '',
-            'total_price': float(temp_booking.get('total_price', 0)),
-            'duration': temp_booking.get('duration'),
-            'current_hair_image_url': temp_booking.get('current_hair_image_url') or temp_booking.get('currentHairImageURL'),
-            'reference_image_url': temp_booking.get('reference_image_url') or temp_booking.get('referenceImageURL'),
-            'box_braids_variation': temp_booking.get('box_braids_variation') or temp_booking.get('boxBraidsVariation'),
-            'cornrows_variation': temp_booking.get('cornrows_variation') or temp_booking.get('cornrowsVariation'),
-            'two_strand_twists_variation': temp_booking.get('two_strand_twists_variation') or temp_booking.get('twoStrandTwistsVariation'),
-            'status': 'confirmed',
-            'deposit_paid': amount_paid / 100.0,
-            'deposit_amount': amount_paid,
-            'payment_session_id': session_id or payment_intent_id,
-            'stripe_session_id': session_id or payment_intent_id,
-            'booking_reference': temp_booking.get('booking_reference'),  # Include booking reference
-        }
-        
-        print(f"Booking data being saved to bookings table:")
-        print(f"  appointment-datetime: {booking_data.get('appointment-datetime')}")
-        print(f"  selected_style: {booking_data.get('selected_style')}")
-        print(f"  pre_wash_option: {booking_data.get('pre_wash_option')}")
-        print(f"  hair_length: {booking_data.get('hair_length')}")
-        print(f"  hair_option: {booking_data.get('hair_option')}")
-        print(f"  notes: {booking_data.get('notes')}")
-        
-        if calendar_event_id:
-            booking_data['calendar_event_id'] = calendar_event_id
+            session = stripe.checkout.Session.retrieve(session_id)
+            print(f"Checkout session payment status: {session.payment_status}")
+            if session.payment_status != 'paid':
+                raise Exception("Payment not completed")
 
-        try:
-            result = supabase.table('bookings').insert(booking_data).execute()
-            print(f"Successfully saved booking to Supabase: {booking_id}")
-        except Exception as db_error:
-            print(f"Error saving booking to Supabase: {db_error}")
-            return redirect(f"{YOUR_DOMAIN}/booking-error.html?error=Failed to save booking")
+            return finalize_temp_booking_payment(booking_id, session_id, session.amount_total)
 
-        # Delete the temporary booking
-        try:
-            supabase.table('temp_bookings').delete().eq('id', booking_id).execute()
-            print(f"Deleted temporary booking: {booking_id}")
-        except Exception as e:
-            print(f"Warning: Failed to delete temporary booking: {e}")
+        if payment_intent_id:
+            print(f"Received PaymentIntent ID: {payment_intent_id}")
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            print(f"PaymentIntent status: {payment_intent.status}")
+            if payment_intent.status != 'succeeded':
+                raise Exception("Payment not completed")
 
-        # Redirect to success page (use payment_intent_id or session_id for lookup)
-        lookup_id = payment_intent_id if payment_intent_id else session_id
-        return redirect(f"{YOUR_DOMAIN}/booking-success.html?session_id={lookup_id}")
+            booking_id = booking_id or payment_intent.metadata.get('bookingId')
+            if not booking_id:
+                raise Exception("Missing booking ID in payment metadata")
 
+            amount_paid_cents = payment_intent.amount_received or payment_intent.amount
+            return finalize_temp_booking_payment(booking_id, payment_intent.id, amount_paid_cents)
+
+        raise Exception("Missing payment information")
     except Exception as e:
         print(f"An exception occurred in payment success handler: {e}")
         import traceback
         traceback.print_exc()
-        return redirect(f"{YOUR_DOMAIN}/booking-error.html?error={str(e)}")
+        return redirect(f"{site_url}/booking-error.html?error={quote(str(e))}")
 
 
 # --- Firebase booking_success endpoint (commented out - using Supabase handle_payment_success instead) ---

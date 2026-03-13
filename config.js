@@ -6,12 +6,19 @@ var STRIPE_PUBLISHABLE_KEY = 'pk_live_51REifLRqvuBtPAdXaNce44j5Fe7h0Z1G0pqr1x4i6
 // Firebase Functions API endpoint (legacy)
 const API_BASE_URL = 'https://us-central1-connect-2a17c.cloudfunctions.net/api';
 
+// Backend API base URL for production (Vercel, etc.). Set this to your deployed Flask app URL.
+// Example: 'https://your-app.railway.app' or 'https://your-app.onrender.com'
+// Leave empty if your API is on the same domain (e.g. Vercel serverless /api routes).
+var PRODUCTION_API_ORIGIN = '';
+
 // When the page is opened as file://, relative /api/* URLs become file:///E:/api/* and fail.
-// Use this base so API calls go to the Flask server (must match app.py port). Leave empty when page is served over HTTP.
+// When on Vercel, /api/* does not exist unless you add serverless functions, so we use PRODUCTION_API_ORIGIN.
 var API_ORIGIN = (function() {
-    if (typeof location === 'undefined' || !location.origin) return 'http://localhost:5500';
+    if (typeof location === 'undefined' || !location.origin) return PRODUCTION_API_ORIGIN || 'http://localhost:5500';
     if (location.protocol === 'file:' || location.origin === 'null') return 'http://localhost:5500';
-    return ''; // same origin
+    var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (isLocal) return ''; // same origin (Flask serves frontend + API)
+    return PRODUCTION_API_ORIGIN || ''; // production: use deployed backend URL
 })();
 
 // API endpoints (relative paths; API_ORIGIN is prepended when needed)

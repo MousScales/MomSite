@@ -14,7 +14,7 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL && typeof SUPABASE_ANON_
     console.warn('Supabase not configured. Please add your Supabase credentials to config.js');
 }
 
-// Stripe instance - initialized when loading payment form (uses key from API or config.js)
+// Stripe is initialized lazily so production can use the publishable key from the API.
 let stripeInstance = null;
 
 // Initialize Firebase (will be initialized when Firebase scripts are loaded) - commented out
@@ -636,8 +636,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (m[1] === 'AM' && h === 12) h = 0;
                     isoDateTime.setHours(h, parseInt(m[0].split(':')[1], 10), 0, 0);
                     appointmentDateTimeInput.value = isoDateTime.toISOString();
+                    appointmentDateTimeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (typeof checkAndLoadPayment === 'function') {
+                        checkAndLoadPayment();
+                    }
                     formatSelectedDateDisplay(date, timeSlot, totalDuration);
-                    if (typeof checkAndLoadPayment === 'function') checkAndLoadPayment();
                 });
             }
             timeSlotsWrapper.appendChild(timeButton);
@@ -1042,105 +1045,195 @@ document.addEventListener('DOMContentLoaded', function() {
             hideProgressModal();
         }
     });
-    
     // Embedded payment state
     let elements = null;
+    let paymentElement = null;
     let paymentIntentClientSecret = null;
     let embeddedPaymentReady = false;
     let isLoadingPayment = false;
+    let currentPaymentSignature = null;
 
     function setPaymentMessage(message, type) {
-        const msgEl = document.getElementById('payment-message');
-        if (msgEl) {
-            msgEl.textContent = message;
-            msgEl.className = 'payment-message' + (type ? ' payment-message-' + type : '');
+        const messageEl = document.getElementById('payment-message');
+        if (!messageEl) return;
+        messageEl.textContent = message || '';
+        messageEl.className = 'payment-message' + (type ? ' payment-message-' + type : '');
+    }
+
+    function setPaymentPlaceholder(message, loading) {
+        const paymentContainer = document.getElementById('payment-element-container');
+        if (!paymentContainer) return;
+        const cssClass = loading ? 'payment-loading' : 'payment-placeholder';
+        paymentContainer.innerHTML = `<p class="${cssClass}">${message}</p>`;
+    }
+
+    function isVisible(el) {
+        return !!(el && el.offsetParent !== null);
+    }
+
+    function getPaymentSignature() {
+        const currentHairImage = currentHairImageInput && currentHairImageInput.files ? currentHairImageInput.files[0] : null;
+        const referenceImage = referenceImageInput && referenceImageInput.files ? referenceImageInput.files[0] : null;
+        return JSON.stringify({
+            name: document.getElementById('name') ? document.getElementById('name').value.trim() : '',
+            phone: document.getElementById('phone') ? document.getElementById('phone').value.trim() : '',
+            email: document.getElementById('email') ? document.getElementById('email').value.trim() : '',
+            style: selectedStyleInput ? selectedStyleInput.value : '',
+            boxBraidsVariation: boxBraidsVariationSelect ? boxBraidsVariationSelect.value : '',
+            cornrowsVariation: cornrowsVariationSelect ? cornrowsVariationSelect.value : '',
+            twoStrandVariation: twoStrandTwistsVariationSelect ? twoStrandTwistsVariationSelect.value : '',
+            hairLength: hairLengthSelect ? hairLengthSelect.value : '',
+            hairOption: hairOptionSelect ? hairOptionSelect.value : '',
+            preWash: preWashSelect ? preWashSelect.value : '',
+            appointmentDateTime: appointmentDateTimeInput ? appointmentDateTimeInput.value : '',
+            currentHairImage: currentHairImage ? `${currentHairImage.name}:${currentHairImage.size}:${currentHairImage.lastModified}` : '',
+            referenceImage: referenceImage ? `${referenceImage.name}:${referenceImage.size}:${referenceImage.lastModified}` : ''
+        });
+    }
+
+    function getPaymentReadinessMessage() {
+        const styleName = selectedStyleInput ? selectedStyleInput.value : '';
+        if (!document.getElementById('name')?.value.trim()) return 'Enter your full name to load the secure payment form.';
+        if (!document.getElementById('phone')?.value.trim()) return 'Enter your phone number to load the secure payment form.';
+        if (!document.getElementById('email')?.value.trim()) return 'Enter your email address to load the secure payment form.';
+        if (!styleName) return 'Select a style to load the secure payment form.';
+        if (isVisible(boxBraidsVariationGroup) && !boxBraidsVariationSelect?.value) {
+            return 'Choose the box braids type to load the secure payment form.';
         }
+        if (isVisible(cornrowsVariationGroup) && !cornrowsVariationSelect?.value) {
+            return 'Choose the cornrows style to load the secure payment form.';
+        }
+        if (isVisible(twoStrandTwistsVariationGroup) && !twoStrandTwistsVariationSelect?.value) {
+            return 'Choose the two strand twist style to load the secure payment form.';
+        }
+        if (isVisible(document.getElementById('hair-length-group')) && !hairLengthSelect?.value) {
+            return 'Select your hair length to load the secure payment form.';
+        }
+        if (isVisible(document.getElementById('hair-option-group')) && !hairOptionSelect?.value) {
+            return 'Select your hair option to load the secure payment form.';
+        }
+        if (!preWashSelect?.value) return 'Choose a pre-wash option to load the secure payment form.';
+        if (!appointmentDateTimeInput?.value) return 'Select your appointment date and time to load the secure payment form.';
+        if (!currentHairImageInput?.files?.[0]) return 'Upload your current hair photo to load the secure payment form.';
+        return '';
     }
 
     function isFormReadyForPayment() {
-        const name = document.getElementById('name')?.value?.trim();
-        const phone = document.getElementById('phone')?.value?.trim();
-        const email = document.getElementById('email')?.value?.trim();
-        const style = selectedStyleInput?.value?.trim();
-        const appointmentDateTime = appointmentDateTimeInput?.value;
-        const currentHairImage = document.getElementById('current-hair-image')?.files?.[0];
-        return !!(name && phone && email && style && appointmentDateTime && currentHairImage);
+        return !getPaymentReadinessMessage();
+    }
+
+    function destroyPaymentElement() {
+        if (paymentElement && typeof paymentElement.destroy === 'function') {
+            paymentElement.destroy();
+        }
+        paymentElement = null;
+        elements = null;
+        paymentIntentClientSecret = null;
+        embeddedPaymentReady = false;
+    }
+
+    function resetEmbeddedPaymentState(message) {
+        destroyPaymentElement();
+        currentPaymentSignature = null;
+        setPaymentMessage('');
+        setPaymentPlaceholder(message || getPaymentReadinessMessage() || 'Complete the required booking details above to load the secure payment form.', false);
+        updateSubmitButton();
     }
 
     function updateSubmitButton() {
         const submitBtn = document.getElementById('submit-btn');
         if (!submitBtn) return;
-        const formReady = isFormReadyForPayment();
-        const canSubmit = formReady && embeddedPaymentReady;
+        const canSubmit = embeddedPaymentReady && !!elements;
         submitBtn.disabled = !canSubmit;
+        submitBtn.textContent = canSubmit ? 'Book Appointment' : 'Complete Payment Details';
     }
 
-    // Auto-load payment form when form is valid
-    async function maybeLoadPaymentForm() {
-        if (embeddedPaymentReady || isLoadingPayment) return;
-        if (!isFormReadyForPayment()) return;
-
-        const paymentContainer = document.getElementById('payment-element-container');
-        isLoadingPayment = true;
-        if (paymentContainer) paymentContainer.innerHTML = '<p class="payment-loading"><i class="fas fa-spinner fa-spin"></i> Loading payment...</p>';
+    async function ensureStripeInstance() {
+        if (stripeInstance) return stripeInstance;
 
         try {
-            // Get Stripe publishable key from API (Vercel env) or fallback to config.js
-            if (!stripeInstance) {
-                try {
-                    const configRes = await fetch('/api/stripe-config');
-                    if (configRes.ok) {
-                        const configData = await configRes.json();
-                        if (configData.publishableKey) {
-                            stripeInstance = Stripe(configData.publishableKey);
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Stripe config API failed, using config.js:', e);
-                }
-                if (!stripeInstance && typeof STRIPE_PUBLISHABLE_KEY !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
-                    stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
-                }
-                if (!stripeInstance) {
-                    throw new Error('Stripe not configured. Add STRIPE_PUBLISHABLE_KEY to Vercel env or config.js.');
+            const configResponse = await fetch('/api/stripe-config');
+            if (configResponse.ok) {
+                const configData = await configResponse.json();
+                if (configData.publishableKey) {
+                    stripeInstance = Stripe(configData.publishableKey);
+                    return stripeInstance;
                 }
             }
+        } catch (error) {
+            console.warn('Failed to load Stripe config from API:', error);
+        }
 
-            if (paymentContainer) paymentContainer.innerHTML = '<p class="payment-loading"><i class="fas fa-spinner fa-spin"></i> Uploading photos...</p>';
+        if (typeof STRIPE_PUBLISHABLE_KEY !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
+            stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+            return stripeInstance;
+        }
+
+        throw new Error('Stripe is not configured. Add the live publishable key in Vercel or config.js.');
+    }
+
+    function buildBookingPayload(formData, currentHairImageUrl, referenceImageUrl, pricing) {
+        return {
+            name: formData.get('name'),
+            phone: formData.get('phone'),
+            email: formData.get('email'),
+            'appointment-datetime': formData.get('appointment-datetime'),
+            selected_style: formData.get('selected-style'),
+            hair_length: formData.get('hair-length'),
+            hair_option: formData.get('hair-option'),
+            pre_wash_option: formData.get('pre-wash-option'),
+            detangling_option: formData.get('detangling-option'),
+            notes: formData.get('notes'),
+            totalPrice: pricing.price,
+            total_price: pricing.price,
+            duration: pricing.duration,
+            currentHairImageURL: currentHairImageUrl,
+            current_hair_image_url: currentHairImageUrl,
+            referenceImageURL: referenceImageUrl,
+            reference_image_url: referenceImageUrl,
+            box_braids_variation: formData.get('box-braids-variation'),
+            cornrows_variation: formData.get('cornrows-variation'),
+            two_strand_twists_variation: formData.get('two-strand-twists-variation')
+        };
+    }
+
+    async function maybeLoadPaymentForm() {
+        if (isLoadingPayment || !isFormReadyForPayment()) return;
+
+        const signature = getPaymentSignature();
+        if (embeddedPaymentReady && currentPaymentSignature === signature) {
+            updateSubmitButton();
+            return;
+        }
+
+        if (embeddedPaymentReady && currentPaymentSignature !== signature) {
+            resetEmbeddedPaymentState('Updating payment form for your latest booking details...');
+        }
+
+        isLoadingPayment = true;
+        setPaymentMessage('');
+
+        try {
+            await ensureStripeInstance();
+
+            setPaymentPlaceholder('<i class="fas fa-spinner fa-spin"></i> Uploading your photos...', true);
             const formData = new FormData(bookingForm);
-            const currentHairImage = document.getElementById('current-hair-image').files[0];
-            const referenceImage = document.getElementById('reference-image').files[0];
+            const currentHairImage = currentHairImageInput?.files?.[0];
+            const referenceImage = referenceImageInput?.files?.[0];
+
+            if (!currentHairImage) {
+                throw new Error('Please provide a current photo of your hair before payment.');
+            }
 
             const currentHairImageUrl = await uploadImage(currentHairImage);
             const referenceImageUrl = referenceImage ? await uploadImage(referenceImage) : null;
+            const pricing = calculatePrice();
+            const bookingData = buildBookingPayload(formData, currentHairImageUrl, referenceImageUrl, pricing);
 
-            if (paymentContainer) paymentContainer.innerHTML = '<p class="payment-loading"><i class="fas fa-spinner fa-spin"></i> Loading payment form...</p>';
-
-            const { price, duration } = calculatePrice();
-            const bookingData = {
-                name: formData.get('name'),
-                phone: formData.get('phone'),
-                email: formData.get('email'),
-                'appointment-datetime': formData.get('appointment-datetime'),
-                selected_style: formData.get('selected-style'),
-                hair_length: formData.get('hair-length'),
-                hair_option: formData.get('hair-option'),
-                pre_wash_option: formData.get('pre-wash-option'),
-                detangling_option: formData.get('detangling-option'),
-                notes: formData.get('notes'),
-                totalPrice: price,
-                total_price: price,
-                duration: duration,
-                currentHairImageURL: currentHairImageUrl,
-                current_hair_image_url: currentHairImageUrl,
-                referenceImageURL: referenceImageUrl,
-                reference_image_url: referenceImageUrl,
-                box_braids_variation: formData.get('box-braids-variation'),
-                cornrows_variation: formData.get('cornrows-variation'),
-                two_strand_twists_variation: formData.get('two-strand-twists-variation')
-            };
-
-            const createIntentUrl = (typeof ENDPOINTS !== 'undefined' && ENDPOINTS.CREATE_PAYMENT_INTENT) ? ENDPOINTS.CREATE_PAYMENT_INTENT : '/api/create-payment-intent';
+            setPaymentPlaceholder('<i class="fas fa-spinner fa-spin"></i> Loading secure payment form...', true);
+            const createIntentUrl = (typeof ENDPOINTS !== 'undefined' && ENDPOINTS.CREATE_PAYMENT_INTENT) ?
+                ENDPOINTS.CREATE_PAYMENT_INTENT :
+                '/api/create-payment-intent';
             const response = await fetch(createIntentUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1151,81 +1244,142 @@ document.addEventListener('DOMContentLoaded', function() {
                 const text = await response.text();
                 let errorMessage = `Server error (${response.status})`;
                 try {
-                    const err = JSON.parse(text);
-                    errorMessage = err.error?.message || err.error || errorMessage;
-                } catch (e) {
+                    const errorData = JSON.parse(text);
+                    errorMessage = errorData.error?.message || errorData.error || errorMessage;
+                } catch (parseError) {
                     if (text) errorMessage = text.substring(0, 200);
                 }
                 throw new Error(errorMessage);
             }
 
             const data = await response.json();
-            paymentIntentClientSecret = data.clientSecret;
-            if (!paymentIntentClientSecret) throw new Error('No payment client secret returned');
+            if (!data.clientSecret) {
+                throw new Error('No payment client secret was returned by the server.');
+            }
 
-            const appearance = { theme: 'stripe', variables: { colorPrimary: '#c8914e' } };
-            elements = stripeInstance.elements({ clientSecret: paymentIntentClientSecret, appearance });
-            const paymentElement = elements.create('payment', {
+            paymentIntentClientSecret = data.clientSecret;
+            const appearance = {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#c8914e'
+                }
+            };
+            elements = stripeInstance.elements({
+                clientSecret: paymentIntentClientSecret,
+                appearance
+            });
+            paymentElement = elements.create('payment', {
                 layout: 'tabs',
                 paymentMethodOrder: ['card']
             });
-            paymentContainer.innerHTML = '';
-            paymentElement.mount('#payment-element-container');
+
+            const paymentContainer = document.getElementById('payment-element-container');
+            if (paymentContainer) {
+                paymentContainer.innerHTML = '';
+                paymentElement.mount('#payment-element-container');
+            }
 
             embeddedPaymentReady = true;
-            updateSubmitButton();
+            currentPaymentSignature = signature;
+            setPaymentMessage('Secure payment form ready.', 'success');
         } catch (error) {
-            console.error('Load payment error:', error);
-            setPaymentMessage(error.message, 'error');
-            if (paymentContainer) paymentContainer.innerHTML = '';
+            console.error('Error loading embedded payment form:', error);
+            resetEmbeddedPaymentState(getPaymentReadinessMessage());
+            setPaymentMessage(error.message || 'Unable to load the payment form.', 'error');
         } finally {
             isLoadingPayment = false;
+            updateSubmitButton();
         }
     }
 
-    // Auto-load payment form when form fields change and form is valid
     function checkAndLoadPayment() {
+        if (!isFormReadyForPayment()) {
+            if (embeddedPaymentReady || isLoadingPayment) {
+                resetEmbeddedPaymentState(getPaymentReadinessMessage());
+            } else {
+                setPaymentPlaceholder(getPaymentReadinessMessage() || 'Complete the required booking details above to load the secure payment form.', false);
+                updateSubmitButton();
+            }
+            return;
+        }
+
+        const nextSignature = getPaymentSignature();
+        if (currentPaymentSignature && currentPaymentSignature !== nextSignature) {
+            resetEmbeddedPaymentState('Updating payment form for your latest booking details...');
+        }
+
         updateSubmitButton();
-        if (isFormReadyForPayment() && !embeddedPaymentReady && !isLoadingPayment) {
+        if (!embeddedPaymentReady && !isLoadingPayment) {
             maybeLoadPaymentForm();
         }
     }
-    ['name', 'phone', 'email', 'current-hair-image'].forEach(function(id) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', checkAndLoadPayment);
-            if (id === 'current-hair-image') el.addEventListener('change', checkAndLoadPayment);
-        }
-    });
-    if (selectedStyleInput) selectedStyleInput.addEventListener('change', checkAndLoadPayment);
-    if (appointmentDateTimeInput) appointmentDateTimeInput.addEventListener('change', checkAndLoadPayment);
-    updateSubmitButton();
 
-    // Handle form submission - confirm payment only
+    ['name', 'phone', 'email'].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) field.addEventListener('input', checkAndLoadPayment);
+    });
+
+    if (currentHairImageInput) currentHairImageInput.addEventListener('change', checkAndLoadPayment);
+    if (referenceImageInput) referenceImageInput.addEventListener('change', checkAndLoadPayment);
+    if (selectedStyleInput) selectedStyleInput.addEventListener('change', checkAndLoadPayment);
+    if (boxBraidsVariationSelect) boxBraidsVariationSelect.addEventListener('change', checkAndLoadPayment);
+    if (cornrowsVariationSelect) cornrowsVariationSelect.addEventListener('change', checkAndLoadPayment);
+    if (twoStrandTwistsVariationSelect) twoStrandTwistsVariationSelect.addEventListener('change', checkAndLoadPayment);
+    if (hairLengthSelect) hairLengthSelect.addEventListener('change', checkAndLoadPayment);
+    if (hairOptionSelect) hairOptionSelect.addEventListener('change', checkAndLoadPayment);
+    if (preWashSelect) preWashSelect.addEventListener('change', checkAndLoadPayment);
+    if (appointmentDateTimeInput) appointmentDateTimeInput.addEventListener('change', checkAndLoadPayment);
+
+    resetEmbeddedPaymentState();
+
+    // Handle form submission - embedded payment confirms in place
     bookingForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const submitBtn = document.getElementById('submit-btn');
-        if (!embeddedPaymentReady || !elements) return;
+        if (!embeddedPaymentReady || !elements || !stripeInstance) {
+            setPaymentMessage('Complete the required booking details and wait for the secure payment form to load.', 'error');
+            showProgressModal(
+                'Payment Not Ready',
+                'Complete the required booking details and wait for the secure payment form to load.',
+                'error'
+            );
+            updateSubmitButton();
+            return;
+        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';
         setPaymentMessage('');
+        showProgressModal('Processing Payment', 'Securely confirming your payment. Please wait...', 'loading');
 
-        const returnUrl = (typeof location !== 'undefined' && location.origin) ? location.origin + '/api/handle-payment-success' : 'http://localhost:5500/api/handle-payment-success';
-        const email = document.getElementById('email')?.value || '';
+        try {
+            const returnUrl = (typeof location !== 'undefined' && location.origin) ?
+                location.origin + '/api/handle-payment-success' :
+                'http://localhost:5500/api/handle-payment-success';
+            const email = document.getElementById('email')?.value || '';
 
-        const { error } = await stripeInstance.confirmPayment({
-            elements,
-            confirmParams: {
-                return_url: returnUrl,
-                receipt_email: email || undefined
+            const result = await stripeInstance.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: returnUrl,
+                    receipt_email: email || undefined
+                }
+            });
+
+            if (result.error) {
+                throw result.error;
             }
-        });
-
-        if (error) {
-            setPaymentMessage(error.message || 'Payment failed.', 'error');
-            submitBtn.disabled = false;
+        } catch (error) {
+            console.error('Error confirming embedded payment:', error);
+            setPaymentMessage(error.message || 'Payment failed. Please review your card details and try again.', 'error');
+            showProgressModal(
+                'Payment Error',
+                error.message || 'Payment failed. Please review your card details and try again.',
+                'error',
+                error.message || 'Stripe could not confirm the payment.'
+            );
+            updateSubmitButton();
         }
     });
 

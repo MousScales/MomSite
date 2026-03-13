@@ -315,6 +315,50 @@
     background: #444;
 }
 
+.submit-button:disabled {
+    background: #888;
+    cursor: not-allowed;
+}
+
+.payment-section-note {
+    margin-bottom: 1rem;
+}
+
+.payment-element-container {
+    min-height: 96px;
+    padding: 1rem;
+    border: 1px solid #e6dccf;
+    border-radius: 8px;
+    background: #faf7f2;
+}
+
+.payment-placeholder,
+.payment-loading {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.payment-loading i {
+    margin-right: 0.5rem;
+    color: #c8914e;
+}
+
+.payment-message {
+    min-height: 1.25rem;
+    margin-top: 0.75rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.payment-message-error {
+    color: #c0392b;
+}
+
+.payment-message-success {
+    color: #2e7d32;
+}
+
 /* Old nav/footer overrides removed — using site-wide styles from styles.css */
 
 /* Responsive styles */
@@ -1248,7 +1292,7 @@ select:disabled {
 }
 
 /* Make the calendar input match other form inputs */
-#appointment-datetime {
+.booking-form #appointment-datetime {
     width: 100%;
     padding: 12px;
     border: 1px solid #ddd;
@@ -1258,7 +1302,7 @@ select:disabled {
     background: #fff;
 }
 
-#appointment-datetime:focus {
+.booking-form #appointment-datetime:focus {
     outline: none;
     border-color: #28a745;
     box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
