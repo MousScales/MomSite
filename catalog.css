@@ -1,0 +1,320 @@
+/* ============================================
+   Catalog Page Styles
+   Mobile-first, inherits from styles.css
+   ============================================ */
+
+/* ==================
+   Catalog Header
+   ================== */
+.catalog-header {
+    padding: 5rem 1.25rem 1.5rem;
+    text-align: center;
+    background: var(--color-bg-warm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.catalog-header h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: var(--color-dark);
+    margin-bottom: 0.4rem;
+}
+
+.catalog-header p {
+    font-size: 0.95rem;
+    color: var(--color-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Search */
+.catalog-search {
+    position: relative;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.catalog-search i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-light-text);
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.catalog-search .search-input {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 2.75rem;
+    font-size: 16px;
+    font-family: var(--font-body);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    min-height: 48px;
+    -webkit-appearance: none;
+}
+
+.catalog-search .search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(184, 134, 78, 0.12);
+}
+
+.catalog-search .search-input::placeholder {
+    color: var(--color-light-text);
+}
+
+/* ==================
+   Catalog Main
+   ================== */
+.catalog-main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 6rem;
+}
+
+/* ==================
+   Section Titles
+   ================== */
+.cat-section-title {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-dark);
+    margin: 2rem 0 1rem;
+    padding-left: 0.25rem;
+    position: relative;
+}
+
+.cat-section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 1em;
+    background: var(--color-accent);
+    border-radius: 2px;
+    margin-right: 0.6rem;
+    vertical-align: middle;
+}
+
+/* ==================
+   Hairstyles Grid
+   ================== */
+.hairstyles-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+/* ==================
+   Hairstyle Card
+   ================== */
+.hairstyle-card {
+    background: var(--color-card-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hairstyle-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.hairstyle-card:active {
+    transform: translateY(-1px);
+}
+
+/* Card Image */
+.hairstyle-image {
+    position: relative;
+    width: 100%;
+    padding-top: 105%;
+    overflow: hidden;
+    background: var(--color-bg-cream);
+}
+
+.hairstyle-image img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.hairstyle-card:hover .hairstyle-image img {
+    transform: scale(1.05);
+}
+
+/* Card Info */
+.hairstyle-info {
+    padding: 0.75rem 0.65rem;
+}
+
+.hairstyle-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-dark);
+    margin-bottom: 0.15rem;
+    line-height: 1.3;
+}
+
+.price-range {
+    font-size: 0.82rem;
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+/* ==================
+   Sticky CTA (mobile)
+   ================== */
+.catalog-sticky-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem 1rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--color-border);
+    z-index: 900;
+    display: block;
+}
+
+.btn-full {
+    width: 100%;
+    text-align: center;
+}
+
+/* ==================
+   Responsive – Tablet+
+   ================== */
+@media (min-width: 600px) {
+    .catalog-header {
+        padding: 5.5rem 2rem 2rem;
+    }
+
+    .catalog-main {
+        padding: 1.5rem 1.25rem 4rem;
+    }
+
+    .hairstyles-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .hairstyle-info {
+        padding: 0.85rem 0.85rem;
+    }
+
+    .hairstyle-title {
+        font-size: 1.05rem;
+    }
+
+    .price-range {
+        font-size: 0.88rem;
+    }
+
+    .cat-section-title {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1.25rem;
+    }
+}
+
+/* ==================
+   Responsive – Desktop
+   ================== */
+@media (min-width: 900px) {
+    .catalog-header {
+        padding: 6rem 2rem 2.5rem;
+    }
+
+    .catalog-main {
+        padding: 2rem 1.5rem 3rem;
+    }
+
+    .hairstyles-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+
+    .hairstyle-image {
+        padding-top: 115%;
+    }
+
+    .hairstyle-info {
+        padding: 1rem;
+    }
+
+    .hairstyle-title {
+        font-size: 1.1rem;
+    }
+
+    .price-range {
+        font-size: 0.92rem;
+    }
+
+    /* Hide sticky CTA on desktop */
+    .catalog-sticky-cta {
+        display: none;
+    }
+
+    .catalog-main {
+        padding-bottom: 3rem;
+    }
+}
+
+/* ==================
+   No Results
+   ================== */
+.no-results-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-muted);
+}
+
+.no-results-message h3 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    color: var(--color-dark);
+    margin-bottom: 0.5rem;
+}
+
+.no-results-message p {
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+/* ==================
+   Stagger animation
+   ================== */
+.hairstyle-card {
+    animation: cardIn 0.4s ease-out both;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hairstyle-card:nth-child(1) { animation-delay: 0s; }
+.hairstyle-card:nth-child(2) { animation-delay: 0.05s; }
+.hairstyle-card:nth-child(3) { animation-delay: 0.10s; }
+.hairstyle-card:nth-child(4) { animation-delay: 0.15s; }
+.hairstyle-card:nth-child(5) { animation-delay: 0.20s; }

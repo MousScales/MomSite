@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Details - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .booking-details-container { max-width: 700px; margin: 0 auto; padding: 6rem 1.25rem 3rem; }
+        .booking-details-card { background: var(--color-bg, #fff); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .booking-details-card h1 { font-size: 1.75rem; margin-bottom: 1rem; color: var(--color-text, #333); }
+        .booking-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e0e0e0; }
+        .booking-id-badge { background: var(--color-accent, #c8914e); color: #fff; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+        .status-badge { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: inline-block; }
+        .status-confirmed { background: #d5f4e6; color: #1e7e34; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .details-section { margin-bottom: 2rem; }
+        .details-section h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--color-text, #333); border-bottom: 1px solid #e0e0e0; padding-bottom: 0.5rem; }
+        .detail-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { font-weight: 500; color: #666; }
+        .detail-value { color: var(--color-text, #333); text-align: right; }
+        .action-buttons { margin-top: 2rem; display: flex; gap: 1rem; }
+        .btn-cancel { background: #c0392b; color: #fff; padding: 0.9rem 2rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; flex: 1; }
+        .btn-cancel:hover { background: #a93226; }
+        .btn-cancel:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-secondary { background: #6c757d; color: #fff; padding: 0.9rem 2rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+        .btn-secondary:hover { background: #5a6268; }
+        .loading { text-align: center; padding: 3rem; color: #666; }
+        .error-message { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .success-message { background: #d5f4e6; color: #1e7e34; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .image-preview { margin-top: 0.5rem; }
+        .image-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+            position: relative;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .modal-header .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+        .modal-body p {
+            margin: 0 0 1rem 0;
+            color: #666;
+            line-height: 1.6;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal-btn-primary {
+            background: #c0392b;
+            color: #fff;
+        }
+        .modal-btn-primary:hover {
+            background: #a93226;
+        }
+        .modal-btn-secondary {
+            background: #6c757d;
+            color: #fff;
+        }
+        .modal-btn-secondary:hover {
+            background: #5a6268;
+        }
+        .modal-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .modal-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .modal-icon.success {
+            color: #4caf50;
+        }
+        .modal-icon.warning {
+            color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar scrolled" id="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="nav-links">
+            <a href="index.html">Home</a>
+            <a href="styles-catalog.html">Our Styles</a>
+            <a href="booking.html" class="cta-nav">Book Now</a>
+            <a href="cancel.html"><i class="fas fa-search"></i> Lookup Booking</a>
+        </div>
+    </nav>
+
+    <main class="booking-details-container">
+        <div class="booking-details-card">
+            <div id="loading" class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading booking details...
+            </div>
+            
+            <div id="error" class="error-message" style="display: none;"></div>
+            <div id="success" class="success-message" style="display: none;"></div>
+            
+            <div id="booking-content" style="display: none;">
+                <div class="booking-header">
+                    <h1><i class="fas fa-calendar-check"></i> Booking Details</h1>
+                    <div>
+                        <span id="booking-reference" class="booking-id-badge"></span>
+                        <span id="status-badge" class="status-badge" style="margin-left: 0.5rem;"></span>
+                    </div>
+                </div>
+
+                <div class="details-section">
+                    <h2><i class="fas fa-user"></i> Client Information</h2>
+                    <div class="detail-row">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value" id="client-name"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" id="client-email"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value" id="client-phone"></span>
+                    </div>
+                </div>
+
+                <div class="details-section">
+                    <h2><i class="fas fa-calendar-alt"></i> Appointment Details</h2>
+                    <div class="detail-row">
+                        <span class="detail-label">Date & Time:</span>
+                        <span class="detail-value" id="appointment-datetime"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Service:</span>
+                        <span class="detail-value" id="selected-style"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Duration:</span>
+                        <span class="detail-value" id="duration"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Price:</span>
+                        <span class="detail-value" id="total-price"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Deposit Paid:</span>
+                        <span class="detail-value" id="deposit-paid"></span>
+                    </div>
+                </div>
+
+                <div class="details-section" id="service-options-section" style="display: none;">
+                    <h2><i class="fas fa-cog"></i> Service Options</h2>
+                    <div id="service-options"></div>
+                </div>
+
+                <div class="details-section" id="images-section" style="display: none;">
+                    <h2><i class="fas fa-images"></i> Images</h2>
+                    <div id="images-container"></div>
+                </div>
+
+                <div class="details-section" id="notes-section" style="display: none;">
+                    <h2><i class="fas fa-sticky-note"></i> Notes</h2>
+                    <p id="notes" style="color: #666; margin: 0;"></p>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="cancel-btn" class="btn-cancel" onclick="cancelBooking()">
+                        <i class="fas fa-calendar-times"></i> Cancel Booking
+                    </button>
+                    <a href="index.html" class="btn-secondary">
+                        <i class="fas fa-home"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cancellation Confirmation Modal -->
+    <div id="cancel-confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Confirm Cancellation</h2>
+                <button class="close-btn" onclick="closeCancelConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this booking?</p>
+                <p style="color: #c0392b; font-weight: 600;">This action cannot be undone.</p>
+                <p style="font-size: 0.9rem; color: #666;">The time slot will become available for other customers.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeCancelConfirmModal()">Keep Booking</button>
+                <button class="modal-btn modal-btn-primary" id="confirm-cancel-btn" onclick="proceedWithCancellation()">
+                    <i class="fas fa-calendar-times"></i> Yes, Cancel Booking
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancellation Success Modal -->
+    <div id="cancel-success-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-check-circle"></i> Cancellation Confirmed</h2>
+                <button class="close-btn" onclick="closeCancelSuccessModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <p style="text-align: center; font-size: 1.1rem; color: #333; font-weight: 600;">Your booking has been cancelled successfully.</p>
+                <p style="text-align: center; color: #666;">The time slot is now available for other customers.</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn modal-btn-primary" onclick="closeCancelSuccessModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services in New London, CT.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="styles-catalog.html">Our Styles</a>
+                <a href="booking.html">Book Now</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Maya African Hair Braiding. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+        let bookingData = null;
+        let bookingId = null;
+
+        // Get booking ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingIdParam = urlParams.get('id') || urlParams.get('bookingId');
+
+        if (!bookingIdParam) {
+            showError('No booking ID provided.');
+        } else {
+            loadBookingDetails(bookingIdParam);
+        }
+
+        async function loadBookingDetails(bookingIdOrRef) {
+            try {
+                // Try to get booking by ID or reference
+                const response = await fetch(`/api/get-booking-details?id=${encodeURIComponent(bookingIdOrRef)}`);
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Booking not found');
+                }
+
+                bookingData = data;
+                bookingId = data.id || bookingIdOrRef;
+                displayBookingDetails(data);
+            } catch (error) {
+                console.error('Error loading booking:', error);
+                showError(error.message || 'Failed to load booking details. Please check your booking ID.');
+            }
+        }
+
+        function displayBookingDetails(booking) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('booking-content').style.display = 'block';
+
+            // Booking reference and status
+            const bookingRef = booking.booking_reference || booking.bookingReference || booking.id.substring(0, 8).toUpperCase();
+            document.getElementById('booking-reference').textContent = bookingRef;
+            
+            const status = (booking.status || 'pending').toLowerCase();
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            statusBadge.className = 'status-badge status-' + status;
+
+            // Client information
+            document.getElementById('client-name').textContent = booking.name || 'N/A';
+            document.getElementById('client-email').textContent = booking.email || 'N/A';
+            document.getElementById('client-phone').textContent = booking.phone || 'N/A';
+
+            // Appointment details
+            const appointmentDateTime = booking['appointment-datetime'] || booking.appointmentDateTime;
+            if (appointmentDateTime) {
+                const date = new Date(appointmentDateTime);
+                document.getElementById('appointment-datetime').textContent = date.toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            } else {
+                document.getElementById('appointment-datetime').textContent = 'Not set';
+            }
+
+            document.getElementById('selected-style').textContent = booking.selected_style || booking.selectedStyle || 'N/A';
+            
+            const duration = booking.duration || 0;
+            const hours = Math.floor(duration / 60);
+            const minutes = duration % 60;
+            document.getElementById('duration').textContent = hours > 0 
+                ? `${hours}h ${minutes}m` 
+                : `${minutes}m`;
+
+            const totalPrice = booking.total_price || booking.totalPrice || 0;
+            document.getElementById('total-price').textContent = `$${totalPrice.toFixed(2)}`;
+
+            const depositPaid = booking.deposit_paid || booking.depositPaid || 0;
+            document.getElementById('deposit-paid').textContent = `$${depositPaid.toFixed(2)}`;
+
+            // Service options
+            const serviceOptions = [];
+            if (booking.hair_length || booking.hairLength) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Hair Length:</span><span class="detail-value">${booking.hair_length || booking.hairLength}</span></div>`);
+            }
+            if (booking.hair_option || booking.hairOption) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Hair Option:</span><span class="detail-value">${booking.hair_option || booking.hairOption}</span></div>`);
+            }
+            if (booking.pre_wash_option || booking.preWashOption) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Pre-Wash:</span><span class="detail-value">${booking.pre_wash_option || booking.preWashOption}</span></div>`);
+            }
+            if (booking.detangling_option || booking.detanglingOption) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Detangling:</span><span class="detail-value">${booking.detangling_option || booking.detanglingOption}</span></div>`);
+            }
+            if (booking.box_braids_variation || booking.boxBraidsVariation) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Box Braids Variation:</span><span class="detail-value">${booking.box_braids_variation || booking.boxBraidsVariation}</span></div>`);
+            }
+            if (booking.cornrows_variation || booking.cornrowsVariation) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Cornrows Variation:</span><span class="detail-value">${booking.cornrows_variation || booking.cornrowsVariation}</span></div>`);
+            }
+            if (booking.two_strand_twists_variation || booking.twoStrandTwistsVariation) {
+                serviceOptions.push(`<div class="detail-row"><span class="detail-label">Two Strand Twists Variation:</span><span class="detail-value">${booking.two_strand_twists_variation || booking.twoStrandTwistsVariation}</span></div>`);
+            }
+
+            if (serviceOptions.length > 0) {
+                document.getElementById('service-options').innerHTML = serviceOptions.join('');
+                document.getElementById('service-options-section').style.display = 'block';
+            }
+
+            // Images
+            const imagesContainer = document.getElementById('images-container');
+            imagesContainer.innerHTML = '';
+            if (booking.current_hair_image_url || booking.currentHairImageURL) {
+                const img = document.createElement('div');
+                img.className = 'image-preview';
+                img.innerHTML = `<p style="margin-bottom: 0.5rem; font-weight: 500;">Current Hair:</p><img src="${booking.current_hair_image_url || booking.currentHairImageURL}" alt="Current hair">`;
+                imagesContainer.appendChild(img);
+            }
+            if (booking.reference_image_url || booking.referenceImageURL) {
+                const img = document.createElement('div');
+                img.className = 'image-preview';
+                img.innerHTML = `<p style="margin-bottom: 0.5rem; font-weight: 500;">Reference Image:</p><img src="${booking.reference_image_url || booking.referenceImageURL}" alt="Reference image">`;
+                imagesContainer.appendChild(img);
+            }
+            if (imagesContainer.children.length > 0) {
+                document.getElementById('images-section').style.display = 'block';
+            }
+
+            // Notes
+            const notes = booking.notes || '';
+            if (notes) {
+                document.getElementById('notes').textContent = notes;
+                document.getElementById('notes-section').style.display = 'block';
+            }
+
+            // Hide cancel button if already cancelled
+            if (status === 'cancelled') {
+                document.getElementById('cancel-btn').style.display = 'none';
+            }
+        }
+
+        function cancelBooking() {
+            if (!bookingData || !bookingId) {
+                showError('Booking information not available.');
+                return;
+            }
+            // Show confirmation modal
+            const modal = document.getElementById('cancel-confirm-modal');
+            modal.classList.add('show');
+        }
+
+        function closeCancelConfirmModal() {
+            const modal = document.getElementById('cancel-confirm-modal');
+            modal.classList.remove('show');
+        }
+
+        function closeCancelSuccessModal() {
+            const modal = document.getElementById('cancel-success-modal');
+            modal.classList.remove('show');
+            // Reload booking details to show updated status
+            if (bookingId) {
+                loadBookingDetails(bookingId);
+            }
+        }
+
+        async function proceedWithCancellation() {
+            const confirmBtn = document.getElementById('confirm-cancel-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+
+            try {
+                const email = bookingData.email;
+                const url = typeof ENDPOINTS !== 'undefined' && ENDPOINTS.CANCEL_BOOKING
+                    ? ENDPOINTS.CANCEL_BOOKING
+                    : '/api/cancel-booking';
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        bookingId: bookingId, 
+                        email: email 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && (data.cancelled || data.message)) {
+                    // Close confirmation modal
+                    closeCancelConfirmModal();
+                    
+                    // Show success modal
+                    const successModal = document.getElementById('cancel-success-modal');
+                    successModal.classList.add('show');
+                    
+                    // Hide cancel button
+                    const cancelBtn = document.getElementById('cancel-btn');
+                    if (cancelBtn) {
+                        cancelBtn.style.display = 'none';
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to cancel booking');
+                }
+            } catch (error) {
+                console.error('Error cancelling booking:', error);
+                closeCancelConfirmModal();
+                showError(error.message || 'Failed to cancel booking. Please try again.');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-calendar-times"></i> Yes, Cancel Booking';
+            }
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(event) {
+            const confirmModal = document.getElementById('cancel-confirm-modal');
+            const successModal = document.getElementById('cancel-success-modal');
+            if (event.target === confirmModal) {
+                closeCancelConfirmModal();
+            }
+            if (event.target === successModal) {
+                closeCancelSuccessModal();
+            }
+        });
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            document.getElementById('success').textContent = message;
+            document.getElementById('success').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('success').style.display = 'none';
+            }, 5000);
+        }
+
+        // Navbar toggle
+        var toggle = document.getElementById('nav-toggle');
+        var links = document.getElementById('nav-links');
+        if (toggle && links) {
+            toggle.addEventListener('click', function() {
+                links.classList.toggle('open');
+                toggle.classList.toggle('open');
+            });
+            document.querySelectorAll('.nav-links a').forEach(function(a) {
+                a.addEventListener('click', function() {
+                    links.classList.remove('open');
+                    toggle.classList.remove('open');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+
+

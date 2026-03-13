@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box Braids - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="product.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar scrolled" id="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="nav-links">
+            <a href="index.html">Home</a>
+            <a href="styles-catalog.html">Our Styles</a>
+            <a href="booking.html" class="cta-nav">Book Now</a>
+            <a href="cancel.html"><i class="fas fa-search"></i> Lookup Booking</a>
+        </div>
+    </nav>
+
+    <main class="product-main">
+        <div class="product-container">
+            <!-- Product Gallery -->
+            <div class="product-gallery">
+                <div class="carousel-container">
+                    <div class="carousel-track">
+                        <div class="carousel-slide">
+                            <div class="placeholder-image">Box Braids Style 1</div>
+                        </div>
+                        <div class="carousel-slide">
+                            <div class="placeholder-image">Box Braids Style 2</div>
+                        </div>
+                        <div class="carousel-slide">
+                            <div class="placeholder-image">Box Braids Style 3</div>
+                        </div>
+                    </div>
+                    <button class="carousel-button prev">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="carousel-button next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <div class="carousel-dots">
+                        <span class="carousel-dot active" data-index="0"></span>
+                        <span class="carousel-dot" data-index="1"></span>
+                        <span class="carousel-dot" data-index="2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price and Booking Section -->
+            <div class="price-section">
+                <div class="price-range-box">
+                    <span class="price-range">$0</span>
+                    <div class="price-note"></div>
+                    <div class="additional-note">*All styles can include a wash service for +$20</div>
+                </div>
+                <button onclick="bookNow()" class="book-now-btn">Book Now</button>
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-info">
+                <h1>Box Braids</h1>
+
+                <div class="product-description">
+                    <p>Box braids are a protective style where your natural hair is sectioned into square-shaped parts and braided with extensions. This versatile style can last 6-8 weeks with proper care and can be styled in various ways including updos, ponytails, and buns.</p>
+
+                    <div class="features-section">
+                        <h3>Features</h3>
+                        <ul>
+                            <li>Available in various sizes (small, medium, large)</li>
+                            <li>Multiple length options</li>
+                            <li>Choice of hair texture and color</li>
+                            <li>Low maintenance style</li>
+                            <li>Protective for natural hair</li>
+                        </ul>
+                    </div>
+
+                    <div class="maintenance-section">
+                        <h3>Maintenance Tips</h3>
+                        <ul>
+                            <li>Wash every 2-3 weeks</li>
+                            <li>Moisturize scalp regularly</li>
+                            <li>Wrap hair at night</li>
+                            <li>Avoid tight styling</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services in New London, CT.</p>
+                <div class="footer-social">
+                    <a href="https://instagram.com/mayadoeshairrr" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tiktok.com/@mayadoeshairr" target="_blank" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="styles-catalog.html">Our Styles</a>
+                <a href="booking.html">Book Now</a>
+            </div>
+            <div class="footer-links">
+                <h4>Hours</h4>
+                <p>Mon &ndash; Sat: 9 am &ndash; 7 pm</p>
+                <p>Sunday: Closed</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Maya African Hair Braiding. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="product.js"></script>
+    <script>
+    (function(){
+        var toggle = document.getElementById('nav-toggle');
+        var links = document.getElementById('nav-links');
+        if (toggle && links) {
+            toggle.addEventListener('click', function() {
+                links.classList.toggle('open');
+                toggle.classList.toggle('open');
+                document.body.classList.toggle('nav-open', links.classList.contains('open'));
+            });
+            document.querySelectorAll('.nav-links a').forEach(function(a) {
+                a.addEventListener('click', function() {
+                    links.classList.remove('open');
+                    toggle.classList.remove('open');
+                    document.body.classList.remove('nav-open');
+                });
+            });
+        }
+    })();
+    </script>
+</body>
+</html> 

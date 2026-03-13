@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancel Appointment - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .cancel-container { max-width: 480px; margin: 0 auto; padding: 6rem 1.25rem 3rem; }
+        .cancel-card { background: var(--color-bg, #fff); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .cancel-card h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .cancel-card p { color: var(--color-muted, #666); margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .cancel-form .form-group { margin-bottom: 1.25rem; }
+        .cancel-form label { display: block; font-weight: 500; margin-bottom: 0.35rem; }
+        .cancel-form input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--color-border, #e0e0e0); border-radius: 8px; font-size: 1rem; }
+        .cancel-form button[type="submit"] { width: 100%; padding: 0.9rem; background: #c0392b; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+        .cancel-form button[type="submit"]:hover { background: #a93226; }
+        .cancel-form button:disabled { opacity: 0.7; cursor: not-allowed; }
+        .cancel-result { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; display: none; }
+        .cancel-result.success { background: #d5f4e6; color: #1e7e34; }
+        .cancel-result.error { background: #f8d7da; color: #721c24; }
+        .cancel-result p { margin: 0; font-size: 0.95rem; }
+        .back-link { display: inline-block; margin-top: 1.5rem; color: var(--color-accent, #666); text-decoration: none; font-size: 0.95rem; }
+        .back-link:hover { text-decoration: underline; }
+        .cancel-tabs-container { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid #e0e0e0; }
+        .cancel-tab { background: none; border: none; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 0.95rem; color: #666; border-bottom: 2px solid transparent; margin-right: 0; flex: 1; text-align: center; }
+        .cancel-tab.active { color: var(--color-accent, #c8914e); border-bottom-color: var(--color-accent, #c8914e); font-weight: 600; }
+        .cancel-tab:hover { color: var(--color-accent, #c8914e); }
+        .lookup-result { margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--color-accent, #c8914e); display: none; }
+        .lookup-result h4 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+        .lookup-result p { margin: 0.25rem 0; font-size: 0.9rem; color: #666; }
+        .lookup-result button { margin-top: 0.75rem; padding: 0.5rem 1rem; background: #c0392b; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+        .lookup-result button:hover { background: #a93226; }
+    </style>
+</head>
+<body>
+    <nav class="navbar scrolled" id="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="nav-links">
+            <a href="index.html">Home</a>
+            <a href="styles-catalog.html">Our Styles</a>
+            <a href="booking.html" class="cta-nav">Book Now</a>
+            <a href="cancel.html" class="nav-active"><i class="fas fa-search"></i> Lookup Booking</a>
+        </div>
+    </nav>
+
+    <main class="cancel-container">
+        <div class="cancel-card">
+            <h1><i class="fas fa-search"></i> Find Appointment</h1>
+            <p>Find your appointment using either method below. Once found, you can view details and cancel if needed.</p>
+            
+            <!-- Tabs for different cancellation methods -->
+            <div class="cancel-tabs-container">
+                <button type="button" id="tab-booking-id" class="cancel-tab active" onclick="switchTab('booking-id')">I have my Booking ID</button>
+                <button type="button" id="tab-lookup" class="cancel-tab" onclick="switchTab('lookup')">Lookup by Email & Phone</button>
+            </div>
+
+            <!-- Method 1: Booking ID -->
+            <form id="cancel-form" class="cancel-form" style="display: block;">
+                <div class="form-group">
+                    <label for="booking-id">Booking ID <span class="required">*</span></label>
+                    <input type="text" id="booking-id" name="bookingId" required placeholder="e.g. MAYA-A3B7K9"
+                           aria-describedby="booking-id-help" style="text-transform: uppercase;">
+                    <span id="booking-id-help" class="help-text" style="font-size: 0.85rem; color: #666; margin-top: 0.25rem; display: block;">Find this in your confirmation email or on the booking success page (format: MAYA-XXXXXX).</span>
+                </div>
+                <div class="form-group">
+                    <label for="cancel-email">Email <span class="required">*</span></label>
+                    <input type="email" id="cancel-email" name="email" required placeholder="your@email.com">
+                </div>
+                <button type="submit" id="cancel-submit-btn">Find appointment</button>
+            </form>
+
+            <!-- Method 2: Lookup by Email & Phone -->
+            <form id="lookup-form" class="cancel-form" style="display: none;">
+                <div class="form-group">
+                    <label for="lookup-email">Email <span class="required">*</span></label>
+                    <input type="email" id="lookup-email" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="lookup-phone">Phone Number <span class="required">*</span></label>
+                    <input type="tel" id="lookup-phone" name="phone" required placeholder="(860) 425-0751">
+                    <span class="help-text" style="font-size: 0.85rem; color: #666; margin-top: 0.25rem; display: block;">Enter the phone number you used when booking.</span>
+                </div>
+                <button type="submit" id="lookup-submit-btn">Find My Booking</button>
+            </form>
+
+            <div id="cancel-result" class="cancel-result" role="alert"></div>
+            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to home</a>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services in New London, CT.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="styles-catalog.html">Our Styles</a>
+                <a href="booking.html">Book Now</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Maya African Hair Braiding. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+    (function() {
+        var cancelForm = document.getElementById('cancel-form');
+        var lookupForm = document.getElementById('lookup-form');
+        var resultEl = document.getElementById('cancel-result');
+        var cancelSubmitBtn = document.getElementById('cancel-submit-btn');
+        var lookupSubmitBtn = document.getElementById('lookup-submit-btn');
+        var foundBookingId = null;
+
+        // Tab switching function - define it first and make it globally accessible
+        function switchTab(tab) {
+            if (tab === 'booking-id') {
+                document.getElementById('tab-booking-id').classList.add('active');
+                document.getElementById('tab-lookup').classList.remove('active');
+                cancelForm.style.display = 'block';
+                lookupForm.style.display = 'none';
+                resultEl.style.display = 'none';
+            } else {
+                document.getElementById('tab-booking-id').classList.remove('active');
+                document.getElementById('tab-lookup').classList.add('active');
+                cancelForm.style.display = 'none';
+                lookupForm.style.display = 'block';
+                resultEl.style.display = 'none';
+            }
+        }
+        
+        // Make switchTab globally accessible for onclick handlers
+        window.switchTab = switchTab;
+
+        // Pre-fill booking ID from URL if present
+        var params = new URLSearchParams(window.location.search);
+        var idParam = params.get('id') || params.get('bookingId');
+        if (idParam) {
+            document.getElementById('booking-id').value = idParam;
+            switchTab('booking-id');
+        }
+
+        // Lookup form submission
+        lookupForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var email = document.getElementById('lookup-email').value.trim();
+            var phone = document.getElementById('lookup-phone').value.trim();
+            if (!email || !phone) return;
+
+            lookupSubmitBtn.disabled = true;
+            lookupSubmitBtn.textContent = 'Looking up...';
+            resultEl.style.display = 'none';
+            resultEl.className = 'cancel-result';
+
+            try {
+                var res = await fetch('/api/lookup-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, phone: phone })
+                });
+                var data = await res.json().catch(function() { return {}; });
+
+                if (res.ok && data.booking_id) {
+                    // Use booking_reference if available, otherwise use booking_id
+                    const bookingRef = data.booking_reference || data.booking_id;
+                    console.log('Booking found, redirecting to details page with ID:', bookingRef);
+                    // Redirect to booking details page immediately - don't wait
+                    window.location.replace(`booking-details.html?id=${encodeURIComponent(bookingRef)}`);
+                    return; // Stop execution to prevent any further processing
+                } else {
+                    resultEl.className = 'cancel-result error';
+                    resultEl.innerHTML = '<p>' + (data.error || 'No booking found. Please check your email and phone number.') + '</p>';
+                    resultEl.style.display = 'block';
+                    lookupSubmitBtn.disabled = false;
+                    lookupSubmitBtn.textContent = 'Find My Booking';
+                }
+            } catch (err) {
+                console.error('Lookup error:', err);
+                resultEl.className = 'cancel-result error';
+                resultEl.innerHTML = '<p>Something went wrong. Please try again or contact us.</p>';
+                resultEl.style.display = 'block';
+                lookupSubmitBtn.disabled = false;
+                lookupSubmitBtn.textContent = 'Find My Booking';
+            }
+        });
+
+        // Cancel found booking
+        window.cancelFoundBooking = async function() {
+            if (!foundBookingId) return;
+            var email = document.getElementById('lookup-email').value.trim();
+            
+            var cancelBtn = resultEl.querySelector('button');
+            if (cancelBtn) {
+                cancelBtn.disabled = true;
+                cancelBtn.textContent = 'Cancelling...';
+            }
+
+            try {
+                var url = typeof ENDPOINTS !== 'undefined' && ENDPOINTS.CANCEL_BOOKING
+                    ? ENDPOINTS.CANCEL_BOOKING
+                    : '/api/cancel-booking';
+                var res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookingId: foundBookingId, email: email })
+                });
+                var data = await res.json().catch(function() { return {}; });
+
+                if (res.ok && (data.cancelled || data.message)) {
+                    resultEl.className = 'cancel-result success';
+                    resultEl.innerHTML = '<p>' + (data.message || 'Your appointment has been cancelled successfully.') + '</p>';
+                    lookupForm.reset();
+                } else {
+                    resultEl.className = 'cancel-result error';
+                    resultEl.innerHTML = '<p>' + (data.error || 'Could not cancel. Please try again.') + '</p>';
+                }
+            } catch (err) {
+                resultEl.className = 'cancel-result error';
+                resultEl.innerHTML = '<p>Something went wrong. Please try again or contact us.</p>';
+            }
+        };
+
+        // Cancel form submission
+        cancelForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var bookingId = document.getElementById('booking-id').value.trim().toUpperCase();
+            var email = document.getElementById('cancel-email').value.trim();
+            if (!bookingId || !email) return;
+
+            cancelSubmitBtn.disabled = true;
+            cancelSubmitBtn.textContent = 'Finding...';
+            resultEl.style.display = 'none';
+            resultEl.className = 'cancel-result';
+
+            try {
+                // First, get booking details to verify it exists
+                var bookingRef = bookingId.toUpperCase();
+                var detailsUrl = `/api/get-booking-details?id=${encodeURIComponent(bookingRef)}`;
+                var detailsRes = await fetch(detailsUrl);
+                
+                // Parse JSON response, handling errors gracefully
+                var detailsData = {};
+                try {
+                    detailsData = await detailsRes.json();
+                } catch (parseError) {
+                    // If JSON parsing fails, try to get text response
+                    var errorText = await detailsRes.text();
+                    throw new Error('Invalid response from server. Please try again.');
+                }
+                
+                if (detailsRes.ok && detailsData.id) {
+                    // Verify email matches
+                    if (detailsData.email && detailsData.email.toLowerCase() === email.toLowerCase()) {
+                        // Redirect to booking details page
+                        window.location.replace(`booking-details.html?id=${encodeURIComponent(bookingRef)}`);
+                        return;
+                    } else {
+                        resultEl.className = 'cancel-result error';
+                        resultEl.innerHTML = '<p>The email you entered does not match this booking. Please check your email and try again.</p>';
+                        resultEl.style.display = 'block';
+                        cancelSubmitBtn.disabled = false;
+                        cancelSubmitBtn.textContent = 'Find appointment';
+                        return;
+                    }
+                } else {
+                    // Handle error response
+                    var errorMessage = detailsData.error || 'Booking not found. Please check your Booking ID and email.';
+                    resultEl.className = 'cancel-result error';
+                    resultEl.innerHTML = '<p>' + errorMessage + '</p>';
+                    resultEl.style.display = 'block';
+                    cancelSubmitBtn.disabled = false;
+                    cancelSubmitBtn.textContent = 'Find appointment';
+                }
+            } catch (err) {
+                console.error('Error finding booking:', err);
+                resultEl.className = 'cancel-result error';
+                var userMessage = 'Could not find booking. Please check your Booking ID and email, then try again.';
+                if (err.message && !err.message.includes('Invalid response')) {
+                    userMessage = err.message;
+                }
+                resultEl.innerHTML = '<p>' + userMessage + '</p>';
+                resultEl.style.display = 'block';
+                cancelSubmitBtn.disabled = false;
+                cancelSubmitBtn.textContent = 'Find appointment';
+            }
+        });
+
+        var toggle = document.getElementById('nav-toggle');
+        var links = document.getElementById('nav-links');
+        if (toggle && links) {
+            toggle.addEventListener('click', function() {
+                links.classList.toggle('open');
+                toggle.classList.toggle('open');
+            });
+            document.querySelectorAll('.nav-links a').forEach(function(a) {
+                a.addEventListener('click', function() {
+                    links.classList.remove('open');
+                    toggle.classList.remove('open');
+                });
+            });
+        }
+    })();
+    </script>
+</body>
+</html>
+

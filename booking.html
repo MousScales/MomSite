@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Appointment - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (commented out - will use when we have client credentials) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script> -->
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Progress Modal Styles */
+        .progress-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .progress-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-modal-content {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .progress-modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .progress-modal-header .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .progress-modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .progress-status.loading {
+            background: #e3f2fd;
+        }
+
+        .progress-status.error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+
+        .progress-status.success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+
+        .progress-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #c8914e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-status-icon {
+            font-size: 1.5rem;
+        }
+
+        .progress-status-icon.loading {
+            color: #c8914e;
+        }
+
+        .progress-status-icon.error {
+            color: #f44336;
+        }
+
+        .progress-status-icon.success {
+            color: #4caf50;
+        }
+
+        .progress-message {
+            flex: 1;
+            color: #333;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .progress-message.error {
+            color: #d32f2f;
+            font-weight: 500;
+        }
+
+        .progress-details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .progress-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .progress-modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .progress-modal-btn.primary {
+            background: #c8914e;
+            color: white;
+        }
+
+        .progress-modal-btn.primary:hover {
+            background: #b8864e;
+        }
+
+        .progress-modal-btn.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .progress-modal-btn.secondary:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar scrolled" id="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="nav-links">
+            <a href="index.html">Home</a>
+            <a href="styles-catalog.html">Our Styles</a>
+            <a href="booking.html" class="cta-nav nav-active">Book Now</a>
+            <a href="cancel.html"><i class="fas fa-search"></i> Lookup Booking</a>
+        </div>
+    </nav>
+
+    <main class="booking-container">
+        <div class="page-header">
+            <h1>Book Your Appointment</h1>
+            <p>Choose your preferred style and schedule your appointment.</p>
+        </div>
+
+        <div class="booking-layout">
+            <form id="booking-form" class="booking-form">
+                <div class="form-section">
+                    <h2><i class="fas fa-user"></i> Personal Information</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Full Name <span class="required">*</span></label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><i class="fas fa-cut"></i> Service Details</h2>
+                    <div class="form-group">
+                        <label for="selected-style">Choose Style <span class="required">*</span></label>
+                        <select id="selected-style" name="selected-style" required>
+                            <option value="">Choose a style</option>
+                        </select>
+                        <p class="service-note">Pick your preferred style here or <a href="styles-catalog.html">browse our styles catalog</a> for details.</p>
+                    </div>
+
+                    <div class="form-group" id="box-braids-variation-group" style="display: none;">
+                        <label for="box-braids-variation">Box Braids Type <span class="required">*</span></label>
+                        <select id="box-braids-variation" name="box-braids-variation">
+                            <option value="regular">Regular Box Braids</option>
+                            <option value="knotless">Knotless Box Braids</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="cornrows-variation-group" style="display: none;">
+                        <label for="cornrows-variation">Cornrows Style <span class="required">*</span></label>
+                        <select id="cornrows-variation" name="cornrows-variation" required>
+                            <option value="straight-back">Straight Back Cornrows ($60)</option>
+                            <option value="styled">Styled/Designed Cornrows ($80)</option>
+                        </select>
+                        <p class="service-note">Choose between traditional straight back cornrows or custom styled/designed patterns</p>
+                    </div>
+
+                    <div class="form-group" id="two-strand-twists-variation-group" style="display: none;">
+                        <label for="two-strand-twists-variation">Two Strand Twists Style <span class="required">*</span></label>
+                        <select id="two-strand-twists-variation" name="two-strand-twists-variation">
+                            <option value="regular">Regular</option>
+                            <option value="braided-roots">With Braided Roots</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="hair-length-group" style="display: none;">
+                        <label for="hair-length">Hair Length <span class="required">*</span></label>
+                        <select id="hair-length" name="hair-length">
+                            <option value="">Select hair length</option>
+                            <option value="medium">Medium (Mid-Back)</option>
+                            <option value="long">Long (Lower Back)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="hair-option-group" style="display: none;">
+                        <label for="hair-option">Hair Option <span class="required">*</span></label>
+                        <select id="hair-option" name="hair-option">
+                            <option value="">Select hair option</option>
+                            <option value="synthetic">Synthetic Hair (Included)</option>
+                            <option value="human-hair">Human Hair (+$50)</option>
+                        </select>
+                        <p class="service-note">Basic synthetic hair is included in the price. Human hair is available for an additional $50.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pre-wash-option">Pre-Wash Service <span class="required">*</span></label>
+                        <select id="pre-wash-option" name="pre-wash-option" required>
+                            <option value="no-wash">No Pre-Wash</option>
+                            <option value="wash">Professional Wash ($20)</option>
+                        </select>
+                        <p class="service-note">Professional wash and condition before styling (recommended for clean, healthy results)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="current-hair-image">Current Hair Photo <span class="required">*</span></label>
+                        <input type="file" id="current-hair-image" name="current-hair-image" accept="image/*" required>
+                        <p class="service-note">Please provide a clear, recent photo of your current hair to help us better prepare for your service.</p>
+                        <div id="current-hair-preview" class="image-preview" style="display: none;">
+                            <img id="current-hair-preview-img" src="#" alt="Current hair preview">
+                            <button type="button" id="remove-current-hair-image" class="remove-image">Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reference-image">Reference Image (Optional)</label>
+                        <input type="file" id="reference-image" name="reference-image" accept="image/*">
+                        <div id="image-preview" class="image-preview" style="display: none;">
+                            <img id="preview-img" src="#" alt="Style reference preview">
+                            <button type="button" id="remove-image" class="remove-image">Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Additional Notes (Optional)</label>
+                        <textarea id="notes" name="notes" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><i class="fas fa-calendar-alt"></i> Appointment Details</h2>
+                    <div class="booking-info-banner" role="alert">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <p><strong>Booking Information:</strong> All appointments require at least 48 hours advance notice. Same-day and next-day bookings are not available. If you need something quick or can't find a time that works, call us at <a href="tel:+18604250751">860-425-0751</a> and we'll see if we can fit you in!</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointment-datetime">Select Date and Time <span class="required">*</span></label>
+                        <div class="booking-datetime-container">
+                            <div class="calendar-container">
+                                <div id="calendar"></div>
+                                <div id="selected-date-display" class="selected-date-display" aria-live="polite">Selected Date: —</div>
+                                <input type="hidden" id="appointment-datetime" name="appointment-datetime" required>
+                            </div>
+                            <div class="estimated-duration-display">
+                                <span class="estimated-duration-label">Estimated Duration</span>
+                                <span id="estimated-duration" class="estimated-duration-value">TBD</span>
+                            </div>
+                            <div id="time-slots-container" class="time-slots-container hidden">
+                                <h3>Available Time Slots</h3>
+                                <div class="time-slots-legend">
+                                    <span class="legend-item legend-available"><span class="legend-swatch"></span> Available</span>
+                                    <span class="legend-item legend-limited"><span class="legend-swatch"></span> Limited</span>
+                                    <span class="legend-item legend-booked"><span class="legend-swatch"></span> Fully Booked</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><i class="fas fa-dollar-sign"></i> Pricing</h2>
+                    <div class="price-info">
+                        <p>Total Price: <span id="total-price">$0</span></p>
+                        <p id="pricing-note" style="display: none;" class="service-note"></p>
+                        <div id="add-ons-section" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                            <p style="font-weight: 600; margin-bottom: 8px; color: #333;">Add-ons:</p>
+                            <ul id="add-ons-list" style="list-style: none; padding: 0; margin: 0;">
+                                <!-- Add-ons will be dynamically added here -->
+                            </ul>
+                        </div>
+                        <p>Required Deposit: <span id="deposit-amount">$0</span></p>
+                        <p class="deposit-note">A deposit is required to secure your appointment. The remaining balance will be due at the time of service.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="promo-code">Promo Code (Optional)</label>
+                        <input type="text" id="promo-code" name="promo-code">
+                        <div id="promo-feedback"></div>
+                    </div>
+
+                    <div class="form-group payment-section">
+                        <h3><i class="fas fa-credit-card"></i> Payment</h3>
+                        <div id="payment-element-container" class="payment-element-container"></div>
+                        <div id="payment-message" class="payment-message" role="alert"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn" class="submit-button">Book Appointment</button>
+                    <a href="styles-catalog.html" class="cancel-button">Cancel</a>
+                </div>
+            </form>
+
+            <aside class="booking-sidebar">
+                <div class="sidebar-card">
+                    <div class="sidebar-card-icon"><i class="fas fa-clock"></i></div>
+                    <h3>Business Hours</h3>
+                    <p>Monday &ndash; Saturday: 9 AM &ndash; 7 PM</p>
+                    <p>Sunday: Closed</p>
+                </div>
+                <div class="sidebar-card">
+                    <div class="sidebar-card-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <h3>Location</h3>
+                    <p>116 Ocean Avenue</p>
+                    <p>New London, CT 06320</p>
+                </div>
+                <div class="sidebar-card">
+                    <div class="sidebar-card-icon"><i class="fas fa-info-circle"></i></div>
+                    <h3>Important Notes</h3>
+                    <ul>
+                        <li>Bring reference photos if possible</li>
+                        <li>10% deposit secures your appointment</li>
+                        <li>Free consultation upon request</li>
+                        <li>Reschedule 24 hours in advance</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <h3>Maya African Hair Braiding</h3>
+                <p>Professional hair braiding services in New London, CT.</p>
+                <div class="footer-social">
+                    <a href="https://instagram.com/mayadoeshairrr" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tiktok.com/@mayadoeshairr" target="_blank" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="styles-catalog.html">Our Styles</a>
+                <a href="booking.html">Book Now</a>
+                <a href="cancel.html">Cancel appointment</a>
+            </div>
+            <div class="footer-links">
+                <h4>Hours</h4>
+                <p>Mon &ndash; Sat: 9 am &ndash; 7 pm</p>
+                <p>Sunday: Closed</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Maya African Hair Braiding. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Progress Modal -->
+    <div id="progress-modal" class="progress-modal">
+        <div class="progress-modal-content">
+            <div class="progress-modal-header">
+                <h3 id="progress-modal-title">Processing Your Booking</h3>
+                <button class="close-btn" id="progress-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="progress-modal-body">
+                <div id="progress-status" class="progress-status loading">
+                    <div class="progress-spinner"></div>
+                    <div class="progress-message" id="progress-message">Please wait...</div>
+                </div>
+                <div id="progress-details" class="progress-details" style="display: none;"></div>
+            </div>
+            <div class="progress-modal-footer" id="progress-modal-footer" style="display: none;">
+                <button class="progress-modal-btn secondary" id="progress-modal-cancel">Close</button>
+                <button class="progress-modal-btn primary" id="progress-modal-retry" style="display: none;">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Config -->
+    <script src="config.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="booking.js"></script>
+    <script>
+    (function(){
+        var toggle = document.getElementById('nav-toggle');
+        var links = document.getElementById('nav-links');
+        if (toggle && links) {
+            toggle.addEventListener('click', function() {
+                links.classList.toggle('open');
+                toggle.classList.toggle('open');
+                document.body.classList.toggle('nav-open', links.classList.contains('open'));
+            });
+            document.querySelectorAll('.nav-links a').forEach(function(a) {
+                a.addEventListener('click', function() {
+                    links.classList.remove('open');
+                    toggle.classList.remove('open');
+                    document.body.classList.remove('nav-open');
+                });
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

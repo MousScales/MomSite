@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow public read access to bookings collection
+    match /bookings/{document=**} {
+      allow read: if true;  // Anyone can read bookings
+      allow write: if false; // No one can write through client SDK (use admin SDK/backend instead)
+    }
+  }
+}

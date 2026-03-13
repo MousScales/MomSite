@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed - Maya African Hair Braiding</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .success-container {
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 50px;
+        }
+        .success-title {
+            font-size: 2.5rem;
+            color: var(--primary-color, #2c3e50);
+            margin-bottom: 20px;
+        }
+        .success-message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .booking-details {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .booking-details h3 {
+            color: var(--primary-color, #2c3e50);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .detail-value {
+            color: #666;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: var(--color-accent, #c8914e);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #b8864e;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #1976D2;
+        }
+        .booking-id-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .copy-btn {
+            background: var(--color-accent, #c8914e);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover {
+            background: #b8864e;
+        }
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+        .copy-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 10000;
+            animation: slideInUp 0.3s ease-out;
+        }
+        .copy-toast.show {
+            display: block;
+        }
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Save Booking ID Modal Styles */
+        .save-id-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .save-id-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .save-id-modal-content {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+            position: relative;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .save-id-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+        .save-id-modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .save-id-modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .save-id-modal-header .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .save-id-modal-body {
+            margin-bottom: 1.5rem;
+        }
+        .save-id-modal-body p {
+            margin: 0 0 1rem 0;
+            color: #666;
+            line-height: 1.6;
+        }
+        .save-id-modal-body .booking-id-display {
+            background: #f8f9fa;
+            border: 2px solid var(--color-accent, #c8914e);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .save-id-modal-body .booking-id-display strong {
+            display: block;
+            color: #333;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .save-id-modal-body .booking-id-display .booking-id-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-accent, #c8914e);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        .save-id-modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        .save-id-modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .save-id-modal-btn-primary {
+            background: var(--color-accent, #c8914e);
+            color: #fff;
+        }
+        .save-id-modal-btn-primary:hover {
+            background: #b8864e;
+        }
+        .save-id-modal-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--color-accent, #c8914e);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar scrolled" id="navbar">
+        <a href="index.html" class="logo">Maya African Hair Braiding</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+        <div class="nav-links" id="nav-links">
+            <a href="index.html">Home</a>
+            <a href="styles-catalog.html">Our Styles</a>
+            <a href="booking.html" class="cta-nav">Book Now</a>
+            <a href="cancel.html"><i class="fas fa-search"></i> Lookup Booking</a>
+        </div>
+    </nav>
+
+    <main class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h1 class="success-title">Booking Confirmed!</h1>
+        
+        <p class="success-message">
+            Thank you for your booking! Your appointment has been confirmed and your deposit payment was successful.
+        </p>
+
+        <div class="info-box">
+            <p><i class="fas fa-info-circle"></i> You will receive a confirmation email shortly with all the details of your appointment.</p>
+        </div>
+
+        <div class="booking-details" id="booking-details">
+            <h3>Booking Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Booking ID:</span>
+                <div class="booking-id-container">
+                    <span class="detail-value" id="booking-id">Loading...</span>
+                    <button class="copy-btn" id="copy-booking-id-btn" onclick="copyBookingId()" title="Copy Booking ID">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Payment Status:</span>
+                <span class="detail-value" id="payment-status">Confirmed</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Deposit Paid:</span>
+                <span class="detail-value" id="deposit-amount">Loading...</span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="index.html" class="btn btn-primary">Return to Home</a>
+            <a href="styles-catalog.html" class="btn btn-secondary">View Our Styles</a>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                <i class="fas fa-phone"></i> Need to make changes? Contact us or cancel your booking.
+            </p>
+            <a href="cancel.html" id="cancel-link" class="btn btn-secondary" style="display: inline-block; margin-top: 10px;">
+                <i class="fas fa-calendar-times"></i> Cancel This Booking
+            </a>
+        </div>
+    </main>
+
+    <!-- Save Booking ID Modal -->
+    <div id="save-id-modal" class="save-id-modal">
+        <div class="save-id-modal-content">
+            <div class="save-id-modal-header">
+                <h2><i class="fas fa-bookmark"></i> Save Your Booking ID</h2>
+                <button class="close-btn" onclick="closeSaveIdModal()">&times;</button>
+            </div>
+            <div class="save-id-modal-body">
+                <div class="save-id-modal-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <p><strong>Important:</strong> Please save your Booking ID for future reference.</p>
+                <p>You'll need this ID to:</p>
+                <ul style="text-align: left; color: #666; margin: 1rem 0; padding-left: 1.5rem;">
+                    <li>Look up your booking details</li>
+                    <li>Cancel your appointment</li>
+                </ul>
+                <div class="booking-id-display">
+                    <strong>Your Booking ID:</strong>
+                    <div class="booking-id-value" id="modal-booking-id">Loading...</div>
+                </div>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 1rem;">
+                    <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Click the "Copy" button next to your Booking ID above to easily save it.
+                </p>
+            </div>
+            <div class="save-id-modal-footer">
+                <button class="save-id-modal-btn save-id-modal-btn-primary" onclick="closeSaveIdModal()">
+                    Got it, thanks!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Toast Notification -->
+    <div class="copy-toast" id="copy-toast">
+        <i class="fas fa-check-circle"></i> Booking ID copied to clipboard!
+    </div>
+
+    <script>
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        let bookingId = null;
+        
+        // Display session ID if available
+        if (sessionId) {
+            document.getElementById('booking-id').textContent = sessionId.substring(0, 20) + '...';
+            
+            // Fetch booking details from Stripe to show deposit amount
+            fetch(`/api/get-booking-by-session?session_id=${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.booking_id) {
+                        bookingId = data.booking_id;
+                        // Update cancel link to include booking ID (prefer booking_reference if available)
+                        const cancelLink = document.getElementById('cancel-link');
+                        if (cancelLink) {
+                            const bookingRef = data.booking_reference || bookingId;
+                            cancelLink.href = `cancel.html?bookingId=${bookingRef}`;
+                        }
+                    }
+                    // Display booking reference if available
+                    if (data.booking_reference) {
+                        const bookingIdEl = document.getElementById('booking-id');
+                        if (bookingIdEl) {
+                            bookingIdEl.textContent = data.booking_reference;
+                            bookingIdEl.style.fontWeight = '600';
+                            bookingIdEl.style.color = 'var(--color-accent, #c8914e)';
+                            // Store booking reference for copying
+                            bookingIdEl.setAttribute('data-booking-id', data.booking_reference);
+                            
+                            // Update modal with booking ID
+                            const modalBookingId = document.getElementById('modal-booking-id');
+                            if (modalBookingId) {
+                                modalBookingId.textContent = data.booking_reference;
+                            }
+                            
+                            // Show save ID modal after a short delay
+                            setTimeout(() => {
+                                showSaveIdModal();
+                            }, 1000);
+                        }
+                    } else if (bookingId) {
+                        // Store booking ID for copying if no reference available
+                        const bookingIdEl = document.getElementById('booking-id');
+                        if (bookingIdEl) {
+                            bookingIdEl.setAttribute('data-booking-id', bookingId);
+                            
+                            // Update modal with booking ID
+                            const modalBookingId = document.getElementById('modal-booking-id');
+                            if (modalBookingId) {
+                                modalBookingId.textContent = bookingId.substring(0, 20) + '...';
+                            }
+                            
+                            // Show save ID modal after a short delay
+                            setTimeout(() => {
+                                showSaveIdModal();
+                            }, 1000);
+                        }
+                    }
+                    if (data.deposit_paid) {
+                        document.getElementById('deposit-amount').textContent = `$${data.deposit_paid.toFixed(2)}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching booking details:', error);
+                    // Try to get deposit from Stripe session
+                    if (sessionId) {
+                        // For now, just show that payment was successful
+                        document.getElementById('deposit-amount').textContent = 'Payment Successful';
+                    }
+                });
+        } else {
+            document.getElementById('booking-id').textContent = 'N/A';
+            document.getElementById('deposit-amount').textContent = 'N/A';
+            // Hide copy button if no booking ID
+            const copyBtn = document.getElementById('copy-booking-id-btn');
+            if (copyBtn) {
+                copyBtn.style.display = 'none';
+            }
+        }
+
+        // Copy Booking ID function
+        function copyBookingId() {
+            const bookingIdEl = document.getElementById('booking-id');
+            const bookingId = bookingIdEl.getAttribute('data-booking-id') || bookingIdEl.textContent.trim();
+            
+            if (!bookingId || bookingId === 'Loading...' || bookingId === 'N/A') {
+                return;
+            }
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(bookingId).then(function() {
+                // Show success toast
+                const toast = document.getElementById('copy-toast');
+                toast.classList.add('show');
+                
+                // Update button state
+                const copyBtn = document.getElementById('copy-booking-id-btn');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                copyBtn.classList.add('copied');
+                
+                // Reset button after 2 seconds
+                setTimeout(function() {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('copied');
+                    toast.classList.remove('show');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = bookingId;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const toast = document.getElementById('copy-toast');
+                    toast.classList.add('show');
+                    setTimeout(function() {
+                        toast.classList.remove('show');
+                    }, 2000);
+                } catch (err) {
+                    alert('Failed to copy. Please manually copy: ' + bookingId);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // Save Booking ID Modal Functions
+        function showSaveIdModal() {
+            const modal = document.getElementById('save-id-modal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function closeSaveIdModal() {
+            const modal = document.getElementById('save-id-modal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('save-id-modal');
+            if (event.target === modal) {
+                closeSaveIdModal();
+            }
+        });
+    </script>
+</body>
+</html>
+
