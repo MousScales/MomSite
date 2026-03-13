@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getStripeSecretKey } = require('./_stripe-env');
 const { createCalendarEvent } = require('./_calendar');
+const { sendBookingConfirmation } = require('./_resend');
 
 async function stripeRequest(method, path) {
   const key = getStripeSecretKey();
@@ -34,9 +35,14 @@ module.exports = async (req, res) => {
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbmJkcWtxbHhrZmdoamNidndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNzQxNjMsImV4cCI6MjA4ODc1MDE2M30.r8jDPCV7C7kTrnHIwGvs4vBq-sf8rvyFxe1Q6_rR2Tg';
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : (req.headers.origin || req.headers.referer || 'https://mom-site-steel.vercel.app').replace(/\/$/, '');
+  // Prefer SITE_URL/DOMAIN_URL for localhost testing; then Vercel; then request origin
+  const baseUrl = (
+    process.env.SITE_URL ||
+    process.env.DOMAIN_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    (req.headers.origin || req.headers.referer || '').replace(/\/$/, '') ||
+    'https://mom-site-steel.vercel.app'
+  ).replace(/\/$/, '');
 
   const redirect = (path) => {
     res.writeHead(302, { Location: path });
@@ -154,6 +160,23 @@ module.exports = async (req, res) => {
     }
 
     await supabase.from('temp_bookings').delete().eq('id', resolvedBookingId);
+
+    const lookupBookingUrl = `${baseUrl}/cancel.html?bookingId=${encodeURIComponent(bookingData.booking_reference || bookingData.id)}`;
+    try {
+      await sendBookingConfirmation({
+        to: bookingData.email,
+        customerName: bookingData.name,
+        bookingReference: bookingData.booking_reference || bookingData.id,
+        appointmentDatetime: bookingData['appointment-datetime'],
+        depositPaid: bookingData.deposit_paid,
+        selectedStyle: bookingData.selected_style,
+        duration: bookingData.duration ? `${bookingData.duration} min` : '—',
+        notes: bookingData.notes,
+        lookupBookingUrl,
+      });
+    } catch (e) {
+      console.warn('Confirmation email failed (booking still saved):', e.message);
+    }
 
     const lookupId = payment_intent_id || session_id;
     return redirect(`${baseUrl}/booking-success.html?session_id=${lookupId}`);

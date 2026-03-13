@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>Booking Confirmed — Maya African Hair Braiding</title>
+    <style>
+      @media (max-width: 620px) {
+        .container { width: 100% !important; }
+        .px-32 { padding-left: 16px !important; padding-right: 16px !important; }
+        .stack { display: block !important; width: 100% !important; }
+        .text-center-sm { text-align: center !important; }
+        .btn { width: 100% !important; }
+      }
+    </style>
+  </head>
+
+  <body style="margin:0; padding:0; background:#faf8f5; color:#2d2d2d; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+    <!-- Preheader (hidden) -->
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">
+      Your appointment at Maya African Hair Braiding is confirmed. Save your booking details inside.
+    </div>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#faf8f5;">
+      <tr>
+        <td align="center" style="padding:28px 12px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container"
+            style="width:600px; max-width:600px; border:1px solid #ebe5dd; border-radius:16px; overflow:hidden; background:#ffffff; box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+
+            <!-- Header -->
+            <tr>
+              <td style="padding:22px 24px; background:linear-gradient(180deg, rgba(184,134,78,0.08), rgba(255,255,255,0)); border-bottom:1px solid #ebe5dd;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="stack text-center-sm" style="vertical-align:middle;">
+                      <div style="font-family:'Playfair Display',Georgia,serif; font-size:18px; font-weight:700; color:#1a1a1a; letter-spacing:0.02em;">
+                        Maya African Hair Braiding
+                      </div>
+                      <div style="font-size:12px; color:#6b6b6b; margin-top:2px;">Expert braids · New London, CT</div>
+                    </td>
+                    <td class="stack text-center-sm" align="right" style="vertical-align:middle;">
+                      <div style="display:inline-block; padding:8px 14px; border-radius:999px; background:#f5f0ea; border:1px solid #ebe5dd; color:#b8864e; font-size:12px; font-weight:700;">
+                        ✓ Booking Confirmed
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Hero -->
+            <tr>
+              <td class="px-32" style="padding:26px 32px 10px 32px;">
+                <div style="font-family:'Playfair Display',Georgia,serif; font-size:24px; font-weight:700; letter-spacing:0.02em; color:#1a1a1a;">
+                  Your appointment is confirmed!
+                </div>
+                <div style="margin-top:10px; font-size:14px; line-height:1.6; color:#6b6b6b;">
+                  Hi <strong style="color:#2d2d2d;">{{CUSTOMER_NAME}}</strong>, thank you for booking with Maya African Hair Braiding.
+                  Your deposit has been received. Details are below.
+                </div>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:16px;">
+                  <tr>
+                    <td style="padding:16px 18px; border-radius:14px; background:#faf8f5; border:1px solid #ebe5dd;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="stack" style="padding-right:12px;">
+                            <div style="font-size:11px; color:#6b6b6b; text-transform:uppercase; letter-spacing:0.05em;">Booking ID</div>
+                            <div style="font-size:15px; font-weight:700; color:#1a1a1a;">{{BOOKING_REFERENCE}}</div>
+                          </td>
+                          <td class="stack" style="padding-right:12px;">
+                            <div style="font-size:11px; color:#6b6b6b; text-transform:uppercase; letter-spacing:0.05em;">Date &amp; Time</div>
+                            <div style="font-size:15px; font-weight:700; color:#1a1a1a;">{{APPOINTMENT_DATETIME}}</div>
+                          </td>
+                          <td class="stack" align="right">
+                            <div style="font-size:11px; color:#6b6b6b; text-transform:uppercase; letter-spacing:0.05em;">Deposit Paid</div>
+                            <div style="font-size:15px; font-weight:700; color:#b8864e;">{{DEPOSIT_PAID}}</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Style & details -->
+            <tr>
+              <td class="px-32" style="padding:10px 32px 6px 32px;">
+                <div style="padding:16px; background:#faf8f5; border:1px solid #ebe5dd; border-radius:14px;">
+                  <div style="font-size:13px; font-weight:700; color:#1a1a1a; margin-bottom:8px;">Appointment details</div>
+                  <div style="font-size:13px; line-height:1.6; color:#2d2d2d;">
+                    <strong style="color:#6b6b6b;">Style:</strong> {{SELECTED_STYLE}}<br/>
+                    <strong style="color:#6b6b6b;">Duration:</strong> {{DURATION}}<br/>
+                    <strong style="color:#6b6b6b;">Notes:</strong> {{NOTES}}
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- CTA -->
+            <tr>
+              <td class="px-32" style="padding:18px 32px 26px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="stack" style="vertical-align:middle;">
+                      <div style="font-size:13px; line-height:1.6; color:#6b6b6b;">
+                        Save your Booking ID to look up or cancel your appointment anytime.
+                      </div>
+                    </td>
+                    <td class="stack" align="right" style="vertical-align:middle; padding-top:10px;">
+                      <a
+                        class="btn"
+                        href="{{LOOKUP_BOOKING_URL}}"
+                        style="display:inline-block; text-decoration:none; background:#b8864e; color:#fff; font-weight:700; font-size:14px; padding:12px 18px; border-radius:12px; border:1px solid #a37340;"
+                      >
+                        Look up booking →
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:18px 24px; border-top:1px solid #ebe5dd; background:#faf8f5;">
+                <div style="font-size:12px; color:#6b6b6b; line-height:1.6;">
+                  This confirmation was sent to {{CUSTOMER_EMAIL}} because you completed a booking on Maya African Hair Braiding.
+                </div>
+                <div style="margin-top:10px; font-size:12px; color:#888;">
+                  © 2026 Maya African Hair Braiding · New London, CT
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <div style="height:14px;"></div>
+
+          <div style="font-size:11px; color:#888; text-align:center; max-width:600px;">
+            Need to cancel? Use the Lookup Booking link above and enter your Booking ID.
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

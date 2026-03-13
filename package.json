@@ -4,6 +4,7 @@
   "description": "Maya African Hair Braiding - booking site",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "googleapis": "^144.0.0"
+    "googleapis": "^144.0.0",
+    "resend": "^4.0.0"
   }
 }

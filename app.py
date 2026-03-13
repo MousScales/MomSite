@@ -16,6 +16,11 @@ import stripe
 # from firebase_admin import credentials, firestore
 from supabase import create_client, Client
 try:
+    from resend_helper import send_booking_confirmation
+except ImportError:
+    send_booking_confirmation = None
+
+try:
     from calendar_helper import create_calendar_event, delete_calendar_event
 except ImportError:
     # Fallback to OAuth if service account not available
@@ -30,6 +35,9 @@ except ImportError:
 
 # Load environment variables
 load_dotenv()
+
+_resend_ok = (os.getenv("RESEND_API_KEY") or "").strip().startswith("re_")
+print("Resend configured for confirmation emails." if _resend_ok else "Resend NOT configured (set RESEND_API_KEY in .env); confirmation emails disabled.")
 
 # --- App Initialization ---
 app = Flask(__name__)
@@ -528,6 +536,7 @@ def finalize_temp_booking_payment(booking_id, payment_reference, amount_paid_cen
     Moves a booking from temp_bookings to bookings after Stripe confirms payment.
     Returns the booking reference used for the success page redirect.
     """
+    print(f"[Resend] finalize_temp_booking_payment called: booking_id={booking_id}", flush=True)
     site_url = get_site_url()
 
     existing_booking = supabase.table('bookings').select('id').eq('id', booking_id).execute()
@@ -602,6 +611,32 @@ def finalize_temp_booking_payment(booking_id, payment_reference, amount_paid_cen
     supabase.table('bookings').insert(booking_data).execute()
     supabase.table('temp_bookings').delete().eq('id', booking_id).execute()
 
+    customer_email = booking_data.get('email')
+    print(f"[Resend] send_booking_confirmation={send_booking_confirmation is not None}, booking email={repr(customer_email)}", flush=True)
+    if not customer_email:
+        print("[Resend] Skipping confirmation: no email on booking.", flush=True)
+    elif send_booking_confirmation and customer_email:
+        lookup_url = f"{site_url}/cancel.html?bookingId={quote(booking_data.get('booking_reference') or booking_id)}"
+        print(f"Attempting to send confirmation email to {customer_email} ...", flush=True)
+        try:
+            ok = send_booking_confirmation(
+                to_email=booking_data.get('email'),
+                customer_name=booking_data.get('name'),
+                booking_reference=booking_data.get('booking_reference'),
+                appointment_datetime=appointment_datetime_value,
+                deposit_paid=booking_data.get('deposit_paid'),
+                selected_style=booking_data.get('selected_style'),
+                duration=booking_data.get('duration'),
+                notes=booking_data.get('notes'),
+                lookup_booking_url=lookup_url,
+            )
+            if not ok:
+                print("Resend: confirmation email was not sent (check logs above)", flush=True)
+        except Exception as email_err:
+            print(f"Confirmation email failed (booking saved): {email_err}")
+            import traceback
+            traceback.print_exc()
+
     return redirect(f"{site_url}/booking-success.html?session_id={quote(payment_reference)}")
 
 
@@ -610,7 +645,7 @@ def handle_payment_success():
     """
     Handles successful Stripe returns for both Checkout Sessions and Payment Intents.
     """
-    print("\n--- /api/handle-payment-success endpoint hit ---")
+    print("\n--- /api/handle-payment-success endpoint hit (Flask) ---", flush=True)
     site_url = get_site_url()
 
     if not supabase:
