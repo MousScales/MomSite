@@ -1,7 +1,9 @@
 /**
  * Google Calendar helper for Vercel serverless.
- * Set GOOGLE_SERVICE_ACCOUNT_JSON (full JSON key as string) and GOOGLE_CALENDAR_ID in Vercel env.
- * Share the target calendar with the service account email and grant "Make changes to events".
+ * Supports two auth methods:
+ * 1. OAuth (recommended): GOOGLE_CALENDAR_ID, GOOGLE_CALENDAR_CLIENT_ID,
+ *    GOOGLE_CALENDAR_CLIENT_SECRET, GOOGLE_CALENDAR_REFRESH_TOKEN
+ * 2. Service account: GOOGLE_SERVICE_ACCOUNT_JSON + GOOGLE_CALENDAR_ID
  */
 
 let _calendar = null;
@@ -11,18 +13,33 @@ function getCalendar() {
   if (_calendar !== undefined) return _calendar;
   _calendar = null;
   _calendarId = process.env.GOOGLE_CALENDAR_ID || '';
-  const jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!_calendarId || !jsonStr) {
-    return null;
-  }
+  if (!_calendarId) return null;
+
   try {
     const { google } = require('googleapis');
-    const credentials = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/calendar.events'],
-    });
-    _calendar = google.calendar({ version: 'v3', auth });
+
+    // OAuth with refresh token (from authorize_calendar.py)
+    const refreshToken = process.env.GOOGLE_CALENDAR_REFRESH_TOKEN;
+    const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+
+    if (refreshToken && clientId && clientSecret) {
+      const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, 'urn:ietf:wg:oauth:2.0:oob');
+      oauth2Client.setCredentials({ refresh_token: refreshToken });
+      _calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      return _calendar;
+    }
+
+    // Fallback: service account
+    const jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    if (jsonStr) {
+      const credentials = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+      const auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/calendar.events'],
+      });
+      _calendar = google.calendar({ version: 'v3', auth });
+    }
   } catch (e) {
     console.warn('Google Calendar init failed:', e.message);
   }

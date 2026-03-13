@@ -4,6 +4,10 @@ Run this once to authorize the app and create calendar_token.json.
 """
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from calendar_helper_oauth import get_calendar_service_oauth
 
 print("=" * 60)
