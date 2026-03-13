@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getStripeSecretKey } = require('./_stripe-env');
+const { createCalendarEvent } = require('./_calendar');
 
 async function stripeRequest(method, path) {
   const key = getStripeSecretKey();
@@ -103,6 +104,21 @@ module.exports = async (req, res) => {
     const temp = tempData;
     const appointmentDatetime = temp['appointment-datetime'] || temp.appointment_datetime;
 
+    let calendarEventId = null;
+    try {
+      calendarEventId = await createCalendarEvent({
+        'appointment-datetime': appointmentDatetime,
+        duration: temp.duration,
+        name: temp.name,
+        selected_style: temp.selected_style || temp.selectedStyle,
+        email: temp.email,
+        phone: temp.phone,
+        notes: temp.notes || '',
+      });
+    } catch (e) {
+      console.warn('Google Calendar create failed:', e.message);
+    }
+
     const bookingData = {
       id: resolvedBookingId,
       name: temp.name,
@@ -128,6 +144,7 @@ module.exports = async (req, res) => {
       payment_session_id: payment_intent_id || session_id,
       stripe_session_id: payment_intent_id || session_id,
       booking_reference: temp.booking_reference,
+      ...(calendarEventId && { calendar_event_id: calendarEventId }),
     };
 
     const { error: insertError } = await supabase.from('bookings').insert(bookingData);

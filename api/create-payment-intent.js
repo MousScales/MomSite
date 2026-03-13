@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
     const pi = await stripeRequest('POST', '/payment_intents', {
       amount: String(depositAmount),
       currency: 'usd',
-      'payment_method_types[]': 'card',
+      'automatic_payment_methods[enabled]': 'true',
       'metadata[bookingId]': bookingId
     });
 

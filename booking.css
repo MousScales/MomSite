@@ -339,11 +339,54 @@
 }
 
 .payment-element-container {
-    min-height: 96px;
-    padding: 1rem;
+    min-height: 120px;
+    padding: 1rem 1.25rem;
     border: 1px solid #e6dccf;
     border-radius: 8px;
     background: #faf7f2;
+}
+
+.payment-section .payment-customer-summary {
+    margin-bottom: 1rem;
+}
+
+.payment-section .form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.payment-section .payment-summary-field {
+    flex: 1;
+    min-width: 140px;
+}
+
+/* Custom card form (our layout + Stripe Card Element) */
+.custom-card-form {
+    margin-top: 0.5rem;
+}
+.custom-card-label {
+    display: block;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+#card-element {
+    padding: 0.75rem;
+    border: 1px solid #e6dccf;
+    border-radius: 8px;
+    background: #fff;
+}
+#card-element.StripeElement--focus {
+    border-color: #c8914e;
+    box-shadow: 0 0 0 2px rgba(200, 145, 78, 0.2);
+}
+#card-errors {
+    color: #c0392b;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    min-height: 1.25rem;
 }
 
 .payment-placeholder,

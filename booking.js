@@ -1276,10 +1276,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             paymentIntentClientSecret = data.clientSecret;
+            /* Payment Element: Card, Cash App Pay, Amazon Pay (layout matches reference). */
             const appearance = {
                 theme: 'stripe',
                 variables: {
-                    colorPrimary: '#c8914e'
+                    colorPrimary: '#c8914e',
+                    borderRadius: '8px'
                 }
             };
             const billingName = document.getElementById('name')?.value?.trim() || undefined;
@@ -1290,7 +1292,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             paymentElement = elements.create('payment', {
                 layout: 'tabs',
-                paymentMethodOrder: ['card'],
+                paymentMethodOrder: ['card', 'cashapp', 'amazon_pay', 'link'],
                 defaultValues: {
                     billingDetails: {
                         name: billingName,
