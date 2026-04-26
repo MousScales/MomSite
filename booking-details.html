@@ -679,10 +679,19 @@
                 document.getElementById('notes-section').style.display = 'block';
             }
 
-            // Hide action buttons if already cancelled
+            // Hide action buttons if already cancelled or appointment is in the past
+            const isPast = appointmentDateTime && new Date(appointmentDateTime) < new Date();
             if (status === 'cancelled') {
                 document.getElementById('cancel-btn').style.display = 'none';
                 document.getElementById('reschedule-btn').style.display = 'none';
+            } else if (isPast) {
+                document.getElementById('cancel-btn').style.display = 'none';
+                document.getElementById('reschedule-btn').style.display = 'none';
+                // Show a past appointment notice
+                const notice = document.createElement('div');
+                notice.style.cssText = 'background:#f8f9fa;border-left:4px solid #aaa;padding:0.9rem 1.25rem;border-radius:8px;color:#666;font-size:0.9rem;display:flex;align-items:center;gap:0.6rem;';
+                notice.innerHTML = '<i class="fas fa-clock" style="color:#aaa;font-size:1.1rem;"></i> This appointment has already passed and can no longer be rescheduled or cancelled.';
+                document.querySelector('.bd-actions').replaceWith(notice);
             }
         }
 
