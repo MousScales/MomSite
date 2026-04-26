@@ -437,6 +437,11 @@ body {
     color: white;
 }
 
+.status-rescheduled {
+    background: #dfe6fd;
+    color: #6c5ce7;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .calendar-header {
@@ -580,6 +585,11 @@ body {
 .status-cancelled {
     background-color: #f8d7da;
     color: #721c24;
+}
+
+.status-rescheduled {
+    background-color: #dfe6fd;
+    color: #6c5ce7;
 }
 
 .booking-actions {

@@ -332,6 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             'confirmed': '#00b894',
             'pending': '#fdcb6e',
             'pending_payment': '#fdcb6e',
+            'rescheduled': '#a29bfe',
             'cancelled': '#ff7675',
             'completed': '#74b9ff',
             'default': '#b2bec3'

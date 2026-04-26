@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
     // Update booking in Supabase
     const { error: updateError } = await supabase
       .from('bookings')
-      .update({ 'appointment-datetime': newDatetime, updated_at: now })
+      .update({ 'appointment-datetime': newDatetime, status: 'rescheduled', updated_at: now })
       .eq('id', booking.id);
 
     if (updateError) {
