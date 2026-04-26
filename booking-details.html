@@ -436,21 +436,32 @@
                 <button class="close-btn" onclick="closeRescheduleModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="color:#555;">Choose a new date and time. No extra deposit required.</p>
+                <p style="color:#555;margin-bottom:1rem;">Choose a new date and time. No extra deposit required.</p>
 
-                <div style="margin-bottom:1rem;">
-                    <label style="display:block;font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;">New Date</label>
-                    <input type="date" id="reschedule-date" style="width:100%;padding:0.7rem 1rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:1rem;" onchange="loadRescheduleTimeSlots()">
+                <!-- Calendar -->
+                <div id="reschedule-calendar-wrap">
+                    <div class="calendar-wrapper">
+                        <div class="calendar-header">
+                            <button id="rs-prev-month" class="calendar-nav-btn" type="button">&lt;</button>
+                            <div id="rs-month-year" style="font-weight:600;"></div>
+                            <button id="rs-next-month" class="calendar-nav-btn" type="button">&gt;</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                        </div>
+                        <div id="rs-calendar-days" class="calendar-days"></div>
+                    </div>
                 </div>
 
-                <div id="reschedule-slots-wrap" style="display:none;margin-bottom:1rem;">
-                    <label style="display:block;font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;">Available Times</label>
-                    <div id="reschedule-slots" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+                <!-- Time slots -->
+                <div id="reschedule-slots-wrap" style="display:none;margin-top:1rem;">
+                    <p style="font-weight:600;font-size:0.9rem;margin:0 0 0.6rem;color:#333;">Available Times</p>
+                    <div id="reschedule-slots" class="time-slots-wrapper" style="max-height:220px;overflow-y:auto;"></div>
                     <p id="reschedule-no-slots" style="display:none;color:#c0392b;font-size:0.9rem;margin:0.5rem 0 0;">No available times for this day. Please pick another date.</p>
                 </div>
 
-                <div id="reschedule-loading" style="display:none;color:#888;font-size:0.9rem;"><i class="fas fa-spinner fa-spin"></i> Checking availability...</div>
-                <div id="reschedule-error" style="display:none;background:#f8d7da;color:#721c24;padding:0.75rem 1rem;border-radius:8px;font-size:0.9rem;margin-top:0.5rem;"></div>
+                <div id="reschedule-loading" style="display:none;color:#888;font-size:0.9rem;margin-top:0.75rem;"><i class="fas fa-spinner fa-spin"></i> Checking availability...</div>
+                <div id="reschedule-error" style="display:none;background:#f8d7da;color:#721c24;padding:0.75rem 1rem;border-radius:8px;font-size:0.9rem;margin-top:0.75rem;"></div>
             </div>
             <div class="modal-footer">
                 <button class="modal-btn modal-btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
@@ -799,21 +810,107 @@
             '3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM','5:30 PM',
             '6:00 PM','6:30 PM','7:00 PM'
         ];
-        let selectedRescheduleSlot = null;
+        // Slots allowed on Saturdays (nothing at or after 2:00 PM)
+        const SATURDAY_CUTOFF_HOUR = 14; // 2 PM
+
+        let rsCurrentDate = new Date();
+        let rsSelectedDate = null;
         let selectedRescheduleDatetime = null;
 
+        const BLOCKED_RANGES = [
+            { month: 2, startDay: 14, endDay: 21, year: 2026 }
+        ];
+
+        function rsIsBlocked(d) {
+            return BLOCKED_RANGES.some(r => {
+                if (r.year && d.getFullYear() !== r.year) return false;
+                return d.getMonth() === r.month && d.getDate() >= r.startDay && d.getDate() <= r.endDay;
+            });
+        }
+
+        function rsSlotToDatetime(dateStr, slot) {
+            const [time, period] = slot.split(' ');
+            let [h, m] = time.split(':').map(Number);
+            if (period === 'PM' && h !== 12) h += 12;
+            if (period === 'AM' && h === 12) h = 0;
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setHours(h, m, 0, 0);
+            return d;
+        }
+
+        function rsRenderCalendar() {
+            const year = rsCurrentDate.getFullYear();
+            const month = rsCurrentDate.getMonth();
+            document.getElementById('rs-month-year').textContent =
+                new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            const minDate = new Date(Date.now() + 48 * 60 * 60 * 1000);
+            const container = document.getElementById('rs-calendar-days');
+            container.innerHTML = '';
+
+            // Prev month filler
+            for (let i = 0; i < firstDay; i++) {
+                const d = document.createElement('div');
+                d.className = 'calendar-day other-month';
+                d.textContent = daysInPrevMonth - firstDay + 1 + i;
+                container.appendChild(d);
+            }
+
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const div = document.createElement('div');
+                div.className = 'calendar-day';
+                div.textContent = day;
+
+                const isSunday = date.getDay() === 0;
+                const isPast = date < minDate;
+                const isBlocked = rsIsBlocked(date);
+                const isSelected = rsSelectedDate && date.toDateString() === rsSelectedDate.toDateString();
+                const isToday = date.toDateString() === new Date().toDateString();
+
+                if (isToday) div.classList.add('today');
+                if (isSelected) div.classList.add('selected');
+
+                if (isSunday || isPast || isBlocked) {
+                    div.classList.add('past');
+                    if (isSunday) div.title = 'Closed on Sundays';
+                    else if (isBlocked) div.title = 'Unavailable this week';
+                    else div.title = 'Requires 48 hours advance notice';
+                } else {
+                    div.addEventListener('click', () => {
+                        rsSelectedDate = date;
+                        rsRenderCalendar();
+                        loadRescheduleTimeSlots(date);
+                    });
+                }
+                container.appendChild(div);
+            }
+
+            // Next month filler
+            const total = 42;
+            const filled = firstDay + daysInMonth;
+            for (let day = 1; day <= total - filled; day++) {
+                const d = document.createElement('div');
+                d.className = 'calendar-day other-month';
+                d.textContent = day;
+                container.appendChild(d);
+            }
+        }
+
         function openRescheduleModal() {
-            selectedRescheduleSlot = null;
+            rsSelectedDate = null;
             selectedRescheduleDatetime = null;
-            document.getElementById('reschedule-date').value = '';
+            rsCurrentDate = new Date();
             document.getElementById('reschedule-slots-wrap').style.display = 'none';
             document.getElementById('reschedule-slots').innerHTML = '';
             document.getElementById('reschedule-loading').style.display = 'none';
             document.getElementById('reschedule-error').style.display = 'none';
             document.getElementById('confirm-reschedule-btn').disabled = true;
-            // Set min date to 48h from now
-            const minDate = new Date(Date.now() + 48 * 60 * 60 * 1000);
-            document.getElementById('reschedule-date').min = minDate.toISOString().split('T')[0];
+            rsRenderCalendar();
             document.getElementById('reschedule-modal').classList.add('show');
         }
 
@@ -826,21 +923,17 @@
             if (bookingId) loadBookingDetails(bookingId);
         }
 
-        function slotToDatetime(dateStr, slot) {
-            const [time, period] = slot.split(' ');
-            let [h, m] = time.split(':').map(Number);
-            if (period === 'PM' && h !== 12) h += 12;
-            if (period === 'AM' && h === 12) h = 0;
-            const d = new Date(dateStr + 'T00:00:00');
-            d.setHours(h, m, 0, 0);
-            return d;
-        }
+        // Calendar prev/next
+        document.getElementById('rs-prev-month').addEventListener('click', () => {
+            rsCurrentDate.setMonth(rsCurrentDate.getMonth() - 1);
+            rsRenderCalendar();
+        });
+        document.getElementById('rs-next-month').addEventListener('click', () => {
+            rsCurrentDate.setMonth(rsCurrentDate.getMonth() + 1);
+            rsRenderCalendar();
+        });
 
-        async function loadRescheduleTimeSlots() {
-            const dateStr = document.getElementById('reschedule-date').value;
-            if (!dateStr) return;
-
-            selectedRescheduleSlot = null;
+        async function loadRescheduleTimeSlots(date) {
             selectedRescheduleDatetime = null;
             document.getElementById('confirm-reschedule-btn').disabled = true;
             document.getElementById('reschedule-slots-wrap').style.display = 'none';
@@ -848,21 +941,15 @@
             document.getElementById('reschedule-error').style.display = 'none';
             document.getElementById('reschedule-no-slots').style.display = 'none';
 
-            // Block Sundays
-            const picked = new Date(dateStr + 'T12:00:00');
-            if (picked.getDay() === 0) {
-                document.getElementById('reschedule-loading').style.display = 'none';
-                document.getElementById('reschedule-error').textContent = 'Closed on Sundays. Please pick another day.';
-                document.getElementById('reschedule-error').style.display = 'block';
-                return;
-            }
+            const dateStr = date.toISOString().split('T')[0];
+            const isSaturday = date.getDay() === 6;
 
             let unavailable = [];
             try {
                 const res = await fetch(`/api/get-unavailable-times?date=${dateStr}`);
                 const data = await res.json();
                 unavailable = data.unavailableTimes || [];
-            } catch(e) { /* show all slots if fetch fails */ }
+            } catch(e) {}
 
             document.getElementById('reschedule-loading').style.display = 'none';
 
@@ -870,14 +957,19 @@
             const slotsEl = document.getElementById('reschedule-slots');
             slotsEl.innerHTML = '';
             let available = 0;
+            const now = new Date();
 
             ALL_SLOTS.forEach(slot => {
-                const slotDt = slotToDatetime(dateStr, slot);
+                const slotDt = rsSlotToDatetime(dateStr, slot);
                 const slotEnd = new Date(slotDt.getTime() + duration * 60000);
-                const now = new Date();
 
-                // Skip past slots
+                // Skip past
                 if (slotDt <= now) return;
+                // Saturday cutoff — no slots at 2 PM or later
+                if (isSaturday) {
+                    const slotHour = slotDt.getHours();
+                    if (slotHour >= SATURDAY_CUTOFF_HOUR) return;
+                }
 
                 const taken = unavailable.some(u => {
                     const uStart = new Date(u.start);
@@ -887,15 +979,15 @@
 
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'slot-btn' + (taken ? ' unavailable' : '');
+                btn.className = 'time-slot-btn ' + (taken ? 'unavailable' : 'available');
                 btn.textContent = slot;
                 btn.disabled = taken;
+
                 if (!taken) {
                     available++;
                     btn.addEventListener('click', () => {
-                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        selectedRescheduleSlot = slot;
+                        document.querySelectorAll('#reschedule-slots .time-slot-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
                         selectedRescheduleDatetime = slotDt.toISOString();
                         document.getElementById('confirm-reschedule-btn').disabled = false;
                     });

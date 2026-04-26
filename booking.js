@@ -610,13 +610,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const timeSlotsWrapper = document.createElement('div');
         timeSlotsWrapper.className = 'time-slots-wrapper';
 
+        const isSaturday = date.getDay() === 6;
         var availableCount = 0;
         timeSlots.forEach(function(timeSlot) {
-            const timeButton = document.createElement('button');
-            timeButton.type = 'button';
-            timeButton.className = 'time-slot-btn';
-            timeButton.textContent = timeSlot;
-
             var timeParts = timeSlot.split(' ');
             var meridiem = timeParts[1];
             var hm = timeParts[0].split(':');
@@ -625,6 +621,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (meridiem === 'PM' && hour !== 12) hour += 12;
             if (meridiem === 'AM' && hour === 12) hour = 0;
             slotDateTime.setHours(hour, parseInt(hm[1], 10), 0, 0);
+
+            // Saturday cutoff: skip slots at or after 2 PM
+            if (isSaturday && slotDateTime.getHours() >= SATURDAY_CUTOFF_HOUR) return;
+
+            const timeButton = document.createElement('button');
+            timeButton.type = 'button';
+            timeButton.className = 'time-slot-btn';
+            timeButton.textContent = timeSlot;
 
             var isInPast = isTimeSlotInPast(slotDateTime);
             var isUnavailable = isSlotUnavailable(slotDateTime, totalDuration);
@@ -1520,4 +1524,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
         '6:00 PM', '6:30 PM', '7:00 PM'
     ];
+
+    // No slots at 2:00 PM or later on Saturdays
+    const SATURDAY_CUTOFF_HOUR = 14;
 });
