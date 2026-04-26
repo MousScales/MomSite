@@ -120,6 +120,9 @@ module.exports = async (req, res) => {
         bookingReference: booking.booking_reference || booking.id,
         selectedStyle: booking.selected_style,
         appointmentDatetime: booking['appointment-datetime'],
+        duration: booking.duration,
+        totalPrice: parseFloat(booking.total_price || 0),
+        depositPaid: parseFloat(booking.deposit_paid || 0),
       });
     } catch (e) {
       console.warn('WhatsApp cancel notification failed:', e.message);

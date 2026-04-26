@@ -127,6 +127,9 @@ module.exports = async (req, res) => {
         email: booking.email,
         bookingReference: booking.booking_reference || booking.id,
         selectedStyle: booking.selected_style,
+        duration: booking.duration,
+        totalPrice: parseFloat(booking.total_price || 0),
+        depositPaid: parseFloat(booking.deposit_paid || 0),
         oldDatetime,
         newDatetime,
       });

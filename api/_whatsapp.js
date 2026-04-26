@@ -128,25 +128,40 @@ async function sendOwnerRescheduleNotification(opts) {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return { success: false, error: 'Twilio not configured' };
   if (!OWNER_WHATSAPP_TO || OWNER_WHATSAPP_TO.length === 0) return { success: false, error: 'No recipients' };
 
+  const durationHours = opts.duration ? Math.floor(opts.duration / 60) : 0;
+  const durationMins  = opts.duration ? opts.duration % 60 : 0;
+  const durationStr   = durationHours > 0
+    ? `${durationHours}h${durationMins > 0 ? ` ${durationMins}m` : ''}`
+    : `${durationMins}m`;
+
   const message = [
-    `🔄 *Booking Rescheduled!*`,
+    `🔄🔄 *BOOKING RESCHEDULED* 🔄🔄`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `*Client:* ${opts.name || '—'}`,
     `*Phone:* ${opts.phone || '—'}`,
     `*Email:* ${opts.email || '—'}`,
     ``,
     `*Service:* ${opts.selectedStyle || '—'}`,
-    `*Old Date:* ${formatDatetime(opts.oldDatetime)}`,
-    `*New Date:* ${formatDatetime(opts.newDatetime)}`,
+    opts.duration ? `*Duration:* ${durationStr}` : '',
     ``,
+    `📅 *OLD DATE:* ${formatDatetime(opts.oldDatetime)}`,
+    `📅 *NEW DATE:* ${formatDatetime(opts.newDatetime)}`,
+    ``,
+    `*Total Price:* $${(opts.totalPrice || 0).toFixed(2)}`,
+    `*Deposit Paid:* $${(opts.depositPaid || 0).toFixed(2)}`,
     `*Booking ID:* ${opts.bookingReference || '—'}`,
-  ].join('\n');
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🔄 *THIS BOOKING WAS RESCHEDULED* 🔄`,
+  ].filter(l => l !== undefined).join('\n');
 
   try {
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     for (const recipientTo of OWNER_WHATSAPP_TO) {
       await client.messages.create({ from: TWILIO_WHATSAPP_FROM, to: recipientTo, body: message });
     }
+    console.log(`WhatsApp reschedule notification sent to ${OWNER_WHATSAPP_TO.length} recipient(s)`);
     return { success: true };
   } catch (e) {
     console.error('WhatsApp reschedule notification error:', e.message);
@@ -161,24 +176,38 @@ async function sendOwnerCancelNotification(opts) {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return { success: false, error: 'Twilio not configured' };
   if (!OWNER_WHATSAPP_TO || OWNER_WHATSAPP_TO.length === 0) return { success: false, error: 'No recipients' };
 
+  const durationHours = opts.duration ? Math.floor(opts.duration / 60) : 0;
+  const durationMins  = opts.duration ? opts.duration % 60 : 0;
+  const durationStr   = durationHours > 0
+    ? `${durationHours}h${durationMins > 0 ? ` ${durationMins}m` : ''}`
+    : `${durationMins}m`;
+
   const message = [
-    `❌ *Booking Cancelled!*`,
+    `❌❌ *BOOKING CANCELLED* ❌❌`,
+    `━━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `*Client:* ${opts.name || '—'}`,
     `*Phone:* ${opts.phone || '—'}`,
     `*Email:* ${opts.email || '—'}`,
     ``,
     `*Service:* ${opts.selectedStyle || '—'}`,
+    opts.duration ? `*Duration:* ${durationStr}` : '',
     `*Was scheduled:* ${formatDatetime(opts.appointmentDatetime)}`,
     ``,
+    `*Total Price:* $${(opts.totalPrice || 0).toFixed(2)}`,
+    `*Deposit Paid:* $${(opts.depositPaid || 0).toFixed(2)}`,
     `*Booking ID:* ${opts.bookingReference || '—'}`,
-  ].join('\n');
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `❌ *THIS BOOKING HAS BEEN CANCELLED* ❌`,
+  ].filter(l => l !== undefined).join('\n');
 
   try {
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     for (const recipientTo of OWNER_WHATSAPP_TO) {
       await client.messages.create({ from: TWILIO_WHATSAPP_FROM, to: recipientTo, body: message });
     }
+    console.log(`WhatsApp cancel notification sent to ${OWNER_WHATSAPP_TO.length} recipient(s)`);
     return { success: true };
   } catch (e) {
     console.error('WhatsApp cancel notification error:', e.message);
