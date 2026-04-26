@@ -250,13 +250,11 @@
                 var detailsUrl = `/api/get-booking-details?id=${encodeURIComponent(bookingRef)}`;
                 var detailsRes = await fetch(detailsUrl);
                 
-                // Parse JSON response, handling errors gracefully
+                // Parse JSON response
                 var detailsData = {};
                 try {
                     detailsData = await detailsRes.json();
                 } catch (parseError) {
-                    // If JSON parsing fails, try to get text response
-                    var errorText = await detailsRes.text();
                     throw new Error('Invalid response from server. Please try again.');
                 }
                 
