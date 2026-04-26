@@ -132,6 +132,8 @@ module.exports = async (req, res) => {
         depositPaid: parseFloat(booking.deposit_paid || 0),
         oldDatetime,
         newDatetime,
+        currentHairImageUrl: booking.current_hair_image_url,
+        referenceImageUrl: booking.reference_image_url,
       });
     } catch (e) {
       console.warn('WhatsApp reschedule notification failed:', e.message);

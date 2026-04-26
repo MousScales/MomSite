@@ -123,6 +123,8 @@ module.exports = async (req, res) => {
         duration: booking.duration,
         totalPrice: parseFloat(booking.total_price || 0),
         depositPaid: parseFloat(booking.deposit_paid || 0),
+        currentHairImageUrl: booking.current_hair_image_url,
+        referenceImageUrl: booking.reference_image_url,
       });
     } catch (e) {
       console.warn('WhatsApp cancel notification failed:', e.message);

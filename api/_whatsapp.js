@@ -160,6 +160,24 @@ async function sendOwnerRescheduleNotification(opts) {
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     for (const recipientTo of OWNER_WHATSAPP_TO) {
       await client.messages.create({ from: TWILIO_WHATSAPP_FROM, to: recipientTo, body: message });
+
+      if (opts.currentHairImageUrl) {
+        await client.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: recipientTo,
+          body: `📸 *Current Hair — ${opts.name || 'Client'}*`,
+          mediaUrl: [opts.currentHairImageUrl],
+        });
+      }
+
+      if (opts.referenceImageUrl) {
+        await client.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: recipientTo,
+          body: `✨ *Reference / Inspo Image — ${opts.name || 'Client'}*`,
+          mediaUrl: [opts.referenceImageUrl],
+        });
+      }
     }
     console.log(`WhatsApp reschedule notification sent to ${OWNER_WHATSAPP_TO.length} recipient(s)`);
     return { success: true };
@@ -206,6 +224,24 @@ async function sendOwnerCancelNotification(opts) {
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     for (const recipientTo of OWNER_WHATSAPP_TO) {
       await client.messages.create({ from: TWILIO_WHATSAPP_FROM, to: recipientTo, body: message });
+
+      if (opts.currentHairImageUrl) {
+        await client.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: recipientTo,
+          body: `📸 *Current Hair — ${opts.name || 'Client'}*`,
+          mediaUrl: [opts.currentHairImageUrl],
+        });
+      }
+
+      if (opts.referenceImageUrl) {
+        await client.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: recipientTo,
+          body: `✨ *Reference / Inspo Image — ${opts.name || 'Client'}*`,
+          mediaUrl: [opts.referenceImageUrl],
+        });
+      }
     }
     console.log(`WhatsApp cancel notification sent to ${OWNER_WHATSAPP_TO.length} recipient(s)`);
     return { success: true };
