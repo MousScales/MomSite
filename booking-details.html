@@ -9,158 +9,263 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .booking-details-container { max-width: 700px; margin: 0 auto; padding: 6rem 1.25rem 3rem; }
-        .booking-details-card { background: var(--color-bg, #fff); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .booking-details-card h1 { font-size: 1.75rem; margin-bottom: 1rem; color: var(--color-text, #333); }
-        .booking-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e0e0e0; }
-        .booking-id-badge { background: var(--color-accent, #c8914e); color: #fff; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
-        .status-badge { padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: inline-block; }
-        .status-confirmed { background: #d5f4e6; color: #1e7e34; }
-        .status-cancelled { background: #f8d7da; color: #721c24; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .details-section { margin-bottom: 2rem; }
-        .details-section h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--color-text, #333); border-bottom: 1px solid #e0e0e0; padding-bottom: 0.5rem; }
-        .detail-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { font-weight: 500; color: #666; }
-        .detail-value { color: var(--color-text, #333); text-align: right; }
-        .action-buttons { margin-top: 2rem; display: flex; gap: 1rem; }
-        .btn-cancel { background: #c0392b; color: #fff; padding: 0.9rem 2rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; flex: 1; }
-        .btn-cancel:hover { background: #a93226; }
-        .btn-cancel:disabled { opacity: 0.7; cursor: not-allowed; }
-        .btn-secondary { background: #6c757d; color: #fff; padding: 0.9rem 2rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
-        .btn-secondary:hover { background: #5a6268; }
+        /* ── Page Layout ── */
+        .bd-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 6rem 1.25rem 3rem;
+        }
+
+        /* ── Hero Header Banner ── */
+        .bd-hero {
+            background: linear-gradient(135deg, #2c3e50 0%, #3d5166 100%);
+            border-radius: 16px;
+            padding: 2rem 2rem 1.75rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        .bd-hero-left h1 {
+            font-size: 1.6rem;
+            margin: 0 0 0.35rem;
+            color: #fff;
+            font-weight: 700;
+        }
+        .bd-hero-left p {
+            margin: 0;
+            color: rgba(255,255,255,0.65);
+            font-size: 0.9rem;
+        }
+        .bd-hero-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        .booking-id-badge {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 0.45rem 1rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            font-family: 'Courier New', monospace;
+        }
+        .status-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-confirmed { background: #00b894; color: #fff; }
+        .status-cancelled { background: #e17055; color: #fff; }
+        .status-pending, .status-pending_payment { background: #fdcb6e; color: #5d4037; }
+        .status-completed { background: #74b9ff; color: #1a3a5c; }
+
+        /* ── Alerts ── */
         .loading { text-align: center; padding: 3rem; color: #666; }
-        .error-message { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
-        .success-message { background: #d5f4e6; color: #1e7e34; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
-        .image-preview { margin-top: 0.5rem; }
-        .image-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #e0e0e0; }
-        
-        /* Modal Styles */
+        .error-message { background: #f8d7da; color: #721c24; padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.25rem; }
+        .success-message { background: #d5f4e6; color: #1e7e34; padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.25rem; }
+
+        /* ── Cards Grid ── */
+        .bd-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .bd-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            border: 1px solid #f0f0f0;
+        }
+        .bd-card.full-width {
+            grid-column: 1 / -1;
+        }
+        .bd-card-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-accent, #c8914e);
+            margin: 0 0 1.1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f5f5f5;
+        }
+
+        /* ── Detail Rows ── */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f5f5f5;
+            gap: 1rem;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .detail-value {
+            font-size: 0.9rem;
+            color: #2c3e50;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* ── Price Highlight ── */
+        .price-highlight {
+            font-size: 1.2rem;
+            color: var(--color-accent, #c8914e);
+        }
+
+        /* ── Images ── */
+        .bd-images-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .bd-image-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .bd-image-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .bd-image-item img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .bd-image-item img:hover { transform: scale(1.02); }
+
+        /* ── Action Bar ── */
+        .bd-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn-cancel {
+            background: #c0392b;
+            color: #fff;
+            padding: 0.85rem 1.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            min-width: 160px;
+            transition: background 0.2s;
+        }
+        .btn-cancel:hover { background: #a93226; }
+        .btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #444;
+            padding: 0.85rem 1.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            flex: 1;
+            min-width: 160px;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover { background: #e0e0e0; }
+
+        /* ── Modal ── */
         .modal {
             display: none;
             position: fixed;
             z-index: 10000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            inset: 0;
+            background: rgba(0,0,0,0.65);
             backdrop-filter: blur(4px);
-            animation: fadeIn 0.3s ease-out;
         }
         .modal.show {
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
         .modal-content {
-            background-color: #fff;
-            border-radius: 12px;
+            background: #fff;
+            border-radius: 16px;
             padding: 2rem;
-            max-width: 500px;
+            max-width: 480px;
             width: 90%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.3s ease-out;
-            position: relative;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            animation: slideUp 0.25s ease-out;
         }
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
         .modal-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
+        .modal-header h2 { margin: 0; font-size: 1.3rem; color: #333; }
         .modal-header .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: #666;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s;
+            background: none; border: none; font-size: 1.4rem; color: #999;
+            cursor: pointer; width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; transition: background 0.2s;
         }
-        .modal-header .close-btn:hover {
-            background: #f0f0f0;
-            color: #333;
-        }
-        .modal-body {
-            margin-bottom: 1.5rem;
-        }
-        .modal-body p {
-            margin: 0 0 1rem 0;
-            color: #666;
-            line-height: 1.6;
-        }
-        .modal-footer {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
+        .modal-header .close-btn:hover { background: #f0f0f0; color: #333; }
+        .modal-body { margin-bottom: 1.5rem; }
+        .modal-body p { margin: 0 0 0.75rem; color: #666; line-height: 1.6; }
+        .modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; }
         .modal-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            padding: 0.7rem 1.4rem; border: none; border-radius: 8px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
         }
-        .modal-btn-primary {
-            background: #c0392b;
-            color: #fff;
-        }
-        .modal-btn-primary:hover {
-            background: #a93226;
-        }
-        .modal-btn-secondary {
-            background: #6c757d;
-            color: #fff;
-        }
-        .modal-btn-secondary:hover {
-            background: #5a6268;
-        }
-        .modal-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        .modal-icon {
-            font-size: 3rem;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .modal-icon.success {
-            color: #4caf50;
-        }
-        .modal-icon.warning {
-            color: #ff9800;
+        .modal-btn-primary { background: #c0392b; color: #fff; }
+        .modal-btn-primary:hover { background: #a93226; }
+        .modal-btn-secondary { background: #e9ecef; color: #444; }
+        .modal-btn-secondary:hover { background: #dee2e6; }
+        .modal-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .modal-icon { font-size: 2.5rem; text-align: center; margin-bottom: 0.75rem; }
+        .modal-icon.success { color: #00b894; }
+
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+            .bd-hero { flex-direction: column; }
+            .bd-hero-right { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+            .bd-grid { grid-template-columns: 1fr; }
+            .bd-images-grid { grid-template-columns: 1fr; }
+            .bd-actions { flex-direction: column; }
+            .btn-cancel, .btn-secondary { min-width: 0; }
         }
     </style>
 </head>
@@ -180,88 +285,112 @@
         </div>
     </nav>
 
-    <main class="booking-details-container">
-        <div class="booking-details-card">
-            <div id="loading" class="loading">
-                <i class="fas fa-spinner fa-spin"></i> Loading booking details...
-            </div>
-            
-            <div id="error" class="error-message" style="display: none;"></div>
-            <div id="success" class="success-message" style="display: none;"></div>
-            
-            <div id="booking-content" style="display: none;">
-                <div class="booking-header">
-                    <h1><i class="fas fa-calendar-check"></i> Booking Details</h1>
-                    <div>
-                        <span id="booking-reference" class="booking-id-badge"></span>
-                        <span id="status-badge" class="status-badge" style="margin-left: 0.5rem;"></span>
-                    </div>
-                </div>
+    <main class="bd-page">
 
-                <div class="details-section">
-                    <h2><i class="fas fa-user"></i> Client Information</h2>
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading booking details...
+        </div>
+        <div id="error" class="error-message" style="display:none;"></div>
+        <div id="success" class="success-message" style="display:none;"></div>
+
+        <div id="booking-content" style="display:none;">
+
+            <!-- Hero banner -->
+            <div class="bd-hero">
+                <div class="bd-hero-left">
+                    <h1><i class="fas fa-calendar-check"></i> Booking Details</h1>
+                    <p>Maya African Hair Braiding</p>
+                </div>
+                <div class="bd-hero-right">
+                    <span id="booking-reference" class="booking-id-badge"></span>
+                    <span id="status-badge" class="status-badge"></span>
+                </div>
+            </div>
+
+            <!-- Main info grid -->
+            <div class="bd-grid">
+
+                <!-- Client Info -->
+                <div class="bd-card">
+                    <p class="bd-card-title"><i class="fas fa-user"></i> Client</p>
                     <div class="detail-row">
-                        <span class="detail-label">Name:</span>
+                        <span class="detail-label">Name</span>
                         <span class="detail-value" id="client-name"></span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span>
+                        <span class="detail-label">Email</span>
                         <span class="detail-value" id="client-email"></span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span>
+                        <span class="detail-label">Phone</span>
                         <span class="detail-value" id="client-phone"></span>
                     </div>
                 </div>
 
-                <div class="details-section">
-                    <h2><i class="fas fa-calendar-alt"></i> Appointment Details</h2>
+                <!-- Appointment -->
+                <div class="bd-card">
+                    <p class="bd-card-title"><i class="fas fa-calendar-alt"></i> Appointment</p>
                     <div class="detail-row">
-                        <span class="detail-label">Date & Time:</span>
+                        <span class="detail-label">Date & Time</span>
                         <span class="detail-value" id="appointment-datetime"></span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Service:</span>
+                        <span class="detail-label">Service</span>
                         <span class="detail-value" id="selected-style"></span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Duration:</span>
+                        <span class="detail-label">Duration</span>
                         <span class="detail-value" id="duration"></span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Total Price:</span>
-                        <span class="detail-value" id="total-price"></span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Deposit Paid:</span>
-                        <span class="detail-value" id="deposit-paid"></span>
                     </div>
                 </div>
 
-                <div class="details-section" id="service-options-section" style="display: none;">
-                    <h2><i class="fas fa-cog"></i> Service Options</h2>
+                <!-- Payment -->
+                <div class="bd-card">
+                    <p class="bd-card-title"><i class="fas fa-dollar-sign"></i> Payment</p>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Price</span>
+                        <span class="detail-value price-highlight" id="total-price"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Deposit Paid</span>
+                        <span class="detail-value" id="deposit-paid"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Balance Due</span>
+                        <span class="detail-value" id="balance-due"></span>
+                    </div>
+                </div>
+
+                <!-- Service Options -->
+                <div class="bd-card" id="service-options-section" style="display:none;">
+                    <p class="bd-card-title"><i class="fas fa-cog"></i> Service Options</p>
                     <div id="service-options"></div>
                 </div>
 
-                <div class="details-section" id="images-section" style="display: none;">
-                    <h2><i class="fas fa-images"></i> Images</h2>
-                    <div id="images-container"></div>
+                <!-- Notes -->
+                <div class="bd-card full-width" id="notes-section" style="display:none;">
+                    <p class="bd-card-title"><i class="fas fa-sticky-note"></i> Notes</p>
+                    <p id="notes" style="color:#555; margin:0; font-size:0.95rem; line-height:1.6;"></p>
                 </div>
 
-                <div class="details-section" id="notes-section" style="display: none;">
-                    <h2><i class="fas fa-sticky-note"></i> Notes</h2>
-                    <p id="notes" style="color: #666; margin: 0;"></p>
+                <!-- Images -->
+                <div class="bd-card full-width" id="images-section" style="display:none;">
+                    <p class="bd-card-title"><i class="fas fa-images"></i> Hair Photos</p>
+                    <div class="bd-images-grid" id="images-container"></div>
                 </div>
 
-                <div class="action-buttons">
-                    <button id="cancel-btn" class="btn-cancel" onclick="cancelBooking()">
-                        <i class="fas fa-calendar-times"></i> Cancel Booking
-                    </button>
-                    <a href="index.html" class="btn-secondary">
-                        <i class="fas fa-home"></i> Back to Home
-                    </a>
-                </div>
             </div>
+
+            <!-- Actions -->
+            <div class="bd-actions">
+                <button id="cancel-btn" class="btn-cancel" onclick="cancelBooking()">
+                    <i class="fas fa-calendar-times"></i> Cancel Booking
+                </button>
+                <a href="index.html" class="btn-secondary">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+            </div>
+
         </div>
     </main>
 
@@ -407,6 +536,9 @@
             const depositPaid = booking.deposit_paid || booking.depositPaid || 0;
             document.getElementById('deposit-paid').textContent = `$${depositPaid.toFixed(2)}`;
 
+            const balanceDue = Math.max(0, totalPrice - depositPaid);
+            document.getElementById('balance-due').textContent = `$${balanceDue.toFixed(2)}`;
+
             // Service options
             const serviceOptions = [];
             if (booking.hair_length || booking.hairLength) {
@@ -440,16 +572,18 @@
             const imagesContainer = document.getElementById('images-container');
             imagesContainer.innerHTML = '';
             if (booking.current_hair_image_url || booking.currentHairImageURL) {
-                const img = document.createElement('div');
-                img.className = 'image-preview';
-                img.innerHTML = `<p style="margin-bottom: 0.5rem; font-weight: 500;">Current Hair:</p><img src="${booking.current_hair_image_url || booking.currentHairImageURL}" alt="Current hair">`;
-                imagesContainer.appendChild(img);
+                const url = booking.current_hair_image_url || booking.currentHairImageURL;
+                const div = document.createElement('div');
+                div.className = 'bd-image-item';
+                div.innerHTML = `<span class="bd-image-label">📸 Current Hair</span><img src="${url}" alt="Current hair" onclick="window.open('${url}','_blank')">`;
+                imagesContainer.appendChild(div);
             }
             if (booking.reference_image_url || booking.referenceImageURL) {
-                const img = document.createElement('div');
-                img.className = 'image-preview';
-                img.innerHTML = `<p style="margin-bottom: 0.5rem; font-weight: 500;">Reference Image:</p><img src="${booking.reference_image_url || booking.referenceImageURL}" alt="Reference image">`;
-                imagesContainer.appendChild(img);
+                const url = booking.reference_image_url || booking.referenceImageURL;
+                const div = document.createElement('div');
+                div.className = 'bd-image-item';
+                div.innerHTML = `<span class="bd-image-label">✨ Reference / Inspo</span><img src="${url}" alt="Reference image" onclick="window.open('${url}','_blank')">`;
+                imagesContainer.appendChild(div);
             }
             if (imagesContainer.children.length > 0) {
                 document.getElementById('images-section').style.display = 'block';
