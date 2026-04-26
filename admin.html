@@ -20,6 +20,7 @@
 
         <div class="admin-tabs">
             <button id="bookings-tab-btn" class="admin-tab-btn active">Bookings</button>
+            <button id="stats-tab-btn" class="admin-tab-btn">Stats</button>
             <button id="calendar-tab-btn" class="admin-tab-btn">Calendar</button>
         </div>
 
@@ -81,6 +82,162 @@
             </div>
         </section>
 
+        <!-- Stats Tab -->
+        <section id="stats-tab" class="admin-tab-panel">
+
+            <!-- Row 1: Key Numbers -->
+            <div class="stats-section-title">Overview</div>
+            <div class="stats-grid stats-grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📋</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-total">0</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-upcoming">0</div>
+                        <div class="stat-label">Upcoming</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#ffeaa7;color:#d6a000;">🔄</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-rescheduled">0</div>
+                        <div class="stat-label">Rescheduled</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f8d7da;color:#c0392b;">❌</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-cancelled">0</div>
+                        <div class="stat-label">Cancelled</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Revenue Numbers -->
+            <div class="stats-section-title">Revenue</div>
+            <div class="stats-grid stats-grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d4edda;color:#155724;">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-rev-total">$0</div>
+                        <div class="stat-label">Total Revenue (est.)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#cce5ff;color:#004085;">💳</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-rev-deposits">$0</div>
+                        <div class="stat-label">Deposits Collected</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff3cd;color:#856404;">⏳</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-rev-balance">$0</div>
+                        <div class="stat-label">Balance Still Due</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-avg-value">$0</div>
+                        <div class="stat-label">Avg Booking Value</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Client Stats -->
+            <div class="stats-section-title">Clients</div>
+            <div class="stats-grid stats-grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">👤</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-unique-clients">0</div>
+                        <div class="stat-label">Unique Clients</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">🔁</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-returning">0</div>
+                        <div class="stat-label">Returning Clients</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d4edda;color:#155724;">🌟</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-new-month">0</div>
+                        <div class="stat-label">New This Month</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f8d7da;color:#721c24;">📉</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="st-cancel-rate">0%</div>
+                        <div class="stat-label">Cancellation Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Top Customers + Popular Services + Busiest Days -->
+            <div class="stats-bottom-grid">
+
+                <!-- Top Customers -->
+                <div class="stats-panel">
+                    <div class="stats-panel-title">🏆 Top Customers</div>
+                    <div id="st-top-customers" class="stats-panel-body">
+                        <div class="stats-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Popular Services -->
+                <div class="stats-panel">
+                    <div class="stats-panel-title">✂️ Popular Services</div>
+                    <div id="st-services" class="stats-panel-body">
+                        <div class="stats-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Busiest Days -->
+                <div class="stats-panel">
+                    <div class="stats-panel-title">📆 Bookings by Day of Week</div>
+                    <div id="st-days" class="stats-panel-body">
+                        <div class="stats-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Busiest Times -->
+                <div class="stats-panel">
+                    <div class="stats-panel-title">🕐 Busiest Time Slots</div>
+                    <div id="st-times" class="stats-panel-body">
+                        <div class="stats-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Status Breakdown -->
+                <div class="stats-panel">
+                    <div class="stats-panel-title">🗂 Status Breakdown</div>
+                    <div id="st-status-breakdown" class="stats-panel-body">
+                        <div class="stats-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- This Week Snapshot -->
+                <div class="stats-panel">
+                    <div class="stats-panel-title">📅 This Week's Appointments</div>
+                    <div id="st-this-week" class="stats-panel-body">
+                        <div class="stats-empty">Loading...</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
         <section id="calendar-tab" class="admin-tab-panel">
             <div class="calendar-header">
                 <div class="calendar-controls">
@@ -115,6 +272,9 @@
     <!-- Config (for API endpoints) -->
     <script src="config.js"></script>
     
+    <!-- Vercel Analytics -->
+    <script defer src="/_vercel/insights/script.js"></script>
+
     <!-- Custom JS -->
     <script src="admin.js"></script>
 </body>

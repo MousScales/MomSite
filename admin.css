@@ -687,3 +687,174 @@ body {
     background-color: #fff5f5;
     color: #bd2130;
 }
+
+/* ── Stats Tab ──────────────────────────────────────────────────── */
+.stats-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin: 20px 0 10px;
+}
+.stats-section-title:first-child { margin-top: 0; }
+
+.stats-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+.stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .stats-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .stats-grid-4 { grid-template-columns: 1fr 1fr; } }
+
+.stat-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid #f0f0f0;
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.stat-info { flex: 1; min-width: 0; }
+.stat-value {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #222;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stat-label {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 3px;
+    white-space: nowrap;
+}
+
+/* Bottom grid of panels */
+.stats-bottom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+}
+@media (max-width: 1100px) { .stats-bottom-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .stats-bottom-grid { grid-template-columns: 1fr; } }
+
+.stats-panel {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid #f0f0f0;
+    overflow: hidden;
+}
+.stats-panel-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f3f3;
+    color: #333;
+    background: #fafafa;
+}
+.stats-panel-body {
+    padding: 10px 14px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.stats-empty {
+    color: #aaa;
+    font-size: 0.88rem;
+    padding: 12px 0;
+    text-align: center;
+}
+
+/* List rows (top customers, this week) */
+.stats-list-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.88rem;
+}
+.stats-list-row:last-child { border-bottom: none; }
+.stats-rank {
+    font-weight: 700;
+    color: #c8914e;
+    min-width: 26px;
+    font-size: 0.85rem;
+}
+.stats-list-name {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.stats-list-meta {
+    color: #888;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+.stats-list-value {
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    font-size: 0.88rem;
+}
+
+/* Bar chart rows (services, days, times) */
+.stats-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.83rem;
+}
+.stats-bar-label {
+    min-width: 72px;
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #444;
+    font-size: 0.82rem;
+}
+.stats-bar-track {
+    flex: 1;
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.stats-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+    min-width: 4px;
+}
+.stats-bar-meta {
+    min-width: 28px;
+    text-align: right;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
