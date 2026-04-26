@@ -80,42 +80,36 @@ async function sendOwnerWhatsAppNotification(opts) {
     opts.notes ? `\n*Notes:* ${opts.notes}` : '',
   ].filter(line => line !== undefined).join('\n');
 
-  // Collect image URLs to send as media (WhatsApp supports up to 1 mediaUrl per message,
-  // so we send separate messages for each image if both exist)
-  const mediaUrls = [
-    opts.currentHairImageUrl,
-    opts.referenceImageUrl,
-  ].filter(Boolean);
-
   try {
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
     // Send to all recipient numbers
     for (const recipientTo of OWNER_WHATSAPP_TO) {
-      if (mediaUrls.length === 0) {
-        await client.messages.create({
-          from: TWILIO_WHATSAPP_FROM,
-          to: recipientTo,
-          body: message,
-        });
-      } else {
-        // First message: text + current hair image
-        await client.messages.create({
-          from: TWILIO_WHATSAPP_FROM,
-          to: recipientTo,
-          body: message + '\n\n📸 *Current Hair Photo ↓*',
-          mediaUrl: [mediaUrls[0]],
-        });
+      // Message 1: booking info text only
+      await client.messages.create({
+        from: TWILIO_WHATSAPP_FROM,
+        to: recipientTo,
+        body: message,
+      });
 
-        // Second message: reference image (if provided)
-        if (mediaUrls[1]) {
-          await client.messages.create({
-            from: TWILIO_WHATSAPP_FROM,
-            to: recipientTo,
-            body: `📸 *Reference Image for ${opts.name || 'client'}*`,
-            mediaUrl: [mediaUrls[1]],
-          });
-        }
+      // Message 2: current hair photo
+      if (opts.currentHairImageUrl) {
+        await client.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: recipientTo,
+          body: `📸 *Current Hair — ${opts.name || 'Client'}*`,
+          mediaUrl: [opts.currentHairImageUrl],
+        });
+      }
+
+      // Message 3: reference/inspo image
+      if (opts.referenceImageUrl) {
+        await client.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: recipientTo,
+          body: `✨ *Reference / Inspo Image — ${opts.name || 'Client'}*`,
+          mediaUrl: [opts.referenceImageUrl],
+        });
       }
     }
 
