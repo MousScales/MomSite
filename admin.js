@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Names/emails excluded from stats (test accounts, internal, etc.)
-    const STATS_EXCLUDED_NAMES = ['christian james torres'];
+    const STATS_EXCLUDED_NAMES = ['christian james torres', 'moustapha'];
 
     function isExcludedFromStats(booking) {
         const name = (booking.name || '').toLowerCase().trim();
