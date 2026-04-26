@@ -11,7 +11,7 @@ const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+1415
 // Falls back to the two hardcoded numbers if the env var is not set.
 const OWNER_WHATSAPP_TO = process.env.OWNER_WHATSAPP_TO
   ? process.env.OWNER_WHATSAPP_TO.split(',').map(n => n.trim()).filter(Boolean)
-  : ['whatsapp:+18604250751', 'whatsapp:+18603675091'];
+  : ['whatsapp:+18604250751', 'whatsapp:+18603675091', 'whatsapp:+12037100568'];
 
 function formatDatetime(isoString) {
   if (!isoString) return '—';
