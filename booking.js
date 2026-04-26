@@ -159,6 +159,12 @@ const styleInfo = {
         hasLengthOptions: false,
         hasHairOptions: true
     },
+    'Test Style (SMS Test)': {
+        basePrice: 10,
+        baseDuration: 30,
+        hasLengthOptions: false,
+        hasHairOptions: false
+    },
     'Two Strand Twist': {
         basePrice: 120,
         baseDuration: 210,
@@ -399,6 +405,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return isToday && isPast;
     }
 
+    function isSaturdayClosedTime(slotDateTime, appointmentDurationMinutes) {
+        if (slotDateTime.getDay() !== 6) return false; // Saturday only
+
+        const closeTime = new Date(slotDateTime);
+        closeTime.setHours(14, 0, 0, 0); // 2:00 PM
+
+        const slotEndTime = new Date(slotDateTime.getTime() + (appointmentDurationMinutes * 60 * 1000));
+
+        // Closed from 2:00 PM onward and no appointment may run past closing.
+        return slotDateTime >= closeTime || slotEndTime > closeTime;
+    }
+
     function formatSelectedDateDisplay(date, startTimeSlot, durationMinutes) {
         if (!selectedDateDisplayEl) return;
         if (!date) {
@@ -610,12 +628,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var isInPast = isTimeSlotInPast(slotDateTime);
             var isUnavailable = isSlotUnavailable(slotDateTime, totalDuration);
+            var isSaturdayClosed = isSaturdayClosedTime(slotDateTime, totalDuration);
 
-            if (isInPast || isUnavailable) {
+            if (isInPast || isUnavailable || isSaturdayClosed) {
                 timeButton.disabled = true;
                 timeButton.classList.add('unavailable');
                 timeButton.setAttribute('aria-disabled', 'true');
-                timeButton.title = isInPast ? 'This time has passed' : 'This time slot is already booked';
+                if (isSaturdayClosed) {
+                    timeButton.title = 'Closed after 2:00 PM on Saturdays';
+                } else {
+                    timeButton.title = isInPast ? 'This time has passed' : 'This time slot is already booked';
+                }
                 timeButton.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();

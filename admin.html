@@ -14,55 +14,89 @@
 </head>
 <body>
     <div class="container">
-        <div class="calendar-header">
-            <div class="header-left">
-                <h1>Booking Management</h1>
+        <div class="header-left">
+            <h1>Booking Management</h1>
+        </div>
+
+        <div class="admin-tabs">
+            <button id="bookings-tab-btn" class="admin-tab-btn active">Bookings</button>
+            <button id="calendar-tab-btn" class="admin-tab-btn">Calendar</button>
+        </div>
+
+        <section id="bookings-tab" class="admin-tab-panel active">
+            <div class="revenue-filter-bar">
+                <label for="revenue-range">Revenue Range</label>
+                <select id="revenue-range">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month" selected>This Month</option>
+                    <option value="year">This Year</option>
+                    <option value="last7">Last 7 Days</option>
+                    <option value="last30">Last 30 Days</option>
+                </select>
             </div>
-            <div class="calendar-controls">
-                <button id="prev-btn" class="control-btn"><i class="fas fa-chevron-left"></i></button>
-                <button id="today-btn" class="control-btn">Today</button>
-                <button id="next-btn" class="control-btn"><i class="fas fa-chevron-right"></i></button>
-                <span id="current-range" class="current-range"></span>
-                <div class="view-buttons">
-                    <button id="month-view" class="view-btn active">Month</button>
-                    <button id="week-view" class="view-btn">Week</button>
-                    <button id="day-view" class="view-btn">Day</button>
+
+            <div class="revenue-cards">
+                <div class="revenue-card">
+                    <p class="revenue-label">Total Revenue</p>
+                    <p id="total-revenue-value" class="revenue-value">$0.00</p>
+                </div>
+                <div class="revenue-card">
+                    <p class="revenue-label">Revenue From Deposits</p>
+                    <p id="deposit-revenue-value" class="revenue-value">$0.00</p>
                 </div>
             </div>
-        </div>
 
-        <div id="calendar" class="calendar-container"></div>
+            <!-- Bookings List Section -->
+            <div class="bookings-list-container">
+                <h2>All Bookings</h2>
+                <div class="bookings-filters">
+                    <select id="status-filter">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="pending_payment">Pending Payment</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <input type="text" id="search-bookings" placeholder="Search bookings...">
+                </div>
+                <div class="bookings-table-container">
+                    <table id="bookings-table">
+                        <thead>
+                            <tr>
+                                <th>Time Booked</th>
+                                <th>Client Name</th>
+                                <th>Service</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-list">
+                            <!-- Bookings will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
-        <!-- Bookings List Section -->
-        <div class="bookings-list-container">
-            <h2>All Bookings</h2>
-            <div class="bookings-filters">
-                <select id="status-filter">
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="pending_payment">Pending Payment</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-                <input type="text" id="search-bookings" placeholder="Search bookings...">
+        <section id="calendar-tab" class="admin-tab-panel">
+            <div class="calendar-header">
+                <div class="calendar-controls">
+                    <button id="prev-btn" class="control-btn"><i class="fas fa-chevron-left"></i></button>
+                    <button id="today-btn" class="control-btn">Today</button>
+                    <button id="next-btn" class="control-btn"><i class="fas fa-chevron-right"></i></button>
+                    <span id="current-range" class="current-range"></span>
+                    <div class="view-buttons">
+                        <button id="month-view" class="view-btn active">Month</button>
+                        <button id="week-view" class="view-btn">Week</button>
+                        <button id="day-view" class="view-btn">Day</button>
+                    </div>
+                </div>
             </div>
-            <div class="bookings-table-container">
-                <table id="bookings-table">
-                    <thead>
-                        <tr>
-                            <th>Date & Time</th>
-                            <th>Client Name</th>
-                            <th>Service</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bookings-list">
-                        <!-- Bookings will be dynamically inserted here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+
+            <div id="calendar" class="calendar-container"></div>
+        </section>
     </div>
 
     <!-- Booking Details Modal -->

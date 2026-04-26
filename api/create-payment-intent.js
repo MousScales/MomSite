@@ -47,6 +47,39 @@ function parseBody(req) {
   }
 }
 
+function getBusinessTimeParts(date) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const p of parts) {
+    if (p.type !== 'literal') map[p.type] = p.value;
+  }
+  return {
+    weekday: map.weekday,
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+  };
+}
+
+function isAfterSaturdayClose(startDate, durationMinutes) {
+  const startParts = getBusinessTimeParts(startDate);
+  if (startParts.weekday !== 'Sat') return false;
+
+  const endDate = new Date(startDate.getTime() + (durationMinutes * 60 * 1000));
+  const endParts = getBusinessTimeParts(endDate);
+
+  const startsAtOrAfterClose = startParts.hour > 14 || (startParts.hour === 14 && startParts.minute >= 0);
+  const endsAfterCloseOnSaturday = endParts.weekday === 'Sat' && (endParts.hour > 14 || (endParts.hour === 14 && endParts.minute > 0));
+
+  return startsAtOrAfterClose || endsAfterCloseOnSaturday;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -84,6 +117,7 @@ module.exports = async (req, res) => {
     const data = parseBody(req);
 
     const appointmentStr = data['appointment-datetime'] || data.appointmentDateTime;
+    const durationMinutes = parseInt(data.duration, 10) || 120;
     if (appointmentStr) {
       const appointmentDt = new Date(appointmentStr);
       const nowUtc = new Date();
@@ -91,6 +125,12 @@ module.exports = async (req, res) => {
       if (appointmentDt < minBookable) {
         return res.status(400).json({
           error: 'Appointments must be booked at least 48 hours in advance.',
+        });
+      }
+
+      if (isAfterSaturdayClose(appointmentDt, durationMinutes)) {
+        return res.status(400).json({
+          error: 'Shop closes after 2:00 PM on Saturdays. Please choose an earlier time.',
         });
       }
     }
@@ -118,7 +158,7 @@ module.exports = async (req, res) => {
       detangling_option: data.detangling_option || data.detanglingOption,
       notes: data.notes,
       total_price: totalPrice,
-      duration: parseInt(data.duration, 10) || 120,
+      duration: durationMinutes,
       current_hair_image_url: data.currentHairImageURL || data.current_hair_image_url,
       reference_image_url: data.referenceImageURL || data.reference_image_url,
       box_braids_variation: data.box_braids_variation || data.boxBraidsVariation,

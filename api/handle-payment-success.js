@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { getStripeSecretKey } = require('./_stripe-env');
 const { createCalendarEvent } = require('./_calendar');
 const { sendBookingConfirmation } = require('./_resend');
+const { sendOwnerWhatsAppNotification } = require('./_whatsapp');
 
 async function stripeRequest(method, path) {
   const key = getStripeSecretKey();
@@ -176,6 +177,25 @@ module.exports = async (req, res) => {
       });
     } catch (e) {
       console.warn('Confirmation email failed (booking still saved):', e.message);
+    }
+
+    try {
+      await sendOwnerWhatsAppNotification({
+        name: bookingData.name,
+        phone: bookingData.phone,
+        email: bookingData.email,
+        bookingReference: bookingData.booking_reference || bookingData.id,
+        appointmentDatetime: bookingData['appointment-datetime'],
+        selectedStyle: bookingData.selected_style,
+        duration: bookingData.duration,
+        totalPrice: bookingData.total_price,
+        depositPaid: bookingData.deposit_paid,
+        notes: bookingData.notes,
+        currentHairImageUrl: bookingData.current_hair_image_url,
+        referenceImageUrl: bookingData.reference_image_url,
+      });
+    } catch (e) {
+      console.warn('WhatsApp notification failed (booking still saved):', e.message);
     }
 
     const lookupId = payment_intent_id || session_id;

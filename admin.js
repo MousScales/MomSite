@@ -15,6 +15,102 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Calendar instance
     let calendar = null;
     let allBookings = [];
+    let selectedRevenueRange = 'month';
+
+    function parseMoney(value) {
+        const amount = Number(value);
+        return Number.isFinite(amount) ? amount : 0;
+    }
+
+    function getBookingTimestamp(booking) {
+        return new Date(booking.createdAt || booking.updatedAt || booking.appointmentDateTime || 0);
+    }
+
+    function isBookingInRange(booking, rangeKey) {
+        if (rangeKey === 'all') return true;
+
+        const bookingDate = getBookingTimestamp(booking);
+        if (Number.isNaN(bookingDate.getTime())) return false;
+
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfTomorrow = new Date(startOfToday);
+        startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+        if (rangeKey === 'today') {
+            return bookingDate >= startOfToday && bookingDate < startOfTomorrow;
+        }
+
+        if (rangeKey === 'week') {
+            const startOfWeek = new Date(startOfToday);
+            const weekDay = startOfWeek.getDay(); // 0 = Sunday
+            startOfWeek.setDate(startOfWeek.getDate() - weekDay);
+            return bookingDate >= startOfWeek && bookingDate < startOfTomorrow;
+        }
+
+        if (rangeKey === 'month') {
+            return bookingDate.getFullYear() === now.getFullYear() && bookingDate.getMonth() === now.getMonth();
+        }
+
+        if (rangeKey === 'year') {
+            return bookingDate.getFullYear() === now.getFullYear();
+        }
+
+        if (rangeKey === 'last7' || rangeKey === 'last30') {
+            const days = rangeKey === 'last7' ? 7 : 30;
+            const start = new Date(startOfToday);
+            start.setDate(start.getDate() - (days - 1));
+            return bookingDate >= start && bookingDate < startOfTomorrow;
+        }
+
+        return true;
+    }
+
+    function updateRevenueSummary(bookings) {
+        const totalRevenueEl = document.getElementById('total-revenue-value');
+        const depositRevenueEl = document.getElementById('deposit-revenue-value');
+        if (!totalRevenueEl || !depositRevenueEl) return;
+
+        const activeBookings = bookings.filter((booking) => {
+            const status = (booking.status || '').toLowerCase();
+            return status !== 'cancelled' && isBookingInRange(booking, selectedRevenueRange);
+        });
+        const totalRevenue = activeBookings.reduce((sum, booking) => sum + parseMoney(booking.totalPrice), 0);
+        const depositRevenue = activeBookings.reduce((sum, booking) => sum + parseMoney(booking.depositPaid), 0);
+
+        totalRevenueEl.textContent = `$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        depositRevenueEl.textContent = `$${depositRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function initializeTabs() {
+        const bookingsTabBtn = document.getElementById('bookings-tab-btn');
+        const calendarTabBtn = document.getElementById('calendar-tab-btn');
+        const bookingsTab = document.getElementById('bookings-tab');
+        const calendarTab = document.getElementById('calendar-tab');
+
+        if (!bookingsTabBtn || !calendarTabBtn || !bookingsTab || !calendarTab) return;
+
+        function showTab(tabName) {
+            const showingBookings = tabName === 'bookings';
+
+            bookingsTabBtn.classList.toggle('active', showingBookings);
+            calendarTabBtn.classList.toggle('active', !showingBookings);
+            bookingsTab.classList.toggle('active', showingBookings);
+            calendarTab.classList.toggle('active', !showingBookings);
+
+            if (!showingBookings && calendar) {
+                // Calendar must resize after becoming visible inside a tab.
+                setTimeout(() => {
+                    calendar.updateSize();
+                    updateRange();
+                    updateViewButtons();
+                }, 10);
+            }
+        }
+
+        bookingsTabBtn.addEventListener('click', () => showTab('bookings'));
+        calendarTabBtn.addEventListener('click', () => showTab('calendar'));
+    }
 
     // Initialize calendar
     function initializeCalendar() {
@@ -155,6 +251,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }));
             
             console.log(`Loaded ${allBookings.length} bookings`);
+
+            updateRevenueSummary(allBookings);
             
             // Update calendar events
             if (calendar) {
@@ -178,10 +276,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         bookingsList.innerHTML = '';
 
-        // Sort bookings by date in descending order (newest first)
+        // Sort bookings by time booked (createdAt) in descending order
         const sortedBookings = [...bookings].sort((a, b) => {
-            const dateA = new Date(a.appointmentDateTime);
-            const dateB = new Date(b.appointmentDateTime);
+            const dateA = new Date(a.createdAt || a.updatedAt || a.appointmentDateTime || 0);
+            const dateB = new Date(b.createdAt || b.updatedAt || b.appointmentDateTime || 0);
             return dateB - dateA;
         });
 
@@ -192,10 +290,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         sortedBookings.forEach(booking => {
             const row = document.createElement('tr');
-            const dateTime = new Date(booking.appointmentDateTime);
+            const bookedDateTime = new Date(booking.createdAt || booking.updatedAt || booking.appointmentDateTime);
             
             row.innerHTML = `
-                <td>${dateTime.toLocaleString()}</td>
+                <td>${bookedDateTime.toLocaleString()}</td>
                 <td>${booking.name || 'N/A'}</td>
                 <td>${booking.selectedStyle || 'N/A'}</td>
                 <td><span class="booking-status status-${booking.status || 'pending'}">${(booking.status || 'Pending').charAt(0).toUpperCase() + (booking.status || 'Pending').slice(1)}</span></td>
@@ -219,7 +317,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (booking.name || '').toLowerCase().includes(searchText) ||
                 (booking.selectedStyle || '').toLowerCase().includes(searchText) ||
                 (booking.email || '').toLowerCase().includes(searchText) ||
-                new Date(booking.appointmentDateTime).toLocaleString().toLowerCase().includes(searchText);
+                new Date(booking.appointmentDateTime).toLocaleString().toLowerCase().includes(searchText) ||
+                new Date(booking.createdAt || booking.updatedAt || booking.appointmentDateTime).toLocaleString().toLowerCase().includes(searchText);
             
             return matchesStatus && matchesSearch;
         });
@@ -428,6 +527,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    initializeTabs();
+
     // Initialize calendar
     initializeCalendar();
 
@@ -518,6 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add event listeners for filters
     const statusFilter = document.getElementById('status-filter');
     const searchBookings = document.getElementById('search-bookings');
+    const revenueRangeSelect = document.getElementById('revenue-range');
     
     if (statusFilter) {
         statusFilter.addEventListener('change', filterBookings);
@@ -525,6 +627,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (searchBookings) {
         searchBookings.addEventListener('input', filterBookings);
+    }
+
+    if (revenueRangeSelect) {
+        revenueRangeSelect.value = selectedRevenueRange;
+        revenueRangeSelect.addEventListener('change', (event) => {
+            selectedRevenueRange = event.target.value;
+            updateRevenueSummary(allBookings);
+        });
     }
 
     // Refresh data periodically (every 5 minutes)
