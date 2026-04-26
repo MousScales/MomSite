@@ -140,11 +140,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const totalRev = active.reduce((s, b) => s + parseMoney(b.totalPrice), 0);
         const totalDep = active.reduce((s, b) => s + parseMoney(b.depositPaid), 0);
         const totalBal = active.reduce((s, b) => s + Math.max(0, parseMoney(b.totalPrice) - parseMoney(b.depositPaid)), 0);
-        const avgVal = active.length ? totalRev / active.length : 0;
-        document.getElementById('st-rev-total').textContent = $fmt(totalRev);
+        const avgVal  = active.length ? totalRev / active.length : 0;
+        const avgDep  = active.length ? totalDep / active.length : 0;
+        document.getElementById('st-rev-total').textContent    = $fmt(totalRev);
         document.getElementById('st-rev-deposits').textContent = $fmt(totalDep);
-        document.getElementById('st-rev-balance').textContent = $fmt(totalBal);
-        document.getElementById('st-avg-value').textContent = $fmt(avgVal);
+        document.getElementById('st-rev-balance').textContent  = $fmt(totalBal);
+        document.getElementById('st-avg-value').textContent    = $fmt(avgVal);
+        document.getElementById('st-avg-deposit').textContent  = $fmt(avgDep);
 
         // Clients
         const emailMap = {};
@@ -165,8 +167,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('st-unique-clients').textContent = uniqueClients;
         document.getElementById('st-returning').textContent = returningClients;
         document.getElementById('st-new-month').textContent = newThisPeriodEmails.size;
-        const cancelRate = bookings.length ? Math.round((cancelled.length / bookings.length) * 100) : 0;
-        document.getElementById('st-cancel-rate').textContent = cancelRate + '%';
 
         // Top Customers
         const clientStats = {};

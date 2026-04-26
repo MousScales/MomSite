@@ -688,6 +688,74 @@ body {
     color: #bd2130;
 }
 
+/* ── Person Split Layout ─────────────────────────────────────────── */
+.person-split {
+    display: grid;
+    grid-template-columns: 1fr 2px 1fr;
+    gap: 0 18px;
+    margin-bottom: 4px;
+}
+@media (max-width: 700px) {
+    .person-split { grid-template-columns: 1fr; }
+    .person-divider { display: none; }
+}
+
+.person-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.person-col-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #fff;
+}
+.mous-header {
+    background: linear-gradient(135deg, #0984e3, #74b9ff);
+}
+.maya-header {
+    background: linear-gradient(135deg, #c8914e, #e8b47a);
+}
+
+.person-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.person-col-sub {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.85;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: auto;
+}
+
+.person-divider {
+    background: #e8e8e8;
+    border-radius: 2px;
+    width: 2px;
+}
+
+.stats-grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+
 /* ── Stats Tab ──────────────────────────────────────────────────── */
 .stats-filter-bar {
     display: flex;

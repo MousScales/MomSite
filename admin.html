@@ -41,50 +41,69 @@
                 <span id="stats-range-label" class="stats-range-desc"></span>
             </div>
 
-            <!-- Row 1: Overview -->
-            <div class="stats-section-title">Overview</div>
-            <div class="stats-grid stats-grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📋</div>
-                    <div class="stat-info"><div class="stat-value" id="st-total">0</div><div class="stat-label">Total Bookings</div></div>
+            <!-- ── SPLIT: MOUS | MAYA ── -->
+            <div class="person-split">
+
+                <!-- MOUS column -->
+                <div class="person-col person-col-mous">
+                    <div class="person-col-header mous-header">
+                        <span class="person-avatar">M</span>
+                        MOUS
+                        <span class="person-col-sub">Deposits</span>
+                    </div>
+                    <div class="stats-grid stats-grid-2" style="margin-bottom:0;">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#cce5ff;color:#004085;">💳</div>
+                            <div class="stat-info"><div class="stat-value" id="st-rev-deposits">$0</div><div class="stat-label">Total Deposits</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">📊</div>
+                            <div class="stat-info"><div class="stat-value" id="st-avg-deposit">$0</div><div class="stat-label">Avg Deposit</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📋</div>
+                            <div class="stat-info"><div class="stat-value" id="st-total">0</div><div class="stat-label">Total Bookings</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#ffeaa7;color:#d6a000;">🔄</div>
+                            <div class="stat-info"><div class="stat-value" id="st-rescheduled">0</div><div class="stat-label">Rescheduled</div></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">📅</div>
-                    <div class="stat-info"><div class="stat-value" id="st-upcoming">0</div><div class="stat-label">Upcoming</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#ffeaa7;color:#d6a000;">🔄</div>
-                    <div class="stat-info"><div class="stat-value" id="st-rescheduled">0</div><div class="stat-label">Rescheduled</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#f8d7da;color:#c0392b;">❌</div>
-                    <div class="stat-info"><div class="stat-value" id="st-cancelled">0</div><div class="stat-label">Cancelled</div></div>
+
+                <!-- divider -->
+                <div class="person-divider"></div>
+
+                <!-- MAYA column -->
+                <div class="person-col person-col-maya">
+                    <div class="person-col-header maya-header">
+                        <span class="person-avatar" style="background:linear-gradient(135deg,#c8914e,#e8b47a);">M</span>
+                        MAYA
+                        <span class="person-col-sub">Full Revenue</span>
+                    </div>
+                    <div class="stats-grid stats-grid-2" style="margin-bottom:0;">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#d4edda;color:#155724;">💰</div>
+                            <div class="stat-info"><div class="stat-value" id="st-rev-total">$0</div><div class="stat-label">Total Revenue</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#fff3cd;color:#856404;">⏳</div>
+                            <div class="stat-info"><div class="stat-value" id="st-rev-balance">$0</div><div class="stat-label">Balance Still Due</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📈</div>
+                            <div class="stat-info"><div class="stat-value" id="st-avg-value">$0</div><div class="stat-label">Avg Booking Value</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:#f8d7da;color:#c0392b;">❌</div>
+                            <div class="stat-info"><div class="stat-value" id="st-cancelled">0</div><div class="stat-label">Cancelled</div></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Row 2: Revenue -->
-            <div class="stats-section-title">Revenue</div>
-            <div class="stats-grid stats-grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#d4edda;color:#155724;">💰</div>
-                    <div class="stat-info"><div class="stat-value" id="st-rev-total">$0</div><div class="stat-label">Total Revenue (est.)</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#cce5ff;color:#004085;">💳</div>
-                    <div class="stat-info"><div class="stat-value" id="st-rev-deposits">$0</div><div class="stat-label">Deposits Collected</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#fff3cd;color:#856404;">⏳</div>
-                    <div class="stat-info"><div class="stat-value" id="st-rev-balance">$0</div><div class="stat-label">Balance Still Due</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📊</div>
-                    <div class="stat-info"><div class="stat-value" id="st-avg-value">$0</div><div class="stat-label">Avg Booking Value</div></div>
-                </div>
-            </div>
-
-            <!-- Row 3: Clients -->
-            <div class="stats-section-title">Clients</div>
+            <!-- ── Shared non-monetary stats ── -->
+            <div class="stats-section-title" style="margin-top:22px;">Clients</div>
             <div class="stats-grid stats-grid-4">
                 <div class="stat-card">
                     <div class="stat-icon" style="background:#e3fcef;color:#00b894;">👤</div>
@@ -99,8 +118,8 @@
                     <div class="stat-info"><div class="stat-value" id="st-new-month">0</div><div class="stat-label">New This Period</div></div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background:#f8d7da;color:#721c24;">📉</div>
-                    <div class="stat-info"><div class="stat-value" id="st-cancel-rate">0%</div><div class="stat-label">Cancellation Rate</div></div>
+                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">📅</div>
+                    <div class="stat-info"><div class="stat-value" id="st-upcoming">0</div><div class="stat-label">Upcoming</div></div>
                 </div>
             </div>
 
