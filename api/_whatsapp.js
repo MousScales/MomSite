@@ -121,4 +121,69 @@ async function sendOwnerWhatsAppNotification(opts) {
   }
 }
 
-module.exports = { sendOwnerWhatsAppNotification };
+/**
+ * Notify owner that a booking was rescheduled.
+ */
+async function sendOwnerRescheduleNotification(opts) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return { success: false, error: 'Twilio not configured' };
+  if (!OWNER_WHATSAPP_TO || OWNER_WHATSAPP_TO.length === 0) return { success: false, error: 'No recipients' };
+
+  const message = [
+    `🔄 *Booking Rescheduled!*`,
+    ``,
+    `*Client:* ${opts.name || '—'}`,
+    `*Phone:* ${opts.phone || '—'}`,
+    `*Email:* ${opts.email || '—'}`,
+    ``,
+    `*Service:* ${opts.selectedStyle || '—'}`,
+    `*Old Date:* ${formatDatetime(opts.oldDatetime)}`,
+    `*New Date:* ${formatDatetime(opts.newDatetime)}`,
+    ``,
+    `*Booking ID:* ${opts.bookingReference || '—'}`,
+  ].join('\n');
+
+  try {
+    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+    for (const recipientTo of OWNER_WHATSAPP_TO) {
+      await client.messages.create({ from: TWILIO_WHATSAPP_FROM, to: recipientTo, body: message });
+    }
+    return { success: true };
+  } catch (e) {
+    console.error('WhatsApp reschedule notification error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Notify owner that a booking was cancelled.
+ */
+async function sendOwnerCancelNotification(opts) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return { success: false, error: 'Twilio not configured' };
+  if (!OWNER_WHATSAPP_TO || OWNER_WHATSAPP_TO.length === 0) return { success: false, error: 'No recipients' };
+
+  const message = [
+    `❌ *Booking Cancelled!*`,
+    ``,
+    `*Client:* ${opts.name || '—'}`,
+    `*Phone:* ${opts.phone || '—'}`,
+    `*Email:* ${opts.email || '—'}`,
+    ``,
+    `*Service:* ${opts.selectedStyle || '—'}`,
+    `*Was scheduled:* ${formatDatetime(opts.appointmentDatetime)}`,
+    ``,
+    `*Booking ID:* ${opts.bookingReference || '—'}`,
+  ].join('\n');
+
+  try {
+    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+    for (const recipientTo of OWNER_WHATSAPP_TO) {
+      await client.messages.create({ from: TWILIO_WHATSAPP_FROM, to: recipientTo, body: message });
+    }
+    return { success: true };
+  } catch (e) {
+    console.error('WhatsApp cancel notification error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+module.exports = { sendOwnerWhatsAppNotification, sendOwnerRescheduleNotification, sendOwnerCancelNotification };

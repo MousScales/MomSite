@@ -202,6 +202,37 @@
             transition: background 0.2s;
         }
         .btn-secondary:hover { background: #e0e0e0; }
+        .btn-reschedule {
+            background: var(--color-accent, #c8914e);
+            color: #fff;
+            padding: 0.85rem 1.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            min-width: 160px;
+            transition: background 0.2s;
+        }
+        .btn-reschedule:hover { background: #b8864e; }
+        .modal-btn-reschedule { background: var(--color-accent, #c8914e); color: #fff; }
+        .modal-btn-reschedule:hover { background: #b8864e; }
+        .modal-btn-reschedule:disabled { opacity: 0.6; cursor: not-allowed; }
+        .slot-btn {
+            padding: 0.45rem 0.9rem;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+            color: #444;
+        }
+        .slot-btn:hover { border-color: var(--color-accent,#c8914e); color: var(--color-accent,#c8914e); }
+        .slot-btn.selected { background: var(--color-accent,#c8914e); color: #fff; border-color: var(--color-accent,#c8914e); }
+        .slot-btn.unavailable { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
 
         /* ── Modal ── */
         .modal {
@@ -383,6 +414,9 @@
 
             <!-- Actions -->
             <div class="bd-actions">
+                <button id="reschedule-btn" class="btn-reschedule" onclick="openRescheduleModal()">
+                    <i class="fas fa-calendar-alt"></i> Reschedule
+                </button>
                 <button id="cancel-btn" class="btn-cancel" onclick="cancelBooking()">
                     <i class="fas fa-calendar-times"></i> Cancel Booking
                 </button>
@@ -393,6 +427,55 @@
 
         </div>
     </main>
+
+    <!-- Reschedule Modal -->
+    <div id="reschedule-modal" class="modal">
+        <div class="modal-content" style="max-width:520px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-alt"></i> Reschedule Booking</h2>
+                <button class="close-btn" onclick="closeRescheduleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#555;">Choose a new date and time. No extra deposit required.</p>
+
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block;font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;">New Date</label>
+                    <input type="date" id="reschedule-date" style="width:100%;padding:0.7rem 1rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:1rem;" onchange="loadRescheduleTimeSlots()">
+                </div>
+
+                <div id="reschedule-slots-wrap" style="display:none;margin-bottom:1rem;">
+                    <label style="display:block;font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;">Available Times</label>
+                    <div id="reschedule-slots" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+                    <p id="reschedule-no-slots" style="display:none;color:#c0392b;font-size:0.9rem;margin:0.5rem 0 0;">No available times for this day. Please pick another date.</p>
+                </div>
+
+                <div id="reschedule-loading" style="display:none;color:#888;font-size:0.9rem;"><i class="fas fa-spinner fa-spin"></i> Checking availability...</div>
+                <div id="reschedule-error" style="display:none;background:#f8d7da;color:#721c24;padding:0.75rem 1rem;border-radius:8px;font-size:0.9rem;margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
+                <button class="modal-btn modal-btn-reschedule" id="confirm-reschedule-btn" onclick="confirmReschedule()" disabled>
+                    <i class="fas fa-check"></i> Confirm New Time
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule Success Modal -->
+    <div id="reschedule-success-modal" class="modal">
+        <div class="modal-content" style="max-width:420px;text-align:center;">
+            <div class="modal-header" style="justify-content:center;border:none;">
+                <h2 style="font-size:1.2rem;">Booking Rescheduled!</h2>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <div class="modal-icon success"><i class="fas fa-check-circle"></i></div>
+                <p>Your appointment has been moved to the new time. A confirmation has been noted.</p>
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="modal-btn modal-btn-reschedule" onclick="closeRescheduleSuccessModal()">Done</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Cancellation Confirmation Modal -->
     <div id="cancel-confirm-modal" class="modal">
@@ -596,9 +679,10 @@
                 document.getElementById('notes-section').style.display = 'block';
             }
 
-            // Hide cancel button if already cancelled
+            // Hide action buttons if already cancelled
             if (status === 'cancelled') {
                 document.getElementById('cancel-btn').style.display = 'none';
+                document.getElementById('reschedule-btn').style.display = 'none';
             }
         }
 
@@ -698,6 +782,160 @@
                 document.getElementById('success').style.display = 'none';
             }, 5000);
         }
+
+        // ── Reschedule Logic ──────────────────────────────────────
+        const ALL_SLOTS = [
+            '9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM',
+            '12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM',
+            '3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM','5:30 PM',
+            '6:00 PM','6:30 PM','7:00 PM'
+        ];
+        let selectedRescheduleSlot = null;
+        let selectedRescheduleDatetime = null;
+
+        function openRescheduleModal() {
+            selectedRescheduleSlot = null;
+            selectedRescheduleDatetime = null;
+            document.getElementById('reschedule-date').value = '';
+            document.getElementById('reschedule-slots-wrap').style.display = 'none';
+            document.getElementById('reschedule-slots').innerHTML = '';
+            document.getElementById('reschedule-loading').style.display = 'none';
+            document.getElementById('reschedule-error').style.display = 'none';
+            document.getElementById('confirm-reschedule-btn').disabled = true;
+            // Set min date to 48h from now
+            const minDate = new Date(Date.now() + 48 * 60 * 60 * 1000);
+            document.getElementById('reschedule-date').min = minDate.toISOString().split('T')[0];
+            document.getElementById('reschedule-modal').classList.add('show');
+        }
+
+        function closeRescheduleModal() {
+            document.getElementById('reschedule-modal').classList.remove('show');
+        }
+
+        function closeRescheduleSuccessModal() {
+            document.getElementById('reschedule-success-modal').classList.remove('show');
+            if (bookingId) loadBookingDetails(bookingId);
+        }
+
+        function slotToDatetime(dateStr, slot) {
+            const [time, period] = slot.split(' ');
+            let [h, m] = time.split(':').map(Number);
+            if (period === 'PM' && h !== 12) h += 12;
+            if (period === 'AM' && h === 12) h = 0;
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setHours(h, m, 0, 0);
+            return d;
+        }
+
+        async function loadRescheduleTimeSlots() {
+            const dateStr = document.getElementById('reschedule-date').value;
+            if (!dateStr) return;
+
+            selectedRescheduleSlot = null;
+            selectedRescheduleDatetime = null;
+            document.getElementById('confirm-reschedule-btn').disabled = true;
+            document.getElementById('reschedule-slots-wrap').style.display = 'none';
+            document.getElementById('reschedule-loading').style.display = 'block';
+            document.getElementById('reschedule-error').style.display = 'none';
+            document.getElementById('reschedule-no-slots').style.display = 'none';
+
+            // Block Sundays
+            const picked = new Date(dateStr + 'T12:00:00');
+            if (picked.getDay() === 0) {
+                document.getElementById('reschedule-loading').style.display = 'none';
+                document.getElementById('reschedule-error').textContent = 'Closed on Sundays. Please pick another day.';
+                document.getElementById('reschedule-error').style.display = 'block';
+                return;
+            }
+
+            let unavailable = [];
+            try {
+                const res = await fetch(`/api/get-unavailable-times?date=${dateStr}`);
+                const data = await res.json();
+                unavailable = data.unavailableTimes || [];
+            } catch(e) { /* show all slots if fetch fails */ }
+
+            document.getElementById('reschedule-loading').style.display = 'none';
+
+            const duration = (bookingData && bookingData.duration) ? parseInt(bookingData.duration) : 120;
+            const slotsEl = document.getElementById('reschedule-slots');
+            slotsEl.innerHTML = '';
+            let available = 0;
+
+            ALL_SLOTS.forEach(slot => {
+                const slotDt = slotToDatetime(dateStr, slot);
+                const slotEnd = new Date(slotDt.getTime() + duration * 60000);
+                const now = new Date();
+
+                // Skip past slots
+                if (slotDt <= now) return;
+
+                const taken = unavailable.some(u => {
+                    const uStart = new Date(u.start);
+                    const uEnd = new Date(u.end);
+                    return slotDt < uEnd && slotEnd > uStart;
+                });
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'slot-btn' + (taken ? ' unavailable' : '');
+                btn.textContent = slot;
+                btn.disabled = taken;
+                if (!taken) {
+                    available++;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedRescheduleSlot = slot;
+                        selectedRescheduleDatetime = slotDt.toISOString();
+                        document.getElementById('confirm-reschedule-btn').disabled = false;
+                    });
+                }
+                slotsEl.appendChild(btn);
+            });
+
+            document.getElementById('reschedule-slots-wrap').style.display = 'block';
+            document.getElementById('reschedule-no-slots').style.display = available === 0 ? 'block' : 'none';
+        }
+
+        async function confirmReschedule() {
+            if (!selectedRescheduleDatetime || !bookingData) return;
+            const btn = document.getElementById('confirm-reschedule-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            document.getElementById('reschedule-error').style.display = 'none';
+
+            try {
+                const res = await fetch('/api/reschedule-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        bookingId: bookingData.booking_reference || bookingData.id,
+                        email: bookingData.email,
+                        newDatetime: selectedRescheduleDatetime,
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.rescheduled) {
+                    closeRescheduleModal();
+                    document.getElementById('reschedule-success-modal').classList.add('show');
+                } else {
+                    throw new Error(data.error || 'Failed to reschedule.');
+                }
+            } catch (e) {
+                document.getElementById('reschedule-error').textContent = e.message;
+                document.getElementById('reschedule-error').style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Confirm New Time';
+            }
+        }
+
+        // Close reschedule modals on outside click
+        document.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('reschedule-modal')) closeRescheduleModal();
+            if (e.target === document.getElementById('reschedule-success-modal')) closeRescheduleSuccessModal();
+        });
+        // ── End Reschedule Logic ───────────────────────────────────
 
         // Navbar toggle
         var toggle = document.getElementById('nav-toggle');
