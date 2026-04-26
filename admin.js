@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Calendar instance
     let calendar = null;
     let allBookings = [];
-    let selectedRevenueRange = 'month';
 
     function parseMoney(value) {
         const amount = Number(value);
@@ -66,25 +65,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         return true;
     }
 
-    function updateRevenueSummary(bookings) {
-        const totalRevenueEl = document.getElementById('total-revenue-value');
-        const depositRevenueEl = document.getElementById('deposit-revenue-value');
-        if (!totalRevenueEl || !depositRevenueEl) return;
+    function updateRevenueSummary() {
+        // Revenue is now shown inside the Stats tab via renderStats — no-op here.
+    }
 
-        const activeBookings = bookings.filter((booking) => {
-            const status = (booking.status || '').toLowerCase();
-            return status !== 'cancelled' && isBookingInRange(booking, selectedRevenueRange);
-        });
-        const totalRevenue = activeBookings.reduce((sum, booking) => sum + parseMoney(booking.totalPrice), 0);
-        const depositRevenue = activeBookings.reduce((sum, booking) => sum + parseMoney(booking.depositPaid), 0);
+    // Names/emails excluded from stats (test accounts, internal, etc.)
+    const STATS_EXCLUDED_NAMES = ['christian james torres'];
 
-        totalRevenueEl.textContent = `$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        depositRevenueEl.textContent = `$${depositRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    function isExcludedFromStats(booking) {
+        const name = (booking.name || '').toLowerCase().trim();
+        return STATS_EXCLUDED_NAMES.some(ex => name.includes(ex));
     }
 
     function initializeTabs() {
         const tabs = [
-            { btn: document.getElementById('bookings-tab-btn'), panel: document.getElementById('bookings-tab'), name: 'bookings' },
             { btn: document.getElementById('stats-tab-btn'),    panel: document.getElementById('stats-tab'),    name: 'stats' },
             { btn: document.getElementById('calendar-tab-btn'), panel: document.getElementById('calendar-tab'), name: 'calendar' },
         ];
@@ -99,7 +93,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (name === 'calendar' && calendar) {
                 setTimeout(() => { calendar.updateSize(); updateRange(); updateViewButtons(); }, 10);
             }
-            if (name === 'stats') renderStats(allBookings);
         }
 
         tabs.forEach(t => { if (t.btn) t.btn.addEventListener('click', () => showTab(t.name)); });
@@ -108,10 +101,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── Stats Rendering ───────────────────────────────────────────
     function $fmt(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-    function renderStats(bookings) {
+    let currentStatsRange = 'month';
+
+    function renderStats(allData) {
+        const rangeKey = currentStatsRange;
+
+        // Exclude internal/test accounts and apply date range
+        const bookings = allData.filter(b =>
+            !isExcludedFromStats(b) && isBookingInRange(b, rangeKey)
+        );
+
+        // Update the range description label
+        const rangeLabels = {
+            all: 'All Time', today: 'Today', week: 'This Week',
+            month: 'This Month', year: 'This Year', last7: 'Last 7 Days', last30: 'Last 30 Days'
+        };
+        const labelEl = document.getElementById('stats-range-label');
+        if (labelEl) labelEl.textContent = rangeLabels[rangeKey] || '';
+
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfWeek = new Date(startOfToday);
         startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay());
         const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 7);
@@ -127,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('st-rescheduled').textContent = rescheduled.length;
         document.getElementById('st-cancelled').textContent = cancelled.length;
 
-        // Revenue (exclude cancelled)
+        // Revenue
         const totalRev = active.reduce((s, b) => s + parseMoney(b.totalPrice), 0);
         const totalDep = active.reduce((s, b) => s + parseMoney(b.depositPaid), 0);
         const totalBal = active.reduce((s, b) => s + Math.max(0, parseMoney(b.totalPrice) - parseMoney(b.depositPaid)), 0);
@@ -139,19 +148,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Clients
         const emailMap = {};
-        bookings.forEach(b => { if (b.email) { emailMap[b.email.toLowerCase()] = (emailMap[b.email.toLowerCase()] || 0) + 1; } });
+        bookings.forEach(b => {
+            if (b.email) emailMap[b.email.toLowerCase()] = (emailMap[b.email.toLowerCase()] || 0) + 1;
+        });
         const uniqueClients = Object.keys(emailMap).length;
         const returningClients = Object.values(emailMap).filter(c => c > 1).length;
-
-        const newThisMonth = bookings.filter(b => {
-            const created = new Date(b.createdAt || b.appointmentDateTime || 0);
-            return created >= startOfMonth && emailMap[b.email?.toLowerCase()] === 1;
+        // "New" = email appears only once in the full unfiltered dataset within this period
+        const allEmailMap = {};
+        allData.filter(b => !isExcludedFromStats(b)).forEach(b => {
+            if (b.email) allEmailMap[b.email.toLowerCase()] = (allEmailMap[b.email.toLowerCase()] || 0) + 1;
         });
-        const newThisMonthEmails = new Set(newThisMonth.map(b => b.email?.toLowerCase()).filter(Boolean));
-
+        const newThisPeriodEmails = new Set(
+            bookings.filter(b => b.email && allEmailMap[b.email.toLowerCase()] === 1)
+                .map(b => b.email.toLowerCase())
+        );
         document.getElementById('st-unique-clients').textContent = uniqueClients;
         document.getElementById('st-returning').textContent = returningClients;
-        document.getElementById('st-new-month').textContent = newThisMonthEmails.size;
+        document.getElementById('st-new-month').textContent = newThisPeriodEmails.size;
         const cancelRate = bookings.length ? Math.round((cancelled.length / bookings.length) * 100) : 0;
         document.getElementById('st-cancel-rate').textContent = cancelRate + '%';
 
@@ -160,25 +173,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         bookings.forEach(b => {
             const key = b.email?.toLowerCase();
             if (!key) return;
-            if (!clientStats[key]) clientStats[key] = { name: b.name || b.email, email: key, count: 0, spent: 0 };
+            if (!clientStats[key]) clientStats[key] = { name: b.name || b.email, count: 0, spent: 0 };
             clientStats[key].count++;
-            if ((b.status || '').toLowerCase() !== 'cancelled') {
-                clientStats[key].spent += parseMoney(b.totalPrice);
-            }
+            if ((b.status || '').toLowerCase() !== 'cancelled') clientStats[key].spent += parseMoney(b.totalPrice);
         });
         const topClients = Object.values(clientStats).sort((a, b) => b.count - a.count || b.spent - a.spent).slice(0, 8);
         const topClientsEl = document.getElementById('st-top-customers');
-        if (topClients.length === 0) {
-            topClientsEl.innerHTML = '<div class="stats-empty">No data yet</div>';
-        } else {
-            topClientsEl.innerHTML = topClients.map((c, i) => `
+        topClientsEl.innerHTML = topClients.length === 0
+            ? '<div class="stats-empty">No data yet</div>'
+            : topClients.map((c, i) => `
                 <div class="stats-list-row">
                     <span class="stats-rank">#${i + 1}</span>
                     <span class="stats-list-name">${c.name}</span>
                     <span class="stats-list-meta">${c.count} booking${c.count !== 1 ? 's' : ''}</span>
                     <span class="stats-list-value">${$fmt(c.spent)}</span>
                 </div>`).join('');
-        }
 
         // Popular Services
         const serviceMap = {};
@@ -191,104 +200,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         const topServices = Object.entries(serviceMap).sort((a, b) => b[1].count - a[1].count);
         const maxSvcCount = topServices.length ? topServices[0][1].count : 1;
         const svcEl = document.getElementById('st-services');
-        if (topServices.length === 0) {
-            svcEl.innerHTML = '<div class="stats-empty">No data yet</div>';
-        } else {
-            svcEl.innerHTML = topServices.map(([svc, d]) => `
+        svcEl.innerHTML = topServices.length === 0
+            ? '<div class="stats-empty">No data yet</div>'
+            : topServices.map(([svc, d]) => `
                 <div class="stats-bar-row">
                     <div class="stats-bar-label">${svc}</div>
-                    <div class="stats-bar-track">
-                        <div class="stats-bar-fill" style="width:${Math.round((d.count / maxSvcCount) * 100)}%;background:#6c5ce7;"></div>
-                    </div>
-                    <div class="stats-bar-meta">${d.count} &nbsp;<span style="color:#aaa;font-size:0.8rem;">${$fmt(d.revenue)}</span></div>
+                    <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${Math.round((d.count/maxSvcCount)*100)}%;background:#6c5ce7;"></div></div>
+                    <div class="stats-bar-meta">${d.count} <span style="color:#aaa;font-size:0.8rem;">${$fmt(d.revenue)}</span></div>
                 </div>`).join('');
-        }
 
         // Bookings by Day of Week
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-        active.forEach(b => {
-            const d = new Date(b.appointmentDateTime);
-            if (!isNaN(d)) dayCounts[d.getDay()]++;
-        });
+        const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const dayCounts = [0,0,0,0,0,0,0];
+        active.forEach(b => { const d = new Date(b.appointmentDateTime); if (!isNaN(d)) dayCounts[d.getDay()]++; });
         const maxDay = Math.max(...dayCounts, 1);
         const dayColors = ['#ff7675','#00b894','#0984e3','#fdcb6e','#6c5ce7','#fd79a8','#a29bfe'];
-        const daysEl = document.getElementById('st-days');
-        daysEl.innerHTML = dayNames.map((day, i) => `
+        document.getElementById('st-days').innerHTML = dayNames.map((day, i) => `
             <div class="stats-bar-row">
                 <div class="stats-bar-label">${day}</div>
-                <div class="stats-bar-track">
-                    <div class="stats-bar-fill" style="width:${Math.round((dayCounts[i] / maxDay) * 100)}%;background:${dayColors[i]};"></div>
-                </div>
+                <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${Math.round((dayCounts[i]/maxDay)*100)}%;background:${dayColors[i]};"></div></div>
                 <div class="stats-bar-meta">${dayCounts[i]}</div>
             </div>`).join('');
 
         // Busiest Time Slots
         const hourMap = {};
-        active.forEach(b => {
-            const d = new Date(b.appointmentDateTime);
-            if (isNaN(d)) return;
-            const h = d.getHours();
-            hourMap[h] = (hourMap[h] || 0) + 1;
-        });
-        const sortedHours = Object.entries(hourMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        active.forEach(b => { const d = new Date(b.appointmentDateTime); if (!isNaN(d)) { const h = d.getHours(); hourMap[h] = (hourMap[h]||0)+1; } });
+        const sortedHours = Object.entries(hourMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
         const maxHour = sortedHours.length ? sortedHours[0][1] : 1;
-        function fmtHour(h) {
-            h = parseInt(h);
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            const hr = h % 12 || 12;
-            return `${hr}:00 ${ampm}`;
-        }
+        const fmtHour = h => { h=parseInt(h); return `${h%12||12}:00 ${h>=12?'PM':'AM'}`; };
         const timesEl = document.getElementById('st-times');
-        if (sortedHours.length === 0) {
-            timesEl.innerHTML = '<div class="stats-empty">No data yet</div>';
-        } else {
-            timesEl.innerHTML = sortedHours.map(([h, cnt]) => `
+        timesEl.innerHTML = sortedHours.length === 0
+            ? '<div class="stats-empty">No data yet</div>'
+            : sortedHours.map(([h, cnt]) => `
                 <div class="stats-bar-row">
                     <div class="stats-bar-label">${fmtHour(h)}</div>
-                    <div class="stats-bar-track">
-                        <div class="stats-bar-fill" style="width:${Math.round((cnt / maxHour) * 100)}%;background:#00b894;"></div>
-                    </div>
+                    <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${Math.round((cnt/maxHour)*100)}%;background:#00b894;"></div></div>
                     <div class="stats-bar-meta">${cnt}</div>
                 </div>`).join('');
-        }
 
         // Status Breakdown
         const statusCounts = {};
-        bookings.forEach(b => {
-            const s = (b.status || 'pending').toLowerCase();
-            statusCounts[s] = (statusCounts[s] || 0) + 1;
-        });
-        const statusColors = { confirmed: '#00b894', rescheduled: '#6c5ce7', pending: '#fdcb6e', pending_payment: '#fdcb6e', cancelled: '#ff7675', completed: '#74b9ff' };
-        const breakdownEl = document.getElementById('st-status-breakdown');
+        bookings.forEach(b => { const s=(b.status||'pending').toLowerCase(); statusCounts[s]=(statusCounts[s]||0)+1; });
+        const statusColors = { confirmed:'#00b894', rescheduled:'#6c5ce7', pending:'#fdcb6e', pending_payment:'#fdcb6e', cancelled:'#ff7675', completed:'#74b9ff' };
         const total = bookings.length || 1;
-        breakdownEl.innerHTML = Object.entries(statusCounts).sort((a,b)=>b[1]-a[1]).map(([s, cnt]) => `
+        document.getElementById('st-status-breakdown').innerHTML = Object.entries(statusCounts).sort((a,b)=>b[1]-a[1]).map(([s,cnt])=>`
             <div class="stats-bar-row">
                 <div class="stats-bar-label" style="text-transform:capitalize;">${s.replace('_',' ')}</div>
-                <div class="stats-bar-track">
-                    <div class="stats-bar-fill" style="width:${Math.round((cnt / total) * 100)}%;background:${statusColors[s] || '#b2bec3'};"></div>
-                </div>
+                <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${Math.round((cnt/total)*100)}%;background:${statusColors[s]||'#b2bec3'};"></div></div>
                 <div class="stats-bar-meta">${cnt} <span style="color:#aaa;font-size:0.8rem;">(${Math.round((cnt/total)*100)}%)</span></div>
             </div>`).join('');
 
-        // This Week's Appointments
-        const thisWeek = bookings.filter(b => {
+        // This Week's Appointments (always current week regardless of range filter)
+        const thisWeek = allData.filter(b => {
+            if (isExcludedFromStats(b)) return false;
             const d = new Date(b.appointmentDateTime);
-            return d >= startOfWeek && d < endOfWeek && (b.status || '').toLowerCase() !== 'cancelled';
-        }).sort((a, b) => new Date(a.appointmentDateTime) - new Date(b.appointmentDateTime));
+            return d >= startOfWeek && d < endOfWeek && (b.status||'').toLowerCase() !== 'cancelled';
+        }).sort((a,b) => new Date(a.appointmentDateTime)-new Date(b.appointmentDateTime));
         const weekEl = document.getElementById('st-this-week');
-        if (thisWeek.length === 0) {
-            weekEl.innerHTML = '<div class="stats-empty">No appointments this week</div>';
-        } else {
-            weekEl.innerHTML = thisWeek.map(b => {
+        weekEl.innerHTML = thisWeek.length === 0
+            ? '<div class="stats-empty">No appointments this week</div>'
+            : thisWeek.map(b => {
                 const dt = new Date(b.appointmentDateTime);
                 return `<div class="stats-list-row">
-                    <span class="stats-list-name">${b.name || '—'}</span>
+                    <span class="stats-list-name">${b.name||'—'}</span>
                     <span class="stats-list-meta">${dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span>
                     <span class="stats-list-value" style="font-size:0.85rem;">${dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span>
                 </div>`;
             }).join('');
-        }
     }
     // ── End Stats ─────────────────────────────────────────────────
 
@@ -803,21 +781,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add event listeners for filters
     const statusFilter = document.getElementById('status-filter');
     const searchBookings = document.getElementById('search-bookings');
-    const revenueRangeSelect = document.getElementById('revenue-range');
-    
-    if (statusFilter) {
-        statusFilter.addEventListener('change', filterBookings);
-    }
-    
-    if (searchBookings) {
-        searchBookings.addEventListener('input', filterBookings);
-    }
 
-    if (revenueRangeSelect) {
-        revenueRangeSelect.value = selectedRevenueRange;
-        revenueRangeSelect.addEventListener('change', (event) => {
-            selectedRevenueRange = event.target.value;
-            updateRevenueSummary(allBookings);
+    if (statusFilter) statusFilter.addEventListener('change', filterBookings);
+    if (searchBookings) searchBookings.addEventListener('input', filterBookings);
+
+    const statsRangeSelect = document.getElementById('stats-range');
+    if (statsRangeSelect) {
+        statsRangeSelect.value = currentStatsRange;
+        statsRangeSelect.addEventListener('change', (e) => {
+            currentStatsRange = e.target.value;
+            renderStats(allBookings);
         });
     }
 

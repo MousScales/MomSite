@@ -689,6 +689,44 @@ body {
 }
 
 /* ── Stats Tab ──────────────────────────────────────────────────── */
+.stats-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.stats-filter-bar label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+}
+.stats-filter-bar select {
+    padding: 6px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    background: #fafafa;
+    color: #333;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px;
+    padding-right: 28px;
+}
+.stats-range-desc {
+    font-size: 0.82rem;
+    color: #aaa;
+    margin-left: 2px;
+}
+
 .stats-section-title {
     font-size: 0.75rem;
     font-weight: 700;

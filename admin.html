@@ -19,15 +19,17 @@
         </div>
 
         <div class="admin-tabs">
-            <button id="bookings-tab-btn" class="admin-tab-btn active">Bookings</button>
-            <button id="stats-tab-btn" class="admin-tab-btn">Stats</button>
+            <button id="stats-tab-btn" class="admin-tab-btn active">Stats</button>
             <button id="calendar-tab-btn" class="admin-tab-btn">Calendar</button>
         </div>
 
-        <section id="bookings-tab" class="admin-tab-panel active">
-            <div class="revenue-filter-bar">
-                <label for="revenue-range">Revenue Range</label>
-                <select id="revenue-range">
+        <!-- ── Stats Tab (main) ───────────────────────── -->
+        <section id="stats-tab" class="admin-tab-panel active">
+
+            <!-- Date range filter bar -->
+            <div class="stats-filter-bar">
+                <label for="stats-range">Date Range</label>
+                <select id="stats-range">
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
                     <option value="week">This Week</option>
@@ -36,21 +38,120 @@
                     <option value="last7">Last 7 Days</option>
                     <option value="last30">Last 30 Days</option>
                 </select>
+                <span id="stats-range-label" class="stats-range-desc"></span>
             </div>
 
-            <div class="revenue-cards">
-                <div class="revenue-card">
-                    <p class="revenue-label">Total Revenue</p>
-                    <p id="total-revenue-value" class="revenue-value">$0.00</p>
+            <!-- Row 1: Overview -->
+            <div class="stats-section-title">Overview</div>
+            <div class="stats-grid stats-grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📋</div>
+                    <div class="stat-info"><div class="stat-value" id="st-total">0</div><div class="stat-label">Total Bookings</div></div>
                 </div>
-                <div class="revenue-card">
-                    <p class="revenue-label">Revenue From Deposits</p>
-                    <p id="deposit-revenue-value" class="revenue-value">$0.00</p>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">📅</div>
+                    <div class="stat-info"><div class="stat-value" id="st-upcoming">0</div><div class="stat-label">Upcoming</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#ffeaa7;color:#d6a000;">🔄</div>
+                    <div class="stat-info"><div class="stat-value" id="st-rescheduled">0</div><div class="stat-label">Rescheduled</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f8d7da;color:#c0392b;">❌</div>
+                    <div class="stat-info"><div class="stat-value" id="st-cancelled">0</div><div class="stat-label">Cancelled</div></div>
                 </div>
             </div>
 
-            <!-- Bookings List Section -->
-            <div class="bookings-list-container">
+            <!-- Row 2: Revenue -->
+            <div class="stats-section-title">Revenue</div>
+            <div class="stats-grid stats-grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d4edda;color:#155724;">💰</div>
+                    <div class="stat-info"><div class="stat-value" id="st-rev-total">$0</div><div class="stat-label">Total Revenue (est.)</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#cce5ff;color:#004085;">💳</div>
+                    <div class="stat-info"><div class="stat-value" id="st-rev-deposits">$0</div><div class="stat-label">Deposits Collected</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff3cd;color:#856404;">⏳</div>
+                    <div class="stat-info"><div class="stat-value" id="st-rev-balance">$0</div><div class="stat-label">Balance Still Due</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📊</div>
+                    <div class="stat-info"><div class="stat-value" id="st-avg-value">$0</div><div class="stat-label">Avg Booking Value</div></div>
+                </div>
+            </div>
+
+            <!-- Row 3: Clients -->
+            <div class="stats-section-title">Clients</div>
+            <div class="stats-grid stats-grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">👤</div>
+                    <div class="stat-info"><div class="stat-value" id="st-unique-clients">0</div><div class="stat-label">Unique Clients</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">🔁</div>
+                    <div class="stat-info"><div class="stat-value" id="st-returning">0</div><div class="stat-label">Returning Clients</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d4edda;color:#155724;">🌟</div>
+                    <div class="stat-info"><div class="stat-value" id="st-new-month">0</div><div class="stat-label">New This Period</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f8d7da;color:#721c24;">📉</div>
+                    <div class="stat-info"><div class="stat-value" id="st-cancel-rate">0%</div><div class="stat-label">Cancellation Rate</div></div>
+                </div>
+            </div>
+
+            <!-- Panels -->
+            <div class="stats-bottom-grid">
+                <div class="stats-panel">
+                    <div class="stats-panel-title">🏆 Top Customers</div>
+                    <div id="st-top-customers" class="stats-panel-body"><div class="stats-empty">Loading...</div></div>
+                </div>
+                <div class="stats-panel">
+                    <div class="stats-panel-title">✂️ Popular Services</div>
+                    <div id="st-services" class="stats-panel-body"><div class="stats-empty">Loading...</div></div>
+                </div>
+                <div class="stats-panel">
+                    <div class="stats-panel-title">📆 Bookings by Day of Week</div>
+                    <div id="st-days" class="stats-panel-body"><div class="stats-empty">Loading...</div></div>
+                </div>
+                <div class="stats-panel">
+                    <div class="stats-panel-title">🕐 Busiest Time Slots</div>
+                    <div id="st-times" class="stats-panel-body"><div class="stats-empty">Loading...</div></div>
+                </div>
+                <div class="stats-panel">
+                    <div class="stats-panel-title">🗂 Status Breakdown</div>
+                    <div id="st-status-breakdown" class="stats-panel-body"><div class="stats-empty">Loading...</div></div>
+                </div>
+                <div class="stats-panel">
+                    <div class="stats-panel-title">📅 This Week's Appointments</div>
+                    <div id="st-this-week" class="stats-panel-body"><div class="stats-empty">Loading...</div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Calendar Tab ───────────────────────────── -->
+        <section id="calendar-tab" class="admin-tab-panel">
+            <div class="calendar-header">
+                <div class="calendar-controls">
+                    <button id="prev-btn" class="control-btn"><i class="fas fa-chevron-left"></i></button>
+                    <button id="today-btn" class="control-btn">Today</button>
+                    <button id="next-btn" class="control-btn"><i class="fas fa-chevron-right"></i></button>
+                    <span id="current-range" class="current-range"></span>
+                    <div class="view-buttons">
+                        <button id="month-view" class="view-btn active">Month</button>
+                        <button id="week-view" class="view-btn">Week</button>
+                        <button id="day-view" class="view-btn">Day</button>
+                    </div>
+                </div>
+            </div>
+            <div id="calendar" class="calendar-container"></div>
+
+            <!-- All Bookings table lives here -->
+            <div class="bookings-list-container" style="margin-top:28px;">
                 <h2>All Bookings</h2>
                 <div class="bookings-filters">
                     <select id="status-filter">
@@ -74,186 +175,10 @@
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody id="bookings-list">
-                            <!-- Bookings will be dynamically inserted here -->
-                        </tbody>
+                        <tbody id="bookings-list"></tbody>
                     </table>
                 </div>
             </div>
-        </section>
-
-        <!-- Stats Tab -->
-        <section id="stats-tab" class="admin-tab-panel">
-
-            <!-- Row 1: Key Numbers -->
-            <div class="stats-section-title">Overview</div>
-            <div class="stats-grid stats-grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📋</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-total">0</div>
-                        <div class="stat-label">Total Bookings</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">📅</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-upcoming">0</div>
-                        <div class="stat-label">Upcoming</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#ffeaa7;color:#d6a000;">🔄</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-rescheduled">0</div>
-                        <div class="stat-label">Rescheduled</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#f8d7da;color:#c0392b;">❌</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-cancelled">0</div>
-                        <div class="stat-label">Cancelled</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 2: Revenue Numbers -->
-            <div class="stats-section-title">Revenue</div>
-            <div class="stats-grid stats-grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#d4edda;color:#155724;">💰</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-rev-total">$0</div>
-                        <div class="stat-label">Total Revenue (est.)</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#cce5ff;color:#004085;">💳</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-rev-deposits">$0</div>
-                        <div class="stat-label">Deposits Collected</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#fff3cd;color:#856404;">⏳</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-rev-balance">$0</div>
-                        <div class="stat-label">Balance Still Due</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">📊</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-avg-value">$0</div>
-                        <div class="stat-label">Avg Booking Value</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 3: Client Stats -->
-            <div class="stats-section-title">Clients</div>
-            <div class="stats-grid stats-grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#e3fcef;color:#00b894;">👤</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-unique-clients">0</div>
-                        <div class="stat-label">Unique Clients</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#dfe6fd;color:#6c5ce7;">🔁</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-returning">0</div>
-                        <div class="stat-label">Returning Clients</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#d4edda;color:#155724;">🌟</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-new-month">0</div>
-                        <div class="stat-label">New This Month</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#f8d7da;color:#721c24;">📉</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="st-cancel-rate">0%</div>
-                        <div class="stat-label">Cancellation Rate</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bottom Row: Top Customers + Popular Services + Busiest Days -->
-            <div class="stats-bottom-grid">
-
-                <!-- Top Customers -->
-                <div class="stats-panel">
-                    <div class="stats-panel-title">🏆 Top Customers</div>
-                    <div id="st-top-customers" class="stats-panel-body">
-                        <div class="stats-empty">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Popular Services -->
-                <div class="stats-panel">
-                    <div class="stats-panel-title">✂️ Popular Services</div>
-                    <div id="st-services" class="stats-panel-body">
-                        <div class="stats-empty">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Busiest Days -->
-                <div class="stats-panel">
-                    <div class="stats-panel-title">📆 Bookings by Day of Week</div>
-                    <div id="st-days" class="stats-panel-body">
-                        <div class="stats-empty">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Busiest Times -->
-                <div class="stats-panel">
-                    <div class="stats-panel-title">🕐 Busiest Time Slots</div>
-                    <div id="st-times" class="stats-panel-body">
-                        <div class="stats-empty">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Status Breakdown -->
-                <div class="stats-panel">
-                    <div class="stats-panel-title">🗂 Status Breakdown</div>
-                    <div id="st-status-breakdown" class="stats-panel-body">
-                        <div class="stats-empty">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- This Week Snapshot -->
-                <div class="stats-panel">
-                    <div class="stats-panel-title">📅 This Week's Appointments</div>
-                    <div id="st-this-week" class="stats-panel-body">
-                        <div class="stats-empty">Loading...</div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <section id="calendar-tab" class="admin-tab-panel">
-            <div class="calendar-header">
-                <div class="calendar-controls">
-                    <button id="prev-btn" class="control-btn"><i class="fas fa-chevron-left"></i></button>
-                    <button id="today-btn" class="control-btn">Today</button>
-                    <button id="next-btn" class="control-btn"><i class="fas fa-chevron-right"></i></button>
-                    <span id="current-range" class="current-range"></span>
-                    <div class="view-buttons">
-                        <button id="month-view" class="view-btn active">Month</button>
-                        <button id="week-view" class="view-btn">Week</button>
-                        <button id="day-view" class="view-btn">Day</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="calendar" class="calendar-container"></div>
         </section>
     </div>
 
