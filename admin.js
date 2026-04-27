@@ -174,8 +174,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const key = b.email?.toLowerCase();
             if (!key) return;
             if (!clientStats[key]) clientStats[key] = { name: b.name || b.email, count: 0, spent: 0 };
-            clientStats[key].count++;
-            if ((b.status || '').toLowerCase() !== 'cancelled') clientStats[key].spent += parseMoney(b.totalPrice);
+            if ((b.status || '').toLowerCase() !== 'cancelled') {
+                clientStats[key].count++;
+                clientStats[key].spent += parseMoney(b.totalPrice);
+            }
         });
         const topClients = Object.values(clientStats).sort((a, b) => b.count - a.count || b.spent - a.spent).slice(0, 8);
         const topClientsEl = document.getElementById('st-top-customers');
