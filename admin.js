@@ -641,11 +641,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         // Close modal when clicking outside
-        window.onclick = (event) => {
+        const outsideClickHandler = (event) => {
             if (event.target === modal) {
                 modal.style.display = 'none';
+                window.removeEventListener('click', outsideClickHandler);
             }
         };
+        window.addEventListener('click', outsideClickHandler);
     }
 
     // Make sure calendar event click shows the same details
