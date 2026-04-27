@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOwnerRescheduleNotification } = require('./_whatsapp');
 const { sendRescheduleConfirmation } = require('./_resend');
+const { rescheduleCalComBooking } = require('./_calcom');
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -118,6 +119,15 @@ module.exports = async (req, res) => {
     if (updateError) {
       console.error('Reschedule update error:', updateError);
       return res.status(500).json({ error: 'Failed to reschedule booking.' });
+    }
+
+    // Cal.com reschedule
+    try {
+      if (booking.cal_com_uid) {
+        await rescheduleCalComBooking(booking.cal_com_uid, newDatetime, 'Client rescheduled');
+      }
+    } catch (e) {
+      console.warn('Cal.com reschedule sync failed:', e.message);
     }
 
     // WhatsApp notification to owner

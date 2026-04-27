@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOwnerCancelNotification } = require('./_whatsapp');
 const { sendCancelConfirmation } = require('./_resend');
+const { cancelCalComBooking } = require('./_calcom');
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -110,6 +111,15 @@ module.exports = async (req, res) => {
     if (updateError) {
       console.error('Cancel booking update error:', updateError);
       return res.status(500).json({ error: 'An error occurred while cancelling the booking.' });
+    }
+
+    // Cal.com cancel
+    try {
+      if (booking.cal_com_uid) {
+        await cancelCalComBooking(booking.cal_com_uid, 'Client cancelled');
+      }
+    } catch (e) {
+      console.warn('Cal.com cancel sync failed:', e.message);
     }
 
     // WhatsApp notification to owner

@@ -3,6 +3,7 @@ const { getStripeSecretKey } = require('./_stripe-env');
 const { createCalendarEvent } = require('./_calendar');
 const { sendBookingConfirmation } = require('./_resend');
 const { sendOwnerWhatsAppNotification } = require('./_whatsapp');
+const { createCalComBooking } = require('./_calcom');
 
 async function stripeRequest(method, path) {
   const key = getStripeSecretKey();
@@ -161,6 +162,24 @@ module.exports = async (req, res) => {
     }
 
     await supabase.from('temp_bookings').delete().eq('id', resolvedBookingId);
+
+    // Sync to Cal.com
+    try {
+      const calUid = await createCalComBooking({
+        name: bookingData.name,
+        email: bookingData.email,
+        appointmentDatetime: bookingData['appointment-datetime'],
+        duration: bookingData.duration,
+        selectedStyle: bookingData.selected_style,
+        notes: bookingData.notes,
+        bookingReference: bookingData.booking_reference || bookingData.id,
+      });
+      if (calUid) {
+        await supabase.from('bookings').update({ cal_com_uid: calUid }).eq('id', resolvedBookingId);
+      }
+    } catch (e) {
+      console.warn('Cal.com booking sync failed (booking still saved):', e.message);
+    }
 
     const lookupBookingUrl = `${baseUrl}/cancel.html?bookingId=${encodeURIComponent(bookingData.booking_reference || bookingData.id)}`;
     try {
