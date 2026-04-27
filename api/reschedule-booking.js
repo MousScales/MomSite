@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOwnerRescheduleNotification } = require('./_whatsapp');
+const { sendRescheduleConfirmation } = require('./_resend');
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -137,6 +138,20 @@ module.exports = async (req, res) => {
       });
     } catch (e) {
       console.warn('WhatsApp reschedule notification failed:', e.message);
+    }
+
+    // Confirmation email to client
+    try {
+      await sendRescheduleConfirmation({
+        to: booking.email,
+        customerName: booking.name,
+        bookingReference: booking.booking_reference || booking.id,
+        selectedStyle: booking.selected_style,
+        oldDatetime,
+        newDatetime,
+      });
+    } catch (e) {
+      console.warn('Reschedule confirmation email failed:', e.message);
     }
 
     return res.status(200).json({ rescheduled: true, message: 'Booking rescheduled successfully.' });
