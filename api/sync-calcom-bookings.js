@@ -58,13 +58,6 @@ module.exports = async (req, res) => {
       continue;
     }
 
-    // Skip past appointments (cal.com won't accept them)
-    if (new Date(apptDatetime) < new Date()) {
-      skipped++;
-      results.push({ id: booking.id, name: booking.name, status: 'skipped', reason: 'past appointment' });
-      continue;
-    }
-
     try {
       const calUid = await createCalComBooking({
         name: booking.name,
