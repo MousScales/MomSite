@@ -201,6 +201,54 @@
         </section>
     </div>
 
+    <!-- Customer Profile Modal -->
+    <div id="customer-modal" class="modal customer-modal-overlay">
+        <div class="customer-modal-content">
+            <button class="customer-modal-close" id="customer-modal-close">&times;</button>
+
+            <!-- Header -->
+            <div class="cp-header">
+                <div class="cp-avatar" id="cp-avatar">?</div>
+                <div class="cp-header-info">
+                    <div class="cp-name" id="cp-name">—</div>
+                    <div class="cp-meta">
+                        <span id="cp-email"></span>
+                        <span id="cp-phone"></span>
+                    </div>
+                    <div id="cp-member-since" class="cp-since"></div>
+                </div>
+            </div>
+
+            <!-- Key stats -->
+            <div class="cp-stats-row">
+                <div class="cp-stat"><div class="cp-stat-val" id="cp-total-bookings">0</div><div class="cp-stat-lbl">Bookings</div></div>
+                <div class="cp-stat"><div class="cp-stat-val" id="cp-total-spent">$0</div><div class="cp-stat-lbl">Total Spent</div></div>
+                <div class="cp-stat"><div class="cp-stat-val" id="cp-total-dep">$0</div><div class="cp-stat-lbl">Deposited</div></div>
+                <div class="cp-stat"><div class="cp-stat-val" id="cp-balance-due">$0</div><div class="cp-stat-lbl">Balance Due</div></div>
+                <div class="cp-stat"><div class="cp-stat-val" id="cp-cancelled">0</div><div class="cp-stat-lbl">Cancelled</div></div>
+                <div class="cp-stat"><div class="cp-stat-val" id="cp-rescheduled">0</div><div class="cp-stat-lbl">Rescheduled</div></div>
+            </div>
+
+            <!-- Fun facts row -->
+            <div class="cp-facts-row">
+                <div class="cp-fact"><span class="cp-fact-icon">✂️</span><span class="cp-fact-label">Fav Service</span><span class="cp-fact-val" id="cp-fav-service">—</span></div>
+                <div class="cp-fact"><span class="cp-fact-icon">📅</span><span class="cp-fact-label">Last Visit</span><span class="cp-fact-val" id="cp-last-visit">—</span></div>
+                <div class="cp-fact"><span class="cp-fact-icon">🕐</span><span class="cp-fact-label">Fav Time</span><span class="cp-fact-val" id="cp-fav-time">—</span></div>
+                <div class="cp-fact"><span class="cp-fact-icon">📆</span><span class="cp-fact-label">Fav Day</span><span class="cp-fact-val" id="cp-fav-day">—</span></div>
+            </div>
+
+            <!-- Images -->
+            <div id="cp-images-section" style="display:none;">
+                <div class="cp-section-title">📸 Hair Photos</div>
+                <div class="cp-images-grid" id="cp-images-grid"></div>
+            </div>
+
+            <!-- Booking history -->
+            <div class="cp-section-title">📋 Booking History</div>
+            <div class="cp-bookings-list" id="cp-bookings-list"></div>
+        </div>
+    </div>
+
     <!-- Booking Details Modal -->
     <div id="booking-modal" class="modal">
         <div class="modal-content">

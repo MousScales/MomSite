@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         bookings.forEach(b => {
             const key = b.email?.toLowerCase();
             if (!key) return;
-            if (!clientStats[key]) clientStats[key] = { name: b.name || b.email, count: 0, spent: 0 };
+            if (!clientStats[key]) clientStats[key] = { name: b.name || b.email, email: b.email, count: 0, spent: 0 };
             if ((b.status || '').toLowerCase() !== 'cancelled') {
                 clientStats[key].count++;
                 clientStats[key].spent += parseMoney(b.totalPrice);
@@ -181,15 +181,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const topClients = Object.values(clientStats).sort((a, b) => b.count - a.count || b.spent - a.spent).slice(0, 8);
         const topClientsEl = document.getElementById('st-top-customers');
-        topClientsEl.innerHTML = topClients.length === 0
-            ? '<div class="stats-empty">No data yet</div>'
-            : topClients.map((c, i) => `
-                <div class="stats-list-row">
+        if (topClients.length === 0) {
+            topClientsEl.innerHTML = '<div class="stats-empty">No data yet</div>';
+        } else {
+            topClientsEl.innerHTML = '';
+            topClients.forEach((c, i) => {
+                const row = document.createElement('div');
+                row.className = 'stats-list-row';
+                row.innerHTML = `
                     <span class="stats-rank">#${i + 1}</span>
-                    <span class="stats-list-name">${c.name}</span>
+                    <span class="stats-list-name cp-clickable-name" data-email="${c.email}">${c.name}</span>
                     <span class="stats-list-meta">${c.count} booking${c.count !== 1 ? 's' : ''}</span>
-                    <span class="stats-list-value">${$fmt(c.spent)}</span>
-                </div>`).join('');
+                    <span class="stats-list-value">${$fmt(c.spent)}</span>`;
+                row.querySelector('.cp-clickable-name').addEventListener('click', () => showCustomerProfile(c.email));
+                topClientsEl.appendChild(row);
+            });
+        }
 
         // Popular Services
         const serviceMap = {};
@@ -454,18 +461,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         sortedBookings.forEach(booking => {
             const row = document.createElement('tr');
             const bookedDateTime = new Date(booking.createdAt || booking.updatedAt || booking.appointmentDateTime);
-            
+
             row.innerHTML = `
                 <td>${bookedDateTime.toLocaleString()}</td>
-                <td>${booking.name || 'N/A'}</td>
+                <td><span class="cp-clickable-name" data-email="${booking.email || ''}">${booking.name || 'N/A'}</span></td>
                 <td>${booking.selectedStyle || 'N/A'}</td>
                 <td><span class="booking-status status-${booking.status || 'pending'}">${(booking.status || 'Pending').charAt(0).toUpperCase() + (booking.status || 'Pending').slice(1)}</span></td>
             `;
-            
-            // Add click handler to show booking details
+
+            row.querySelector('.cp-clickable-name').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (booking.email) showCustomerProfile(booking.email);
+            });
             row.style.cursor = 'pointer';
             row.addEventListener('click', () => showBookingDetails(booking));
-            
             bookingsList.appendChild(row);
         });
     }
@@ -795,6 +804,130 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderStats(allBookings);
         });
     }
+
+    // ── Customer Profile ──────────────────────────────────────────
+    function showCustomerProfile(email) {
+        if (!email) return;
+        const key = email.toLowerCase();
+        const bookings = allBookings.filter(b => (b.email || '').toLowerCase() === key);
+        if (bookings.length === 0) return;
+
+        const latest = bookings[0];
+        const active = bookings.filter(b => (b.status || '').toLowerCase() !== 'cancelled');
+        const cancelled = bookings.filter(b => (b.status || '').toLowerCase() === 'cancelled');
+        const rescheduled = bookings.filter(b => (b.status || '').toLowerCase() === 'rescheduled');
+        const totalSpent = active.reduce((s, b) => s + parseMoney(b.totalPrice), 0);
+        const totalDep = active.reduce((s, b) => s + parseMoney(b.depositPaid), 0);
+        const totalBal = active.reduce((s, b) => s + Math.max(0, parseMoney(b.totalPrice) - parseMoney(b.depositPaid)), 0);
+
+        // Favorite service
+        const svcCount = {};
+        active.forEach(b => { const s = b.selectedStyle || 'Unknown'; svcCount[s] = (svcCount[s] || 0) + 1; });
+        const favService = Object.entries(svcCount).sort((a,b) => b[1]-a[1])[0]?.[0] || '—';
+
+        // Favorite time slot
+        const hourCount = {};
+        active.forEach(b => {
+            const d = new Date(b.appointmentDateTime);
+            if (!isNaN(d)) { const h = d.getHours(); hourCount[h] = (hourCount[h]||0)+1; }
+        });
+        const favHour = Object.entries(hourCount).sort((a,b)=>b[1]-a[1])[0]?.[0];
+        const favTime = favHour !== undefined ? (() => { const h=parseInt(favHour); return `${h%12||12}:00 ${h>=12?'PM':'AM'}`; })() : '—';
+
+        // Favorite day
+        const dayCount = {};
+        const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        active.forEach(b => { const d = new Date(b.appointmentDateTime); if (!isNaN(d)) { const day = d.getDay(); dayCount[day] = (dayCount[day]||0)+1; } });
+        const favDayIdx = Object.entries(dayCount).sort((a,b)=>b[1]-a[1])[0]?.[0];
+        const favDay = favDayIdx !== undefined ? dayNames[parseInt(favDayIdx)] : '—';
+
+        // Last visit
+        const pastVisits = active.filter(b => new Date(b.appointmentDateTime) < new Date())
+            .sort((a,b) => new Date(b.appointmentDateTime) - new Date(a.appointmentDateTime));
+        const lastVisit = pastVisits[0]
+            ? new Date(pastVisits[0].appointmentDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '—';
+
+        // Member since
+        const oldest = [...bookings].sort((a,b) => new Date(a.createdAt||0) - new Date(b.createdAt||0))[0];
+        const memberSince = oldest?.createdAt
+            ? new Date(oldest.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            : '—';
+
+        // Avatar initials
+        const name = latest.name || email;
+        const initials = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+        const avatarColors = ['#6c5ce7','#00b894','#0984e3','#e17055','#fd79a8','#fdcb6e'];
+        const avatarColor = avatarColors[name.charCodeAt(0) % avatarColors.length];
+
+        // Populate modal
+        document.getElementById('cp-avatar').textContent = initials;
+        document.getElementById('cp-avatar').style.background = avatarColor;
+        document.getElementById('cp-name').textContent = name;
+        document.getElementById('cp-email').textContent = latest.email || '';
+        document.getElementById('cp-phone').textContent = latest.phone ? `· ${latest.phone}` : '';
+        document.getElementById('cp-member-since').textContent = memberSince !== '—' ? `Member since ${memberSince}` : '';
+        document.getElementById('cp-total-bookings').textContent = active.length;
+        document.getElementById('cp-total-spent').textContent = $fmt(totalSpent);
+        document.getElementById('cp-total-dep').textContent = $fmt(totalDep);
+        document.getElementById('cp-balance-due').textContent = $fmt(totalBal);
+        document.getElementById('cp-cancelled').textContent = cancelled.length;
+        document.getElementById('cp-rescheduled').textContent = rescheduled.length;
+        document.getElementById('cp-fav-service').textContent = favService;
+        document.getElementById('cp-last-visit').textContent = lastVisit;
+        document.getElementById('cp-fav-time').textContent = favTime;
+        document.getElementById('cp-fav-day').textContent = favDay;
+
+        // Images
+        const images = [];
+        bookings.forEach(b => {
+            if (b.currentHairImageURL) images.push({ url: b.currentHairImageURL, label: 'Current Hair', date: b.appointmentDateTime });
+            if (b.referenceImageURL) images.push({ url: b.referenceImageURL, label: 'Reference', date: b.appointmentDateTime });
+        });
+        const imagesSection = document.getElementById('cp-images-section');
+        const imagesGrid = document.getElementById('cp-images-grid');
+        if (images.length > 0) {
+            imagesSection.style.display = 'block';
+            imagesGrid.innerHTML = images.map(img => `
+                <a href="${img.url}" target="_blank" class="cp-image-item">
+                    <img src="${img.url}" alt="${img.label}">
+                    <div class="cp-image-label">${img.label}</div>
+                    ${img.date ? `<div class="cp-image-date">${new Date(img.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>` : ''}
+                </a>`).join('');
+        } else {
+            imagesSection.style.display = 'none';
+        }
+
+        // Booking history
+        const historyEl = document.getElementById('cp-bookings-list');
+        const sorted = [...bookings].sort((a,b) => new Date(b.appointmentDateTime) - new Date(a.appointmentDateTime));
+        historyEl.innerHTML = sorted.map(b => {
+            const dt = new Date(b.appointmentDateTime);
+            const status = (b.status || 'pending').toLowerCase();
+            const statusColors = { confirmed:'#00b894', rescheduled:'#6c5ce7', pending:'#fdcb6e', cancelled:'#ff7675', completed:'#74b9ff' };
+            return `<div class="cp-booking-row">
+                <div class="cp-booking-date">${isNaN(dt) ? '—' : dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}<span style="color:#aaa;font-size:0.8rem;margin-left:6px;">${isNaN(dt)?'':dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span></div>
+                <div class="cp-booking-svc">${b.selectedStyle || '—'}</div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:20px;background:${statusColors[status]||'#b2bec3'}20;color:${statusColors[status]||'#888'};border:1px solid ${statusColors[status]||'#ccc'};">${status.replace('_',' ')}</span>
+                    <span style="font-size:0.85rem;font-weight:600;">$${parseMoney(b.totalPrice).toFixed(2)}</span>
+                    <span style="font-size:0.8rem;color:#888;">dep $${parseMoney(b.depositPaid).toFixed(2)}</span>
+                </div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('customer-modal').classList.add('active');
+    }
+
+    document.getElementById('customer-modal-close').addEventListener('click', () => {
+        document.getElementById('customer-modal').classList.remove('active');
+    });
+    document.getElementById('customer-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('customer-modal')) {
+            document.getElementById('customer-modal').classList.remove('active');
+        }
+    });
+    // ── End Customer Profile ───────────────────────────────────────
 
     // Refresh data periodically (every 5 minutes)
     setInterval(loadBookings, 5 * 60 * 1000);
