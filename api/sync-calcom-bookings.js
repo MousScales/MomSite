@@ -14,14 +14,6 @@ const { createCalComBooking } = require('./_calcom');
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-
-  // Simple secret guard so random people can't trigger it
-  const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-  const secret = process.env.SYNC_SECRET;
-  if (secret && body.secret !== secret) {
-    return res.status(403).json({ error: 'Invalid secret' });
-  }
 
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -55,6 +47,13 @@ module.exports = async (req, res) => {
     if (!apptDatetime || !booking.email) {
       skipped++;
       results.push({ id: booking.id, status: 'skipped', reason: 'missing datetime or email' });
+      continue;
+    }
+
+    // Skip past appointments (cal.com won't accept them)
+    if (new Date(apptDatetime) < new Date()) {
+      skipped++;
+      results.push({ id: booking.id, name: booking.name, status: 'skipped', reason: 'past appointment' });
       continue;
     }
 
