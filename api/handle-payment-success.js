@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { getStripeSecretKey } = require('./_stripe-env');
 const { createCalendarEvent } = require('./_calendar');
 const { sendBookingConfirmation } = require('./_resend');
-const { sendOwnerWhatsAppNotification } = require('./_whatsapp');
+const { sendOwnerWhatsAppNotification, sendCustomerSmsConfirmation } = require('./_whatsapp');
 const { createCalComBooking } = require('./_calcom');
 
 async function stripeRequest(method, path) {
@@ -99,6 +99,7 @@ module.exports = async (req, res) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const notificationIssues = [];
     const { data: tempData, error: tempError } = await supabase
       .from('temp_bookings')
       .select('*')
@@ -183,7 +184,7 @@ module.exports = async (req, res) => {
 
     const lookupBookingUrl = `${baseUrl}/cancel.html?bookingId=${encodeURIComponent(bookingData.booking_reference || bookingData.id)}`;
     try {
-      await sendBookingConfirmation({
+      const emailResult = await sendBookingConfirmation({
         to: bookingData.email,
         customerName: bookingData.name,
         bookingReference: bookingData.booking_reference || bookingData.id,
@@ -194,12 +195,18 @@ module.exports = async (req, res) => {
         notes: bookingData.notes,
         lookupBookingUrl,
       });
+      if (!emailResult || !emailResult.success) {
+        const reason = emailResult?.error || 'Unknown error';
+        console.warn('Confirmation email not sent:', reason);
+        notificationIssues.push(`email:${reason}`);
+      }
     } catch (e) {
       console.warn('Confirmation email failed (booking still saved):', e.message);
+      notificationIssues.push(`email:${e.message || 'send failed'}`);
     }
 
     try {
-      await sendOwnerWhatsAppNotification({
+      const ownerWhatsAppResult = await sendOwnerWhatsAppNotification({
         name: bookingData.name,
         phone: bookingData.phone,
         email: bookingData.email,
@@ -213,12 +220,39 @@ module.exports = async (req, res) => {
         currentHairImageUrl: bookingData.current_hair_image_url,
         referenceImageUrl: bookingData.reference_image_url,
       });
+      if (!ownerWhatsAppResult || !ownerWhatsAppResult.success) {
+        const reason = ownerWhatsAppResult?.error || 'Unknown error';
+        console.warn('Owner WhatsApp notification not sent:', reason);
+        notificationIssues.push(`whatsapp:${reason}`);
+      }
     } catch (e) {
       console.warn('WhatsApp notification failed (booking still saved):', e.message);
+      notificationIssues.push(`whatsapp:${e.message || 'send failed'}`);
+    }
+
+    try {
+      const customerSmsResult = await sendCustomerSmsConfirmation({
+        phone: bookingData.phone,
+        bookingReference: bookingData.booking_reference || bookingData.id,
+        selectedStyle: bookingData.selected_style,
+        appointmentDatetime: bookingData['appointment-datetime'],
+        depositPaid: bookingData.deposit_paid,
+      });
+      if (!customerSmsResult || !customerSmsResult.success) {
+        const reason = customerSmsResult?.error || 'Unknown error';
+        console.warn('Customer SMS not sent:', reason);
+        notificationIssues.push(`sms:${reason}`);
+      }
+    } catch (e) {
+      console.warn('Customer SMS failed (booking still saved):', e.message);
+      notificationIssues.push(`sms:${e.message || 'send failed'}`);
     }
 
     const lookupId = payment_intent_id || session_id;
-    return redirect(`${baseUrl}/booking-success.html?session_id=${lookupId}`);
+    const notifyParam = notificationIssues.length
+      ? `&notify=${encodeURIComponent(notificationIssues.join('|').slice(0, 500))}`
+      : '';
+    return redirect(`${baseUrl}/booking-success.html?session_id=${lookupId}${notifyParam}`);
   } catch (e) {
     console.error('Handle payment success error:', e);
     return redirect(`${baseUrl}/booking-error.html?error=${encodeURIComponent(e.message || 'An error occurred')}`);

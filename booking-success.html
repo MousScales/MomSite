@@ -112,6 +112,20 @@
             margin: 0;
             color: #1976D2;
         }
+        .warning-box {
+            background: #fff8e1;
+            border-left: 4px solid #f9a825;
+            padding: 20px;
+            margin: 20px 0 30px;
+            border-radius: 5px;
+            text-align: left;
+            display: none;
+        }
+        .warning-box p {
+            margin: 0;
+            color: #8a6d1d;
+            line-height: 1.6;
+        }
         .booking-id-container {
             display: flex;
             align-items: center;
@@ -329,6 +343,9 @@
         <div class="info-box">
             <p><i class="fas fa-info-circle"></i> You will receive a confirmation email shortly with all the details of your appointment.</p>
         </div>
+        <div class="warning-box" id="notification-warning">
+            <p><i class="fas fa-exclamation-triangle"></i> Your booking is confirmed, but one or more notifications failed. Please contact us if you did not receive confirmation.</p>
+        </div>
 
         <div class="booking-details" id="booking-details">
             <h3>Booking Details</h3>
@@ -412,7 +429,15 @@
         // Get session ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session_id');
+        const notifyStatus = urlParams.get('notify');
         let bookingId = null;
+
+        if (notifyStatus) {
+            const warningEl = document.getElementById('notification-warning');
+            if (warningEl) {
+                warningEl.style.display = 'block';
+            }
+        }
         
         // Display session ID if available
         if (sessionId) {

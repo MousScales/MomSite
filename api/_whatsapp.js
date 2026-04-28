@@ -2,15 +2,28 @@ const twilio = require('twilio');
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_SMS_FROM = process.env.TWILIO_SMS_FROM || process.env.TWILIO_PHONE_NUMBER || '';
 // Your Twilio WhatsApp sender — sandbox: 'whatsapp:+14155238886'
 // Production (after approval): 'whatsapp:+1YOURNUMBER'
-const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
+function normalizeWhatsAppAddress(rawValue) {
+  if (!rawValue) return '';
+  const value = String(rawValue).trim();
+  if (!value) return '';
+  if (value.startsWith('whatsapp:')) return value;
+  const normalizedPhone = normalizePhoneNumber(value);
+  return normalizedPhone ? `whatsapp:${normalizedPhone}` : '';
+}
+
+const TWILIO_WHATSAPP_FROM = normalizeWhatsAppAddress(process.env.TWILIO_WHATSAPP_FROM) || 'whatsapp:+14155238886';
 
 // Numbers that receive booking notifications.
 // OWNER_WHATSAPP_TO can be a comma-separated list, e.g. "whatsapp:+18601234567,whatsapp:+18609876543"
 // Falls back to the two hardcoded numbers if the env var is not set.
 const OWNER_WHATSAPP_TO = process.env.OWNER_WHATSAPP_TO
-  ? process.env.OWNER_WHATSAPP_TO.split(',').map(n => n.trim()).filter(Boolean)
+  ? process.env.OWNER_WHATSAPP_TO
+    .split(',')
+    .map(n => normalizeWhatsAppAddress(n))
+    .filter(Boolean)
   : ['whatsapp:+18604250751', 'whatsapp:+18603675091', 'whatsapp:+12037100568'];
 
 function formatDatetime(isoString) {
@@ -28,6 +41,16 @@ function formatDatetime(isoString) {
   } catch (_) {
     return isoString;
   }
+}
+
+function normalizePhoneNumber(rawPhone) {
+  if (!rawPhone) return null;
+  const cleaned = String(rawPhone).replace(/[^\d+]/g, '');
+  if (cleaned.startsWith('+')) return cleaned;
+  const digits = cleaned.replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  return null;
 }
 
 /**
@@ -117,6 +140,48 @@ async function sendOwnerWhatsAppNotification(opts) {
     return { success: true };
   } catch (e) {
     console.error('WhatsApp send error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Send SMS confirmation directly to customer.
+ * Uses TWILIO_SMS_FROM (or TWILIO_PHONE_NUMBER) as sender.
+ */
+async function sendCustomerSmsConfirmation(opts) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    console.warn('SMS: TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN not set, skipping customer SMS');
+    return { success: false, error: 'Twilio not configured' };
+  }
+  if (!TWILIO_SMS_FROM) {
+    console.warn('SMS: TWILIO_SMS_FROM (or TWILIO_PHONE_NUMBER) is not set, skipping customer SMS');
+    return { success: false, error: 'SMS sender not configured' };
+  }
+
+  const to = normalizePhoneNumber(opts.phone);
+  if (!to) {
+    console.warn('SMS: customer phone number invalid/missing, skipping customer SMS');
+    return { success: false, error: 'Invalid customer phone number' };
+  }
+
+  const message = [
+    `Maya African Hair Braiding: your booking is confirmed.`,
+    `Ref: ${opts.bookingReference || '—'}`,
+    `Service: ${opts.selectedStyle || '—'}`,
+    `When: ${formatDatetime(opts.appointmentDatetime)}`,
+    `Deposit paid: $${(opts.depositPaid || 0).toFixed(2)}`,
+  ].join('\n');
+
+  try {
+    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+    await client.messages.create({
+      from: TWILIO_SMS_FROM,
+      to,
+      body: message,
+    });
+    return { success: true };
+  } catch (e) {
+    console.error('SMS send error:', e.message);
     return { success: false, error: e.message };
   }
 }
@@ -234,4 +299,9 @@ async function sendOwnerCancelNotification(opts) {
   }
 }
 
-module.exports = { sendOwnerWhatsAppNotification, sendOwnerRescheduleNotification, sendOwnerCancelNotification };
+module.exports = {
+  sendOwnerWhatsAppNotification,
+  sendCustomerSmsConfirmation,
+  sendOwnerRescheduleNotification,
+  sendOwnerCancelNotification,
+};
