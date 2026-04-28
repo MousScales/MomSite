@@ -1198,23 +1198,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const configResponse = await fetch('/api/stripe-config');
-            if (configResponse.ok) {
-                const configData = await configResponse.json();
-                if (configData.publishableKey) {
-                    stripeInstance = Stripe(configData.publishableKey);
-                    return stripeInstance;
+            if (!configResponse.ok) {
+                let details = '';
+                try {
+                    const errorData = await configResponse.json();
+                    details = errorData.error || errorData.hint || '';
+                } catch (_) {
+                    details = '';
                 }
+                throw new Error(details || `Stripe config request failed (${configResponse.status}).`);
+            }
+
+            const configData = await configResponse.json();
+            if (configData.publishableKey) {
+                stripeInstance = Stripe(configData.publishableKey);
+                return stripeInstance;
             }
         } catch (error) {
             console.warn('Failed to load Stripe config from API:', error);
         }
 
-        if (typeof STRIPE_PUBLISHABLE_KEY !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
+        const isLocalHost = typeof location !== 'undefined' &&
+            (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:');
+
+        // Fallback key is for local development only.
+        if (isLocalHost && typeof STRIPE_PUBLISHABLE_KEY !== 'undefined' && STRIPE_PUBLISHABLE_KEY) {
             stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
             return stripeInstance;
         }
 
-        throw new Error('Stripe is not configured. Add the live publishable key in Vercel or config.js.');
+        throw new Error('Stripe is not configured. Set STRIPE_PUBLISHABLE_KEY in Vercel and redeploy.');
     }
 
     function buildBookingPayload(formData, currentHairImageUrl, referenceImageUrl, pricing) {

@@ -1,6 +1,6 @@
-// Stripe publishable key fallback for local testing.
-// Production should use the key returned by /api/stripe-config from Vercel env vars.
-var STRIPE_PUBLISHABLE_KEY = 'pk_test_51REifLRqvuBtPAdXr3sOBg5kM3cH3RhEXxQiRGPc4uW9gV3RtZnoiUF2Qvzru3I9fzKmxXUgF22tzJBoYZS3XqYf00QA6fSLqs';
+// Optional local-only fallback Stripe publishable key.
+// Leave empty for production. Production should use /api/stripe-config.
+var STRIPE_PUBLISHABLE_KEY = '';
 
 // Firebase Functions API endpoint (legacy)
 const API_BASE_URL = 'https://us-central1-connect-2a17c.cloudfunctions.net/api';
