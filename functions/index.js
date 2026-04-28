@@ -15,13 +15,18 @@ const {createCalendarEvent, deleteCalendarEvent} = require("./calendar");
 
 // Production domain URL
 const DOMAIN_URL = "https://www.mayaafricanhairbraid.com";
-// Stripe secret key (Test Mode)
-// Configured with client's Stripe test key
-// For production, replace with live key (sk_live_...) or use Firebase Secrets
-// RECOMMENDED for production: Use Firebase Secrets instead of hardcoding
+// Read Stripe key from environment/Firebase secrets.
 // Set with: firebase functions:secrets:set STRIPE_SECRET_KEY
-const STRIPE_SECRET_KEY = "sk_test_51REifLRqvuBtPAdXRTp97iSuVIpCbbsxwc087FA10" +
-  "CKCrpOqr5ZYpc0fagAvqoQXS3ZWYh8t7dhXhR04uLkBq8tF00v2RXirWg";
+const STRIPE_SECRET_KEY = (process.env.STRIPE_SECRET_KEY || "").trim();
+
+function getStripeClient() {
+  if (!STRIPE_SECRET_KEY) {
+    throw new Error(
+        "STRIPE_SECRET_KEY is not set. Configure Firebase Secret STRIPE_SECRET_KEY.",
+    );
+  }
+  return stripe(STRIPE_SECRET_KEY);
+}
 
 admin.initializeApp();
 
@@ -107,8 +112,8 @@ exports.createCheckoutSession = onRequest((request, response) => {
         return response.status(400).json({error: "Deposit amount is too low"});
       }
 
-      // Initialize Stripe with the secret key
-      const stripeClient = stripe(STRIPE_SECRET_KEY);
+      // Initialize Stripe with env/Firebase secret key
+      const stripeClient = getStripeClient();
 
       // Create a temporary booking document to store the data
       const tempBookingRef = admin.firestore().collection("temp_bookings").doc();
@@ -175,7 +180,7 @@ exports.handlePaymentSuccess = onRequest(async (request, response) => {
     }
 
     // Initialize Stripe
-    const stripeClient = stripe(STRIPE_SECRET_KEY);
+    const stripeClient = getStripeClient();
 
     // Verify payment status
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
