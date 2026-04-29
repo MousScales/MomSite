@@ -34,17 +34,16 @@ function normalizeWhatsAppAddress(rawValue) {
   return normalizedPhone ? `whatsapp:${normalizedPhone}` : '';
 }
 
-const TWILIO_WHATSAPP_FROM = normalizeWhatsAppAddress(process.env.TWILIO_WHATSAPP_FROM) || 'whatsapp:+14155238886';
+const TWILIO_WHATSAPP_FROM = normalizeWhatsAppAddress(process.env.TWILIO_WHATSAPP_FROM);
 
 // Numbers that receive booking notifications.
-// OWNER_WHATSAPP_TO can be a comma-separated list, e.g. "whatsapp:+18601234567,whatsapp:+18609876543"
-// Falls back to the two hardcoded numbers if the env var is not set.
+// OWNER_WHATSAPP_TO can be a comma/semicolon/newline separated list.
 const OWNER_WHATSAPP_TO = process.env.OWNER_WHATSAPP_TO
   ? process.env.OWNER_WHATSAPP_TO
     .split(/[,;\n]/)
     .map(n => normalizeWhatsAppAddress(n))
     .filter(Boolean)
-  : ['whatsapp:+18604250751', 'whatsapp:+18603675091', 'whatsapp:+12037100568'];
+  : [];
 
 function formatDatetime(isoString) {
   if (!isoString) return '—';
