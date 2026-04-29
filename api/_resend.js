@@ -5,6 +5,28 @@ const { Resend } = require('resend');
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM || 'Maya African Hair Braiding <onboarding@resend.dev>';
 
+function normalizeEmail(value) {
+  const v = String(value || '').trim();
+  return v;
+}
+
+async function sendEmailWithRetry(payload, retries = 1) {
+  const resend = new Resend(RESEND_API_KEY);
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const { error } = await resend.emails.send(payload);
+    if (!error) return { success: true };
+    lastError = error;
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+
+  const message = lastError?.message || 'Unknown Resend error';
+  return { success: false, error: message };
+}
+
 let templateHtml = null;
 function getTemplateHtml() {
   if (templateHtml) return templateHtml;
@@ -49,6 +71,10 @@ async function sendBookingConfirmation(opts) {
     console.warn('Resend: RESEND_API_KEY not set or invalid, skipping confirmation email');
     return { success: false, error: 'Resend not configured' };
   }
+  const recipient = normalizeEmail(opts.to);
+  if (!recipient || !recipient.includes('@')) {
+    return { success: false, error: 'Recipient email missing or invalid' };
+  }
 
   const html = getTemplateHtml()
     .replace(/\{\{CUSTOMER_NAME\}\}/g, (opts.customerName || '').trim() || 'there')
@@ -62,16 +88,15 @@ async function sendBookingConfirmation(opts) {
     .replace(/\{\{LOOKUP_BOOKING_URL\}\}/g, opts.lookupBookingUrl || '#');
 
   try {
-    const resend = new Resend(RESEND_API_KEY);
-    const { data, error } = await resend.emails.send({
+    const result = await sendEmailWithRetry({
       from: RESEND_FROM,
-      to: opts.to,
+      to: recipient,
       subject: 'Booking confirmed — Maya African Hair Braiding',
       html,
     });
-    if (error) {
-      console.error('Resend send error:', error);
-      return { success: false, error: error.message };
+    if (!result.success) {
+      console.error('Resend send error:', result.error);
+      return result;
     }
     return { success: true };
   } catch (e) {

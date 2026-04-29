@@ -224,6 +224,8 @@ module.exports = async (req, res) => {
         const reason = ownerWhatsAppResult?.error || 'Unknown error';
         console.warn('Owner WhatsApp notification not sent:', reason);
         notificationIssues.push(`whatsapp:${reason}`);
+      } else if (ownerWhatsAppResult.warning) {
+        notificationIssues.push(`whatsapp:${ownerWhatsAppResult.warning}`);
       }
     } catch (e) {
       console.warn('WhatsApp notification failed (booking still saved):', e.message);

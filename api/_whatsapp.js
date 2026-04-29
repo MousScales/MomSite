@@ -75,6 +75,10 @@ async function sendOwnerWhatsAppNotification(opts) {
     console.warn('WhatsApp: TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN not set, skipping notification');
     return { success: false, error: 'Twilio not configured' };
   }
+  if (!TWILIO_WHATSAPP_FROM) {
+    console.warn('WhatsApp: TWILIO_WHATSAPP_FROM not set or invalid, skipping notification');
+    return { success: false, error: 'WhatsApp sender not configured' };
+  }
   if (!OWNER_WHATSAPP_TO || OWNER_WHATSAPP_TO.length === 0) {
     console.warn('WhatsApp: no recipient numbers configured, skipping notification');
     return { success: false, error: 'No recipient numbers configured' };
@@ -103,45 +107,66 @@ async function sendOwnerWhatsAppNotification(opts) {
     opts.notes ? `\n*Notes:* ${opts.notes}` : '',
   ].filter(line => line !== undefined).join('\n');
 
-  try {
-    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  let sentCount = 0;
+  const issues = [];
 
-    // Send to all recipient numbers
-    for (const recipientTo of OWNER_WHATSAPP_TO) {
-      // Message 1: booking info text only
+  // Send to all recipient numbers; a single failure should not stop all notifications.
+  for (const recipientTo of OWNER_WHATSAPP_TO) {
+    try {
       await client.messages.create({
         from: TWILIO_WHATSAPP_FROM,
         to: recipientTo,
         body: message,
       });
+      sentCount += 1;
+    } catch (e) {
+      const reason = e?.message || 'Unknown error';
+      issues.push(`${recipientTo}: ${reason}`);
+      continue;
+    }
 
-      // Message 2: current hair photo
-      if (opts.currentHairImageUrl) {
+    if (opts.currentHairImageUrl) {
+      try {
         await client.messages.create({
           from: TWILIO_WHATSAPP_FROM,
           to: recipientTo,
           body: `📸 *Current Hair — ${opts.name || 'Client'}*`,
           mediaUrl: [opts.currentHairImageUrl],
         });
+      } catch (e) {
+        issues.push(`${recipientTo} current hair image: ${e?.message || 'media send failed'}`);
       }
+    }
 
-      // Message 3: reference/inspo image
-      if (opts.referenceImageUrl) {
+    if (opts.referenceImageUrl) {
+      try {
         await client.messages.create({
           from: TWILIO_WHATSAPP_FROM,
           to: recipientTo,
           body: `✨ *Reference / Inspo Image — ${opts.name || 'Client'}*`,
           mediaUrl: [opts.referenceImageUrl],
         });
+      } catch (e) {
+        issues.push(`${recipientTo} reference image: ${e?.message || 'media send failed'}`);
       }
     }
-
-    console.log(`WhatsApp notification sent to ${OWNER_WHATSAPP_TO.length} recipient(s)`);
-    return { success: true };
-  } catch (e) {
-    console.error('WhatsApp send error:', e.message);
-    return { success: false, error: e.message };
   }
+
+  if (sentCount === 0) {
+    const error = issues.join(' | ').slice(0, 500) || 'All WhatsApp sends failed';
+    console.error('WhatsApp send failed for all recipients:', error);
+    return { success: false, error };
+  }
+
+  if (issues.length > 0) {
+    const warning = issues.join(' | ').slice(0, 500);
+    console.warn('WhatsApp sent with some issues:', warning);
+    return { success: true, warning };
+  }
+
+  console.log(`WhatsApp notification sent to ${sentCount} recipient(s)`);
+  return { success: true };
 }
 
 /**
