@@ -126,6 +126,11 @@
             color: #8a6d1d;
             line-height: 1.6;
         }
+        .warning-box ul {
+            margin: 10px 0 0 0;
+            padding-left: 18px;
+            color: #8a6d1d;
+        }
         .booking-id-container {
             display: flex;
             align-items: center;
@@ -344,7 +349,8 @@
             <p><i class="fas fa-info-circle"></i> You will receive a confirmation email shortly with all the details of your appointment.</p>
         </div>
         <div class="warning-box" id="notification-warning">
-            <p><i class="fas fa-exclamation-triangle"></i> Your booking is confirmed, but one or more notifications failed. Please contact us if you did not receive confirmation.</p>
+            <p><i class="fas fa-exclamation-triangle"></i> Your booking is confirmed, but one or more notifications failed.</p>
+            <ul id="notification-warning-details"></ul>
         </div>
 
         <div class="booking-details" id="booking-details">
@@ -434,8 +440,22 @@
 
         if (notifyStatus) {
             const warningEl = document.getElementById('notification-warning');
+            const detailsEl = document.getElementById('notification-warning-details');
             if (warningEl) {
                 warningEl.style.display = 'block';
+            }
+            if (detailsEl) {
+                detailsEl.innerHTML = '';
+                const items = decodeURIComponent(notifyStatus)
+                    .split('|')
+                    .map((x) => x.trim())
+                    .filter(Boolean)
+                    .slice(0, 5);
+                items.forEach((item) => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    detailsEl.appendChild(li);
+                });
             }
         }
         

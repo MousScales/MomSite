@@ -69,6 +69,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Revenue is now shown inside the Stats tab via renderStats — no-op here.
     }
 
+    function getDisplayBookingCode(booking) {
+        return (
+            booking.bookingReference ||
+            booking.bookingId ||
+            booking.id ||
+            'N/A'
+        );
+    }
+
     // Names/emails excluded from stats (test accounts, internal, etc.)
     const STATS_EXCLUDED_NAMES = ['christian james torres', 'moustapha'];
 
@@ -391,7 +400,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Normalize booking data (handle both camelCase and snake_case)
             allBookings = bookings.map(booking => ({
                 id: booking.id,
-                bookingReference: booking.bookingReference || booking.booking_reference,
+                bookingReference: booking.bookingReference || booking.booking_reference || booking.bookingId || booking.booking_id,
+                bookingId: booking.bookingId || booking.booking_id || booking.id,
                 name: booking.customerName || booking.name,
                 phone: booking.phoneNumber || booking.phone,
                 email: booking.email,
@@ -545,7 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p><strong>Name:</strong> ${booking.name || 'N/A'}</p>
                     <p><strong>Phone:</strong> ${booking.phone || 'N/A'}</p>
                     <p><strong>Email:</strong> ${booking.email || 'N/A'}</p>
-                    ${booking.bookingReference ? `<p><strong>Booking ID:</strong> ${booking.bookingReference}</p>` : ''}
+                    <p><strong>Booking Code:</strong> ${getDisplayBookingCode(booking)}</p>
                 </div>
                 
                 <div class="detail-group">
@@ -911,6 +921,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="cp-booking-date">${isNaN(dt) ? '—' : dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}<span style="color:#aaa;font-size:0.8rem;margin-left:6px;">${isNaN(dt)?'':dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span></div>
                 <div class="cp-booking-svc">${b.selectedStyle || '—'}</div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:12px;background:#f5f5f5;color:#555;border:1px solid #ddd;">code ${getDisplayBookingCode(b)}</span>
                     <span style="font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:20px;background:${statusColors[status]||'#b2bec3'}20;color:${statusColors[status]||'#888'};border:1px solid ${statusColors[status]||'#ccc'};">${status.replace('_',' ')}</span>
                     <span style="font-size:0.85rem;font-weight:600;">$${parseMoney(b.totalPrice).toFixed(2)}</span>
                     <span style="font-size:0.8rem;color:#888;">dep $${parseMoney(b.depositPaid).toFixed(2)}</span>
