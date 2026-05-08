@@ -1370,33 +1370,50 @@ def cancel_booking():
 def serve_home():
     return send_file('index.html')
 
+@app.route('/booking')
 @app.route('/booking.html')
 def serve_booking():
     return send_file('booking.html')
 
+@app.route('/catalog')
 @app.route('/catalog.html')
 def serve_catalog():
     return send_file('catalog.html')
 
+@app.route('/product')
 @app.route('/product.html')
 def serve_product():
     return send_file('product.html')
 
+@app.route('/admin')
 @app.route('/admin.html')
 def serve_admin():
     return send_file('admin.html')
 
+@app.route('/booking-success')
 @app.route('/booking-success.html')
 def serve_booking_success():
     return send_file('booking-success.html')
 
+@app.route('/booking-error')
+@app.route('/booking-error.html')
+def serve_booking_error():
+    return send_file('booking-error.html')
+
+@app.route('/cancel')
 @app.route('/cancel.html')
 def serve_cancel():
     return send_file('cancel.html')
 
+@app.route('/booking-details')
 @app.route('/booking-details.html')
 def serve_booking_details():
     return send_file('booking-details.html')
+
+@app.route('/styles-catalog')
+@app.route('/styles-catalog.html')
+def serve_styles_catalog():
+    return send_file('styles-catalog.html')
 
 # Catch-all route for other static files (CSS, JS, images)
 # This must come AFTER API routes to avoid conflicts
@@ -1406,12 +1423,16 @@ def serve_static_files(filename):
     # Don't serve API routes as static files
     if filename.startswith('api/'):
         return "API endpoint not found", 404
-    
-    # Only serve specific file types
+
     allowed_extensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.json', '.html']
+
     if not any(filename.lower().endswith(ext) for ext in allowed_extensions):
-        return "File type not allowed", 403
-    
+        # cleanUrls strips .html — try serving the .html version
+        try:
+            return send_file(filename + '.html')
+        except FileNotFoundError:
+            return "File not found", 404
+
     try:
         return send_file(filename)
     except FileNotFoundError:
