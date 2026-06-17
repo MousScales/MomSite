@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOwnerRescheduleNotification } = require('./_whatsapp');
+const { sendOwnerRescheduleSms } = require('./_blooio');
 const { sendRescheduleConfirmation } = require('./_resend');
 const { rescheduleCalComBooking } = require('./_calcom');
 
@@ -148,6 +149,23 @@ module.exports = async (req, res) => {
       });
     } catch (e) {
       console.warn('WhatsApp reschedule notification failed:', e.message);
+    }
+
+    try {
+      await sendOwnerRescheduleSms({
+        name: booking.name,
+        phone: booking.phone,
+        email: booking.email,
+        bookingReference: booking.booking_reference || booking.id,
+        selectedStyle: booking.selected_style,
+        duration: booking.duration,
+        totalPrice: parseFloat(booking.total_price || 0),
+        depositPaid: parseFloat(booking.deposit_paid || 0),
+        oldDatetime,
+        newDatetime,
+      });
+    } catch (e) {
+      console.warn('Owner SMS (Blooio) reschedule notification failed:', e.message);
     }
 
     // Confirmation email to client

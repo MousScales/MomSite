@@ -3,6 +3,7 @@ const { getStripeSecretKey } = require('./_stripe-env');
 const { createCalendarEvent } = require('./_calendar');
 const { sendBookingConfirmation } = require('./_resend');
 const { sendOwnerWhatsAppNotification, sendCustomerSmsConfirmation } = require('./_whatsapp');
+const { sendOwnerBookingSms, sendCustomerBookingSms } = require('./_blooio');
 const { createCalComBooking } = require('./_calcom');
 
 async function stripeRequest(method, path) {
@@ -233,13 +234,69 @@ module.exports = async (req, res) => {
     }
 
     try {
-      const customerSmsResult = await sendCustomerSmsConfirmation({
+      const ownerSmsResult = await sendOwnerBookingSms({
+        name: bookingData.name,
         phone: bookingData.phone,
+        email: bookingData.email,
         bookingReference: bookingData.booking_reference || bookingData.id,
-        selectedStyle: bookingData.selected_style,
         appointmentDatetime: bookingData['appointment-datetime'],
+        selectedStyle: bookingData.selected_style,
+        hairLength: bookingData.hair_length,
+        hairOption: bookingData.hair_option,
+        preWashOption: bookingData.pre_wash_option,
+        detanglingOption: bookingData.detangling_option,
+        boxBraidsVariation: bookingData.box_braids_variation,
+        cornrowsVariation: bookingData.cornrows_variation,
+        twoStrandTwistsVariation: bookingData.two_strand_twists_variation,
+        duration: bookingData.duration,
+        totalPrice: bookingData.total_price,
         depositPaid: bookingData.deposit_paid,
+        notes: bookingData.notes,
+        currentHairImageUrl: bookingData.current_hair_image_url,
+        referenceImageUrl: bookingData.reference_image_url,
       });
+      if (!ownerSmsResult || !ownerSmsResult.success) {
+        const reason = ownerSmsResult?.error || 'Unknown error';
+        console.warn('Owner SMS (Blooio) not sent:', reason);
+        notificationIssues.push(`owner_sms:${reason}`);
+      } else if (ownerSmsResult.warning) {
+        notificationIssues.push(`owner_sms:${ownerSmsResult.warning}`);
+      }
+    } catch (e) {
+      console.warn('Owner SMS (Blooio) failed (booking still saved):', e.message);
+      notificationIssues.push(`owner_sms:${e.message || 'send failed'}`);
+    }
+
+    try {
+      let customerSmsResult = await sendCustomerBookingSms({
+        phone: bookingData.phone,
+        name: bookingData.name,
+        email: bookingData.email,
+        bookingReference: bookingData.booking_reference || bookingData.id,
+        appointmentDatetime: bookingData['appointment-datetime'],
+        selectedStyle: bookingData.selected_style,
+        hairLength: bookingData.hair_length,
+        hairOption: bookingData.hair_option,
+        preWashOption: bookingData.pre_wash_option,
+        detanglingOption: bookingData.detangling_option,
+        boxBraidsVariation: bookingData.box_braids_variation,
+        cornrowsVariation: bookingData.cornrows_variation,
+        twoStrandTwistsVariation: bookingData.two_strand_twists_variation,
+        duration: bookingData.duration,
+        totalPrice: bookingData.total_price,
+        depositPaid: bookingData.deposit_paid,
+        notes: bookingData.notes,
+        lookupBookingUrl,
+      });
+      if (!customerSmsResult?.success && customerSmsResult?.error === 'Blooio not configured') {
+        customerSmsResult = await sendCustomerSmsConfirmation({
+          phone: bookingData.phone,
+          bookingReference: bookingData.booking_reference || bookingData.id,
+          selectedStyle: bookingData.selected_style,
+          appointmentDatetime: bookingData['appointment-datetime'],
+          depositPaid: bookingData.deposit_paid,
+        });
+      }
       if (!customerSmsResult || !customerSmsResult.success) {
         const reason = customerSmsResult?.error || 'Unknown error';
         console.warn('Customer SMS not sent:', reason);

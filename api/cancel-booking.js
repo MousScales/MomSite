@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOwnerCancelNotification } = require('./_whatsapp');
+const { sendOwnerCancelSms } = require('./_blooio');
 const { sendCancelConfirmation } = require('./_resend');
 const { cancelCalComBooking } = require('./_calcom');
 
@@ -137,6 +138,22 @@ module.exports = async (req, res) => {
       });
     } catch (e) {
       console.warn('WhatsApp cancel notification failed:', e.message);
+    }
+
+    try {
+      await sendOwnerCancelSms({
+        name: booking.name,
+        phone: booking.phone,
+        email: booking.email,
+        bookingReference: booking.booking_reference || booking.id,
+        selectedStyle: booking.selected_style,
+        appointmentDatetime: booking['appointment-datetime'],
+        duration: booking.duration,
+        totalPrice: parseFloat(booking.total_price || 0),
+        depositPaid: parseFloat(booking.deposit_paid || 0),
+      });
+    } catch (e) {
+      console.warn('Owner SMS (Blooio) cancel notification failed:', e.message);
     }
 
     // Confirmation email to client
