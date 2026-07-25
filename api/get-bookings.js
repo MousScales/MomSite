@@ -1,6 +1,9 @@
 const { createClient } = require('@supabase/supabase-js');
+const { blockIfMaintenance } = require('./_maintenance');
 
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

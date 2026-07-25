@@ -1,4 +1,5 @@
 const { getStripeSecretKey } = require('./_stripe-env');
+const { blockIfMaintenance } = require('./_maintenance');
 
 /**
  * Diagnostic endpoint - verify Stripe key is set and accepted by Stripe API.
@@ -6,6 +7,8 @@ const { getStripeSecretKey } = require('./_stripe-env');
  * Returns status only - never exposes the key.
  */
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   const key = getStripeSecretKey();
   let status = 'missing';

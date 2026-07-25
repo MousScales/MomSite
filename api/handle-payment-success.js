@@ -5,6 +5,7 @@ const { sendBookingConfirmation } = require('./_resend');
 const { sendOwnerWhatsAppNotification, sendCustomerSmsConfirmation } = require('./_whatsapp');
 const { sendOwnerBookingSms, sendCustomerBookingSms } = require('./_blooio');
 const { createCalComBooking } = require('./_calcom');
+const { blockIfMaintenance } = require('./_maintenance');
 
 async function stripeRequest(method, path) {
   const key = getStripeSecretKey();
@@ -33,6 +34,8 @@ function getQuery(req) {
 }
 
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   const q = getQuery(req);
   const stripeKey = getStripeSecretKey();
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ecnbdqkqlxkfghjcbvwj.supabase.co';

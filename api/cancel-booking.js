@@ -3,6 +3,7 @@ const { sendOwnerCancelNotification } = require('./_whatsapp');
 const { sendOwnerCancelSms } = require('./_blooio');
 const { sendCancelConfirmation } = require('./_resend');
 const { cancelCalComBooking } = require('./_calcom');
+const { blockIfMaintenance } = require('./_maintenance');
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -18,6 +19,8 @@ function parseBody(req) {
 }
 
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

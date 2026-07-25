@@ -2,7 +2,11 @@
  * Returns Stripe publishable key from Vercel env.
  * Used by client to initialize Stripe when keys are in env.
  */
+const { blockIfMaintenance } = require('./_maintenance');
+
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   const key = String(process.env.STRIPE_PUBLISHABLE_KEY || '').replace(/[^a-zA-Z0-9_]/g, '');
   if (!key || !key.startsWith('pk_')) {

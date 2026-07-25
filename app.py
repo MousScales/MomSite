@@ -10,6 +10,7 @@ from urllib.parse import quote
 from flask import Flask, request, jsonify, redirect, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
+from maintenance_config import MAINTENANCE_MODE, is_admin_allowed
 import stripe
 # --- Firebase imports (commented out - using Supabase instead) ---
 # import firebase_admin
@@ -42,6 +43,19 @@ print("Resend configured for confirmation emails." if _resend_ok else "Resend NO
 # --- App Initialization ---
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+
+@app.before_request
+def enforce_maintenance_mode():
+    if not MAINTENANCE_MODE or is_admin_allowed(request.path):
+        return None
+
+    if request.path.startswith('/api/'):
+        return jsonify(
+            error='Site is currently under maintenance. Please call (860) 425-0751 to book.'
+        ), 503
+
+    return send_file('maintenance.html'), 503
 
 # --- Supabase Initialization ---
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://ecnbdqkqlxkfghjcbvwj.supabase.co')

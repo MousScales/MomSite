@@ -10,8 +10,11 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { createCalComBooking } = require('./_calcom');
+const { blockIfMaintenance } = require('./_maintenance');
 
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 

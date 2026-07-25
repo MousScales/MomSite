@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getStripeSecretKey } = require('./_stripe-env');
+const { blockIfMaintenance } = require('./_maintenance');
 
 function generateBookingReference() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -81,6 +82,8 @@ function isAfterSaturdayClose(startDate, durationMinutes) {
 }
 
 module.exports = async (req, res) => {
+  if (blockIfMaintenance(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
